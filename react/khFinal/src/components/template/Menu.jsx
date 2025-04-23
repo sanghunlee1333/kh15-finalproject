@@ -54,7 +54,7 @@ export default function Menu() {
                         
                         {/* 공지게시판 Link */}
                         <li className="nav-item">
-                            <Link to="#" className="nav-link">
+                            <Link to="/notice/list" className="nav-link">
                                 <i className="fa-solid fa-list-ul"></i>
                                 공지게시판
                             </Link>
