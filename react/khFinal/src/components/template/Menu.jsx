@@ -1,6 +1,8 @@
 import { Link } from "react-router";
 import { CiLogin } from "react-icons/ci";
 import { CiLogout } from "react-icons/ci";
+import { FaUserCircle } from "react-icons/fa";
+import { FaLightbulb } from "react-icons/fa6";
 
 export default function Menu() {
 
@@ -23,6 +25,22 @@ export default function Menu() {
                     
                     {/* 좌측 메뉴 */}
                     <ul className="navbar-nav me-auto">
+
+                        {/* 공지게시판 Link */}
+                        <li className="nav-item">
+                            <Link to="#" className="nav-link">
+                                <i className="fa-solid fa-list-ul"></i>
+                                공지게시판
+                            </Link>
+                        </li>
+
+                        {/* 채팅 Link */}
+                        <li className="nav-item">
+                            <Link to="#" className="nav-link">
+                                <i className="fa-solid fa-list-ul"></i>
+                                채팅
+                            </Link>
+                        </li>
 
                         {/* 일정관리 Link */}
                         <li className="nav-item dropdown">
@@ -52,28 +70,35 @@ export default function Menu() {
                             </div>
                         </li>
                         
-                        {/* 공지게시판 Link */}
-                        <li className="nav-item">
-                            <Link to="#" className="nav-link">
-                                <i className="fa-solid fa-list-ul"></i>
-                                공지게시판
-                            </Link>
-                        </li>
                     </ul>
 
                     {/* 우측 메뉴 */}
                     <ul className="navbar-nav">
+
+                        {/* 전체 알림 */}
+                        <li className="nav-item me-4">
+                            <a className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button"
+                                aria-haspopup="true" aria-expanded="false">
+                                <i className="fa-solid fa-database"></i>
+                                <FaLightbulb className="fs-4 text-warning"/>
+                            </a>
+                        </li>
+
+                        {/* 로그인, 로그아웃 Link */}
                         <li className="nav-item">
-                            <Link className="nav-link active">
+                            {/* 로그아웃 */}
+                            <Link to="#" className="nav-link active">
                                 <i className="fa-solid fa-right-to-bracket"></i>
-                                <CiLogout />
-                                Logout
+                                <CiLogout className="fs-4"/>
                             </Link>
-                            {/* <Link className="nav-link active">
+                        </li>
+
+                        {/* 마이페이지 Link, 회원가입 Link */}
+                        <li className="nav-item">
+                            <Link to="#" className="nav-link active">
                                 <i className="fa-solid fa-right-to-bracket"></i>
-                                <CiLogin />
-                                Login
-                            </Link> */}
+                                <FaUserCircle className="fs-4"/>
+                            </Link>
                         </li>
                     </ul>
                 </div>
