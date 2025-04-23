@@ -1,4 +1,12 @@
 {
+<<<<<<< HEAD
+  "hash": "cd6ae025",
+  "configHash": "cd610411",
+  "lockfileHash": "143aa4e9",
+  "browserHash": "c7c6defd",
+  "optimized": {},
+  "chunks": {}
+=======
   "hash": "c1034ef9",
   "configHash": "6510c32b",
   "lockfileHash": "143aa4e9",
@@ -58,4 +66,5 @@
       "file": "chunk-DC5AMYBS.js"
     }
   }
+>>>>>>> main
 }
