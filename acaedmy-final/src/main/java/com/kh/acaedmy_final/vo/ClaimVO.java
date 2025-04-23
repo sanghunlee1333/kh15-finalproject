@@ -1,4 +1,4 @@
-package com.kh.acaedmy_final.dto;
+package com.kh.acaedmy_final.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -6,9 +6,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
-public class MemberDto {
-	private long memberNo;
-	private String memberId;
-	private String memberPw;
+public class ClaimVO {
+	private String memberNo;
 	private String memberDepartment;
+	private String accessToken;
+	private String refreshToken;
 }

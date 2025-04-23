@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="token">
+	<insert id="generate" >
+		insert into token(token_no, token_target, token_value) values(#{tokenNo}, #{tokenTarget}, #{tokenValue})
+	</insert>
+	
+	<select id="sequence">
+		select token_seq.nextval from dual
+	</select>
+	
+	<delete id="delete">
+		delete token where token_no = #{tokenNo}
+	</delete>
+	<delete id="deleteByTarget">
+		delete token where token_target = #{tokenTarget}
+	</delete>
+	
+	<select id="find">
+		select * from token where token_no = #{tokenNo}
+	</select>
+	<select id="findByTarget">
+		select * from token where token_target = #{tokenTarget} and token_value = ${targetValue}
+	</select>
+	
+	
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
