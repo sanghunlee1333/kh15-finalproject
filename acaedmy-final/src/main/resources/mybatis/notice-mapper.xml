@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="notice">
+	<!-- 시퀀스 생성 및 등록 -->
+	<select id="sequence" resultType="int">
+		select pokemon_seq.nextval from dual
+	</select>
+	<!-- 공지글 작성 -->
+	<insert id="write">
+		insert into notice(notice_no, notice_title, notice_content)
+		values(#{noticeNo}, #{noticeTitle}, #{noticeContent})
+	</insert>
+	
+	<!-- 공지글 목록 조회 -->
+	<select id="list" resultType="NoticeDto">
+		select * from notice order by notice_write_date desc
+	</select>
+	<!-- 공지글 상세 조회 -->
+	<select id="detail" resultType="NoticeDto">
+		select * from notice where notice_no = #{noticeNo}
+	</select>
+	
+	<!-- 공지글 삭제 -->
+	<delete id="delete">
+		delete notice where notice_no = #{noticeNo}
+	</delete>
+	
+	<!-- 아래는 선택 사항 -->
+	
+	<!-- 공지글 수정 -->
+	<update id="edit">
+		update notice 
+		set
+			notice_title=#{noticeTitle},
+			notice_content=#{noticeContent},
+			notice_write_date=systimestamp
+	</update>
+	
+	<!-- 검색 조회(컬럼-키워드) -->
+	<select id="search" resultType="NoticeDto">
+		select * from notice where instr(${column}, #{keyword}) > 0
+		order by ${column} asc, notice_write_date desc 
+	</select>
+	
+	<!-- 목록 조회 & 검색 조회 -->
+	<select id="listOrSearch" resultType="NoticeDto">
+		select * from notice
+		<if test="column != null and keyword != null">
+		where ${column} like #{keyword} || '%'	
+		</if> 
+		order by notice_write_date desc
+	</select>
+</mapper>
+
