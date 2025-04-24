@@ -7,6 +7,7 @@ import Sidebar from './components/template/Sidebar'
 import MemberLogin from './components/Member/MemberLogin'
 import NoticeList from './components/Notice/NoticeList'
 import NoticeDetail from './components/Notice/NoticeDetail'
+import MemberJoin from './components/Member/MemberJoin'
 
 
 function App() {
@@ -27,7 +28,7 @@ function App() {
 
           {/* Member */}
           <Route path="/member/login" element={<MemberLogin/>}></Route>
-          <Route path="/member/join" element={<MemberLogin/>}></Route>
+          <Route path="/member/join" element={<MemberJoin/>}></Route>
 
           {/* Notice */}
           <Route path="/notice/list" element={<NoticeList/>}></Route>
