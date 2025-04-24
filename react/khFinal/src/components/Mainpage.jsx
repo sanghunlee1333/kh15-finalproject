@@ -3,7 +3,7 @@ import { FaCalendarAlt } from "react-icons/fa";
 export default function Mainpage() {
 
     return (<>
-        <div className="main-content">
+       
             <h2 className="mb-4 mt-2">
                 <FaCalendarAlt className="text-danger me-2"/>
                 <span className="align-middle">일정</span>
@@ -14,6 +14,6 @@ export default function Mainpage() {
             >
                 [여기에 달력 API 들어올 예정]
             </div>
-        </div>
+     
     </>)
 }

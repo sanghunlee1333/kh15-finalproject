@@ -1,6 +1,6 @@
   /* 사이드바 */
   .sidebar {
-      width: 300px;
+      width: 200px;
       height: calc(100vh - 56px);
       position: fixed;
       top: 56px;
@@ -35,7 +35,7 @@
 
   /* 메인 콘텐츠 */
   .main-content {
-    margin-left: 300px; /* 기본 사이드바 너비 */
+    margin-left: 200px; /* 기본 사이드바 너비 */
     padding: 25px;
     padding-top: 76px; /* navbar 높이(56px) + 여백(20px) */
     min-height: calc(100vh - 56px);
@@ -43,21 +43,21 @@
     transition: margin-left 0.1s ease;
   }
   
-  /* 992px 이하: 사이드바 너비 250px */
+  /* 992px 이하: 사이드바 너비 200px */
   @media (max-width: 991.98px) {
     .main-content {
       margin-left: 200px;
     }
   }
   
-  /* 768px 이하: 사이드바 너비 200px */
+  /* 768px 이하: 사이드바 너비 150px */
   @media (max-width: 767.98px) {
     .main-content {
       margin-left: 150px;
     }
   }
   
-  /* 576px 이하: 사이드바 너비 150px */
+  /* 576px 이하: 사이드바 너비 70px */
   @media (max-width: 575.98px) {
     .main-content {
       margin-left: 70px;
@@ -72,7 +72,6 @@
     border-radius: 1rem;
   }
 
-  /* App.css */
 .hr-stick {
   height: 4px;
   background-color: #444;
