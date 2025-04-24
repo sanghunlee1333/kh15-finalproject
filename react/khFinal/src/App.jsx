@@ -19,7 +19,7 @@ function App() {
       {/* 사이드바 */}
       <Sidebar/>
       
-      <div>
+      <div className="main-content">
 
         {/* Routes에 주소와 연결될 컴포넌트를 작성하여 상황에 맞는 화면 출력 */}
         <Routes>
