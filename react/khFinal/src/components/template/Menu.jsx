@@ -28,19 +28,28 @@ export default function Menu() {
 
                         {/* 공지게시판 Link */}
                         <li className="nav-item">
-                            <Link to="#" className="nav-link">
+                            <Link to="/notice/list" className="nav-link">
                                 <i className="fa-solid fa-list-ul"></i>
                                 공지게시판
                             </Link>
                         </li>
 
-                        {/* 채팅 Link */}
+                        {/* 연락처 Link */}
                         <li className="nav-item">
-                            <Link to="#" className="nav-link">
+                            <Link to="/chat/contact" className="nav-link">
+                                <i className="fa-solid fa-list-ul"></i>
+                                연락처
+                            </Link>
+                        </li>
+
+                        {/* 채팅 */}
+                        <li className="nav-item">
+                            <Link to="/chat/room" className="nav-link">
                                 <i className="fa-solid fa-list-ul"></i>
                                 채팅
                             </Link>
                         </li>
+
 
                         {/* 일정관리 Link */}
                         <li className="nav-item dropdown">
@@ -70,13 +79,6 @@ export default function Menu() {
                             </div>
                         </li>
                         
-                        {/* 공지게시판 Link */}
-                        <li className="nav-item">
-                            <Link to="/notice/list" className="nav-link">
-                                <i className="fa-solid fa-list-ul"></i>
-                                공지게시판
-                            </Link>
-                        </li>
                     </ul>
 
                     {/* 우측 메뉴 */}
