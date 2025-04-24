@@ -22,7 +22,12 @@ public class MemberDao {
 	public MemberDto selectOne(String memberId) {
 		return sqlSession.selectOne("member.find", memberId);
 	}
+	public MemberDto selectOne(long memberNo) {
+		return sqlSession.selectOne("member.findByNo", memberNo);
+	}
 	public boolean insert(MemberDto memberDto) {
+		long memberNo = sqlSession.selectOne("member.sequence");
+		memberDto.setMemberNo(memberNo);
 		return sqlSession.insert("member.join", memberDto)> 0;
 	}
 	
