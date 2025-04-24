@@ -1,4 +1,4 @@
-import { IoChatbubbleEllipses } from "react-icons/io5";
+import { FaFacebookMessenger } from "react-icons/fa6";
 
 export default function Sidebar() {
     return (<>
@@ -6,29 +6,120 @@ export default function Sidebar() {
         <div className="sidebar p-3 col-sm">
 
             <h4 className="m-2">
-            <IoChatbubbleEllipses className="fs-4 me-2 text-info"/>
-                <span className="align-middle">채팅</span>
+                <FaFacebookMessenger className="fs-4 text-primary"/>
             </h4>
-            <hr />
-            <ul className="list-group m-2">
+
+            <hr className="hr-stick mt-4"/>
+
+            <ul className="list-group mb-1">
                 <li className="list-group-item">
-                    <h6>방 제목 (4)</h6>
-                    <span>내용</span>
+                    <h6>
+                        Title
+                        <span className="text-muted ms-2">4</span>
+                    </h6>
+                    <span>content</span>
                 </li>
             </ul>
-            <ul className="list-group m-2">
+            <ul className="list-group mb-1">
                 <li className="list-group-item">
-                    <h6>방 제목 (2)</h6>
-                    <span>내용</span>
-                    
+                    <h6>
+                        Title
+                        <span className="text-muted ms-2">3</span>
+                    </h6>
+                    <span>content</span>
                 </li>
             </ul>
-            <ul className="list-group m-2">
+            <ul className="list-group mb-1">
                 <li className="list-group-item">
-                    <h6>방 제목 (7)</h6>
-                    <span>내용</span>
+                    <h6>
+                        Title
+                        <span className="text-muted ms-2">7</span>
+                    </h6>
+                    <span>content</span>
                 </li>
             </ul>
+            <ul className="list-group mb-1">
+                <li className="list-group-item">
+                    <h6>
+                        Title
+                        <span className="text-muted ms-2">6</span>
+                    </h6>
+                    <span>content</span>
+                </li>
+            </ul>
+            <ul className="list-group mb-1">
+                <li className="list-group-item">
+                    <h6>
+                        Title
+                        <span className="text-muted ms-2">5</span>
+                    </h6>
+                    <span>content</span>
+                </li>
+            </ul>
+            <ul className="list-group mb-1">
+                <li className="list-group-item">
+                    <h6>
+                        Title
+                        <span className="text-muted ms-2">5</span>
+                    </h6>
+                    <span>content</span>
+                </li>
+            </ul>
+            <ul className="list-group mb-1">
+                <li className="list-group-item">
+                    <h6>
+                        Title
+                        <span className="text-muted ms-2">8</span>
+                    </h6>
+                    <span>content</span>
+                </li>
+            </ul>
+            <ul className="list-group mb-1">
+                <li className="list-group-item">
+                    <h6>
+                        Title
+                        <span className="text-muted ms-2">3</span>
+                    </h6>
+                    <span>content</span>
+                </li>
+            </ul>
+            <ul className="list-group mb-1">
+                <li className="list-group-item">
+                    <h6>
+                        Title
+                        <span className="text-muted ms-2">2</span>
+                    </h6>
+                    <span>content</span>
+                </li>
+            </ul>
+            <ul className="list-group mb-1">
+                <li className="list-group-item">
+                    <h6>
+                        Title
+                        <span className="text-muted ms-2">4</span>
+                    </h6>
+                    <span>content</span>
+                </li>
+            </ul>
+            <ul className="list-group mb-1">
+                <li className="list-group-item">
+                    <h6>
+                        Title
+                        <span className="text-muted ms-2">3</span>
+                    </h6>
+                    <span>content</span>
+                </li>
+            </ul>
+            <ul className="list-group mb-1">
+                <li className="list-group-item">
+                    <h6>
+                        Title
+                        <span className="text-muted ms-2">7</span>
+                    </h6>
+                    <span>content</span>
+                </li>
+            </ul>
+            
         </div>
 
     </>

@@ -15,21 +15,21 @@
   /* 화면이 992px보다 작으면 사이드바 너비 줄임 (부트스트랩 기준 md breakpoint) */
 @media (max-width: 991.98px) {
     .sidebar {
-      width: 250px;
+      width: 200px;
     }
   }
   
   /* 화면이 768px보다 작으면 더 줄임 */
   @media (max-width: 767.98px) {
     .sidebar {
-      width: 200px;
+      width: 150px;
     }
   }
   
   /* 아주 작은 화면에서는 최소 사이드바 너비 */
   @media (max-width: 575.98px) {
     .sidebar {
-      width: 150px;
+      width: 70px;
     }
   }
 
@@ -46,20 +46,36 @@
   /* 992px 이하: 사이드바 너비 250px */
   @media (max-width: 991.98px) {
     .main-content {
-      margin-left: 250px;
+      margin-left: 200px;
     }
   }
   
   /* 768px 이하: 사이드바 너비 200px */
   @media (max-width: 767.98px) {
     .main-content {
-      margin-left: 200px;
+      margin-left: 150px;
     }
   }
   
   /* 576px 이하: 사이드바 너비 150px */
   @media (max-width: 575.98px) {
     .main-content {
-      margin-left: 150px;
+      margin-left: 70px;
     }
   }
+
+  /* 점보트론 */
+  .jumbotron {
+    background-color: #e6e6e6;
+    color: rgb(58, 58, 58);
+    padding: 2rem;
+    border-radius: 1rem;
+  }
+
+  /* App.css */
+.hr-stick {
+  height: 4px;
+  background-color: #444;
+  border: none;
+  border-radius: 3px;
+}

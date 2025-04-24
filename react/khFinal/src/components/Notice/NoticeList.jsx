@@ -5,21 +5,21 @@ import Jumbotron from "../template/Jumbotron";
 
 import { FaPlus } from "react-icons/fa";
 
-export default function NoticeList(){
+export default function NoticeList() {
     //recoil
-    
+
     //state
-    const[notices, setNotices] = useState([]);
-    const[selectedNotices, setSelectedNotices] = useState([]);
+    const [notices, setNotices] = useState([]);
+    const [selectedNotices, setSelectedNotices] = useState([]);
 
     //effect
-    useEffect(()=>{
+    useEffect(() => {
         loadNotices();
     }, []);
-    
+
     //callback
-    const loadNotices = useCallback(async ()=>{
-        const {data} = await axios.get("/notice/");
+    const loadNotices = useCallback(async () => {
+        const { data } = await axios.get("/notice/");
         console.log(data);
         setNotices(data);
         // axios({
@@ -30,13 +30,13 @@ export default function NoticeList(){
         // });
     }, []);
 
-    const changeNoticeChoice = useCallback((e, target)=>{
-        setNotices(notices.map(notice=>{
+    const changeNoticeChoice = useCallback((e, target) => {
+        setNotices(notices.map(notice => {
             //target과 notice를 비교해서 일치하는 경우 choice를 변경
-            if(notice.noticeNo === target.noticeNo){ //원하는 대상이라면
+            if (notice.noticeNo === target.noticeNo) { //원하는 대상이라면
                 return {
                     ...notice,
-                    choice : e.target.checked
+                    choice: e.target.checked
                 }
             }
             return notice; //아니면 통과
@@ -44,8 +44,9 @@ export default function NoticeList(){
     }, [notices]);
 
     //view
-    return(<>
-        <Jumbotron subject="공지 게시판"/>
+    return (<>
+
+        <Jumbotron subject="공지 게시판" />
 
         <div className="row mt-4">
             <div className="col text-end">
@@ -54,14 +55,14 @@ export default function NoticeList(){
                 </Link>
             </div>
         </div>
-        
+
         <div className="row mt-4">
             <div className="col">
                 <table className="table table-hover">
                     <thead>
                         <tr>
                             <th>
-                                <input type="checkbox"/>
+                                <input type="checkbox" />
                             </th>
                             <th>번호</th>
                             <th>제목</th>
@@ -69,19 +70,19 @@ export default function NoticeList(){
                         </tr>
                     </thead>
                     <tbody>
-                        {notices.map(notice=>(
-                        <tr key={notice.noticeNo}>
-                            <td>
-                                <input type="checkbox" checked={notice.choice === true} onChange={e=>changeNoticeChoice(e, notice)}/>
-                            </td>
-                            <td>{notice.noticeNo}</td>
-                            <td>
-                                <Link className="text-decoration-none d-inline-flex align-items-center" to={`/notice/detail/${notice.noticeNo}`}>
-                                    {notice.noticeTitle}
-                                </Link>
-                            </td>
-                            <td>{notice.noticeWriteDate}</td>
-                        </tr>
+                        {notices.map(notice => (
+                            <tr key={notice.noticeNo}>
+                                <td>
+                                    <input type="checkbox" checked={notice.choice === true} onChange={e => changeNoticeChoice(e, notice)} />
+                                </td>
+                                <td>{notice.noticeNo}</td>
+                                <td>
+                                    <Link className="text-decoration-none d-inline-flex align-items-center" to={`/notice/detail/${notice.noticeNo}`}>
+                                        {notice.noticeTitle}
+                                    </Link>
+                                </td>
+                                <td>{notice.noticeWriteDate}</td>
+                            </tr>
                         ))}
                     </tbody>
                 </table>

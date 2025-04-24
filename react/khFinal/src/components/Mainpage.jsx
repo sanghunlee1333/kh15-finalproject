@@ -1,4 +1,3 @@
-import '../App.css';
 import { FaCalendarAlt } from "react-icons/fa";
 
 export default function Mainpage() {
