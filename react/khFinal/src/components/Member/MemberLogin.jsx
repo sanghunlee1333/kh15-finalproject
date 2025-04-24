@@ -34,7 +34,7 @@ export default function MemberLogin(){
 
     const gotoLogin = useCallback(async()=>{
         //console.log(members);
-        const resp = await axios.post("http://localhost:8080/api/member/login", members);
+        const resp = await axios.post("/member/login", members);
         
         setUserNo(resp.data.memberNo);
         setUserDepartment(resp.data.memberDepartment);
@@ -61,12 +61,18 @@ export default function MemberLogin(){
     },[click])
 
     const gotoLogout = useCallback(async ()=>{
-      await axios.get("http://localhost:8080/api/member/logout");
+      await axios.get("/member/logout");
       window.localStorage.removeItem('refreshToken');
       window.sessionStorage.removeItem('refreshToken');
       setUserNo("");
       setUserDepartment("");
       
+    },[])
+
+    const refreshLog = useCallback(async ()=>{
+      const rest = await axios.get("/member/refresh");
+      console.log("new refreshtoken");
+      console.log(rest.data.refreshToken);
     },[])
 
    
@@ -141,7 +147,16 @@ export default function MemberLogin(){
       </div>
     </div>
 
-
+      {/* 리프레쉬 */}
+      <div className="row mt-3">
+      <div className="col">
+        <button className="btn btn-secandary" onClick={refreshLog}>
+          리프레시
+        </button>
+        <span>userNo = {userNo}</span>
+        <span>userDepartment = {userDepartment}</span>
+      </div>
+    </div>
   </div>
 </div>
         {/* </div> */}
