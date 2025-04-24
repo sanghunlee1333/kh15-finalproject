@@ -2,6 +2,8 @@ package com.kh.acaedmy_final.service;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -75,7 +77,7 @@ public class TokenService {
 				.getPayload();
 		
 		return ClaimVO.builder()
-					.memberNo((String) claims.get("memberNo"))
+					.memberNo(((Number) claims.get("memberNo")).longValue())
 					.memberDepartment((String) claims.get("memberDepartment"))
 				.build();
 	}
@@ -84,6 +86,18 @@ public class TokenService {
 		String token = bearerToken.substring(7);
 		return parse(token);
 	}
+
+	public boolean checkBearerToken(ClaimVO claimVO, String refreshToken) {
+		Map<String, Object> params = new HashMap<>();
+		
+		params.put("tokenTarget", claimVO.getMemberNo());
+		params.put("tokenValue", refreshToken);
+		
+		
+		//TokenDto target = tokenDao.selectOneByTargetAndValue(null);
+		return false;
+	}
+	
 	
 }
 

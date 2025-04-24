@@ -1,3 +1,4 @@
+
 export default function Jumbotron(
     {
         subject = "제목",
@@ -5,7 +6,7 @@ export default function Jumbotron(
         ...rest
     }
 ) {
-    return(
+    return (
         <div className="row">
             <div className="col">
                 <div className="bg-dark text-light p-4 rounded">
