@@ -3,6 +3,8 @@ import Jumbotron from "../template/Jumbotron";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { HiUserGroup, HiUserAdd } from "react-icons/hi";
 import { FaUserCircle } from "react-icons/fa";
+import axios from "axios";
+
 export default function MemberJoin(){
     // state
 
@@ -68,7 +70,10 @@ export default function MemberJoin(){
     },[memberResidentNumber])
     const checkMemberResidentNoRear = useCallback(()=>{
         const regex = /^[0-9]{7}$/;
-    },[member])
+        const isValid = regex.test(memberResidentNumber.rearNo);
+        console.log(isValid);
+
+    },[memberResidentNumber])
     const checkMemberContact = useCallback(()=>{
         const regex = /^010[0-9]{8}$/;
         const isValid = regex.test(member.memberContact);
@@ -112,11 +117,13 @@ export default function MemberJoin(){
 
 
     const submitForm = useCallback(async ()=>{
-
+        
         setMember((prev)=>({
             ...prev,
             memberResidentNo:memberResident,
-        }))
+        }));
+        const isValid = await axios.post("/member/", member);
+        console.log(isValid);
         console.log(member);
     },[memberResidentNumber])
 
