@@ -10,12 +10,12 @@ import { Modal } from "bootstrap";
 
 
 
-export default function NoticeList(){
+export default function NoticeList() {
     //recoil
-    
+
     //state
-    const[notices, setNotices] = useState([]);
-    const[selectedNotices, setSelectedNotices] = useState([]);
+    const [notices, setNotices] = useState([]);
+    const [selectedNotices, setSelectedNotices] = useState([]);
 
     //some = 자바스크립트 배열에 내장된 메서드로, 배열 안에 하나라도 주어진 조건을 만족하는 요소가 있는지 체크해 주는 함수
     //조건을 만족하는 요소가 나오면, 즉시 true를 반환하고 더 이상 나머지 요소는 검사X
@@ -28,13 +28,13 @@ export default function NoticeList(){
     
 
     //effect
-    useEffect(()=>{
+    useEffect(() => {
         loadNotices();
     }, []);
-    
+
     //callback
-    const loadNotices = useCallback(async ()=>{
-        const {data} = await axios.get("/notice/");
+    const loadNotices = useCallback(async () => {
+        const { data } = await axios.get("/notice/");
         console.log(data);
         setNotices(data);
     }, []);
@@ -42,8 +42,9 @@ export default function NoticeList(){
     //체크박스 개별 체크
     const changeNoticeChoice = useCallback((e, target)=>{ //target은 파라미터 이름일 뿐
         setNotices(notices.map(notice=>{
+
             //target과 notice를 비교해서 일치하는 경우 choice를 변경
-            if(notice.noticeNo === target.noticeNo){ //원하는 대상이라면
+            if (notice.noticeNo === target.noticeNo) { //원하는 대상이라면
                 return {
                     ...notice, //원래 있던 notice 객체의 모든 속성(key–value 쌍)을 "새 객체" 안에 똑같이 복사
                     choice : e.target.checked //리액트는 객체의 속성만 변하고 객체 자체가 변하지 않으면 렌더링을 하지 않음
@@ -122,8 +123,9 @@ export default function NoticeList(){
     }, [modal]);
 
     //view
-    return(<>
-        <Jumbotron subject="공지 게시판"/>
+    return (<>
+
+        <Jumbotron subject="공지 게시판" />
 
         <div className="row mt-4">
             <div className="col text-end">
@@ -139,7 +141,7 @@ export default function NoticeList(){
                 </Link>
             </div>
         </div>
-        
+
         <div className="row mt-4">
             <div className="col">
                 <ul className="list-group list-group-flush">
