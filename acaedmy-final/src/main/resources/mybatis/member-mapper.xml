@@ -17,7 +17,9 @@
 	<insert id="join" >
 		insert into member(member_id, member_pw) values(#{memberId}, #{memberPw})
 	</insert>
-	
+	<select id="findByNo" resultType ="MemberDto">
+		select * from member where member_no = #{memberNo}
+	</select>
 	
 </mapper>
 

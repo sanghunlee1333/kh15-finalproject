@@ -10,10 +10,10 @@ import NoticeDetail from './components/Notice/NoticeDetail'
 import ChatContact from './components/Websocket/ChatContact'
 import GroupChat from './components/Websocket/GroupChat'
 import ChatRoom from './components/Websocket/ChatRoom'
-
+import MemberJoin from './components/Member/MemberJoin'
 
 function App() {
-  
+
   return (
     <>
       {/* 메뉴 */}
@@ -21,8 +21,8 @@ function App() {
 
       {/* 사이드바 */}
       <Sidebar/>
-      
-      <div>
+
+      <div className="main-content">
 
         {/* Routes에 주소와 연결될 컴포넌트를 작성하여 상황에 맞는 화면 출력 */}
         <Routes>
@@ -30,7 +30,7 @@ function App() {
 
           {/* Member */}
           <Route path="/member/login" element={<MemberLogin/>}></Route>
-          <Route path="/member/join" element={<MemberLogin/>}></Route>
+          <Route path="/member/join" element={<MemberJoin/>}></Route>
 
           {/* Notice */}
           <Route path="/notice/list" element={<NoticeList/>}></Route>
