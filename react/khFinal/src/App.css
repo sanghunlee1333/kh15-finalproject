@@ -1,81 +1,13 @@
-  /* 사이드바 */
-  .sidebar {
-      width: 200px;
-      height: calc(100vh - 56px);
-      position: fixed;
-      top: 56px;
-      left: 0;
-      bottom: 0;
-      overflow-y: auto;
-      background-color: #e6e6e6;
-      color: rgb(58, 58, 58);
-      transition: all 0.3s ease;
-  }
-
-  /* 전역 body 디자인 수정 */
-  body {
-    overflow-y: auto; /* 세로 스크롤 허용 */
-  }
-
-  /* 화면이 992px보다 작으면 사이드바 너비 줄임 (부트스트랩 기준 md breakpoint) */
-@media (max-width: 991.98px) {
-    .sidebar {
-      width: 200px;
-    }
-  }
-  
-  /* 화면이 768px보다 작으면 더 줄임 */
-  @media (max-width: 767.98px) {
-    .sidebar {
-      width: 150px;
-    }
-  }
-  
-  /* 아주 작은 화면에서는 최소 사이드바 너비 */
-  @media (max-width: 575.98px) {
-    .sidebar {
-      width: 70px;
-    }
-  }
-
-  /* 메인 콘텐츠 */
+  /* 메인화면 css */
   .main-content {
-    margin-left: 200px; /* 기본 사이드바 너비 */
-    padding: 25px;
-    padding-top: 76px; /* navbar 높이(56px) + 여백(20px) */
+    margin-left: 65px;        /* 사이드바 너비 */
+    padding: 7vw;
+    padding-top: 11vh;         /* navbar 높이만큼만 여백 주기 */
     min-height: calc(100vh - 56px);
     overflow-y: auto;
     transition: margin-left 0.1s ease;
   }
   
-  /* 992px 이하: 사이드바 너비 200px */
-  @media (max-width: 991.98px) {
-    .main-content {
-      margin-left: 200px;
-    }
-  }
-  
-  /* 768px 이하: 사이드바 너비 200px */
-  @media (max-width: 767.98px) {
-    .main-content {
-      margin-left: 150px;
-    }
-  }
-  
-  /* 768px 이하: 사이드바 너비 150px */
-  @media (max-width: 767.98px) {
-    .main-content {
-      margin-left: 70px;
-    }
-  }
-  
-  /* 576px 이하: 사이드바 너비 70px */
-  @media (max-width: 575.98px) {
-    .main-content {
-      margin-left: 70px;
-    }
-  }
-
   /* 점보트론 */
   .jumbotron {
     background-color: #e6e6e6;
@@ -84,9 +16,17 @@
     border-radius: 1rem;
   }
 
-.hr-stick {
-  height: 4px;
-  background-color: #444;
-  border: none;
-  border-radius: 3px;
-}
+  /* 막대기 */
+  .hr-stick {
+    height: 4px;
+    background-color: #444;
+    border: none;
+    border-radius: 3px;
+  }
+
+  /* 전역 body 디자인 수정 */
+  body {
+    overflow-y: auto; /* 세로 스크롤 허용 */
+  }
+
+  

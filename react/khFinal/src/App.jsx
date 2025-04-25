@@ -11,6 +11,7 @@ import ChatContact from './components/Websocket/ChatContact'
 import GroupChat from './components/Websocket/GroupChat'
 import ChatRoom from './components/Websocket/ChatRoom'
 import MemberJoin from './components/Member/MemberJoin'
+import Footer from './components/template/Footer'
 
 function App() {
 
@@ -43,7 +44,10 @@ function App() {
           <Route path="/chat/group" element={<GroupChat/>}></Route>
         </Routes>
 
+
       </div>
+      
+      <Footer/>
     </>
   )
 }

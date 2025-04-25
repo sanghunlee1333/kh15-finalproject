@@ -4,7 +4,6 @@ import axios from "axios";
 import Jumbotron from "../template/Jumbotron";
 import moment from "moment";
 
-
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { Modal } from "bootstrap";
 
@@ -15,8 +14,9 @@ export default function NoticeList() {
 
     //state
     const [notices, setNotices] = useState([]);
-    const [selectedNotices, setSelectedNotices] = useState([]);
-
+    const [column, setColumn] = useState("");
+    const [keyword, setKeyword] = useState("");
+    
     //some = 자바스크립트 배열에 내장된 메서드로, 배열 안에 하나라도 주어진 조건을 만족하는 요소가 있는지 체크해 주는 함수
     //조건을 만족하는 요소가 나오면, 즉시 true를 반환하고 더 이상 나머지 요소는 검사X
     const hasChecked = notices.some(notice => notice.choice);
@@ -25,21 +25,41 @@ export default function NoticeList() {
     //ref
     const modal = useRef();
 
-    
-
     //effect
+    //처음 컴포넌트가 로드될때 가져온 게시글을 뿌려주는 함수
     useEffect(() => {
         loadNotices();
     }, []);
 
     //callback
+    //게시글 가져오기 함수
     const loadNotices = useCallback(async () => {
         const { data } = await axios.get("/notice/");
-        console.log(data);
+        // console.log(data);
         setNotices(data);
     }, []);
 
-    //체크박스 개별 체크
+    //검색 요청 함수
+    const searchNotice = useCallback(async ()=>{
+        //키워드가 비어있을 경우, 전체 목록을 불러오고 종료
+        if(keyword.length === 0) {
+            loadNotices();
+            return;
+        }
+
+        //사용자가 선택한 column, 입력한 keyword를 자바스크립 객체(JSON객체 형태로 전달)
+        const params = {
+            column,
+            keyword
+        };
+
+        const resp = await axios.post("/notice/search", params); //서버에 데이터와 함께 요청하고 응답을 받을 때까지 기다림
+        console.log(resp.data);
+        setNotices(resp.data);
+    }, [column, keyword]);
+
+
+    //체크박스 개별 체크 함수
     const changeNoticeChoice = useCallback((e, target)=>{ //target은 파라미터 이름일 뿐
         setNotices(notices.map(notice=>{
 
@@ -57,7 +77,7 @@ export default function NoticeList() {
         }));
     }, [notices]);
 
-    //체크박스 전체 체크
+    //체크박스 전체 체크 함수
     const changeNoticeAll = useCallback(e=>{
         const isChecked = e.target.checked;
         setNotices(notices=>
@@ -93,6 +113,7 @@ export default function NoticeList() {
     }
     */
 
+    //게시글 삭제 함수
     const deleteNotice = useCallback(async ()=>{
         //notices 배열을 순회하며 notice.choice === true 인 공지 객체들만 따로 모아 checkedList라는 새로운 배열을 만듦 
         const checkedList = notices.filter(notice=>notice.choice);
@@ -111,6 +132,8 @@ export default function NoticeList() {
         closeModal(); //모달 닫기
         loadNotices(); //목록 갱신
     }, [notices]);
+
+    //
 
     const openModal = useCallback(()=>{
         if (!modal.current) return;   
@@ -156,7 +179,8 @@ export default function NoticeList() {
                     {notices.map(notice=>(
                     <li className="list-group-item d-flex align-items-center text-center" key={notice.noticeNo} style={{width: '100%'}}>
                         <div checked={notice.choice === true} onChange={e=>changeNoticeChoice(e, notice)} style={{width: '5%'}}>
-                            <input type="checkbox" checked={notice.choice === true ? true : false}/>
+                            <input type="checkbox" checked={notice.choice === true ? true : false} 
+                                onChange={(e) => changeNoticeChoice(e, notice)}/>
                         </div>
                         <div className="ms-1" style={{width: '10%'}}>
                             {notice.noticeNo}
@@ -166,12 +190,34 @@ export default function NoticeList() {
                                 {notice.noticeTitle}
                             </Link>
                         </div>
-                        <div style={{width: '20%'}}>
-                            {moment(notice.noticeWriteDate).format('YYYY-MM-DD')}
-                        </div>
+                        {/* <div style={{width: '20%'}}>
+                            {moment(notice.noticeWriteDate).isAfter(moment) && (
+                                {moment(notice.noticeWriteDate).format('YYYY-MM-DD')}
+                            ) ? (
+                                {moment(notice.noticeWriteDate).format("HH:mm")}
+                            )}
+                        </div> */}
                     </li>
                     ))}
                 </ul>
+            </div>
+        </div>
+
+        <div className="row mt-4 justify-content-end">
+            <div className="col">
+                <div className="d-flex justify-content-center">
+                    <select name="keyword" style={{ width: "15%", minWidth: "5vh" }} className="form-select" value={column} onChange={e=>setColumn(e.target.value)}>
+                        <option value="">선택하세요</option>
+                        <option value="notice_title">제목</option>
+                        <option value="notice_content">내용</option>
+                    </select>
+                    <input type="text" style={{ width: "20%", minWidth: "15vh" }} className="form-control ms-2" 
+                        placeholder="제목" value={keyword} onChange={e=>setKeyword(e.target.value)}/>
+                    <button type="button" style={{ width: "5%", minWidth: "10vh" }} 
+                        className="btn btn-secondary ms-2 text-nowrap" onClick={searchNotice}>
+                        검색
+                    </button>
+                </div>
             </div>
         </div>
 
