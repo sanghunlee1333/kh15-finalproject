@@ -1,6 +1,8 @@
 package com.kh.acaedmy_final.dao;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,12 @@ public class MemberDao {
 	}
 	public MemberDto selectOne(long memberNo) {
 		return sqlSession.selectOne("member.findByNo", memberNo);
+	}
+	public List<MemberDto> findByDepartment(String memberDepartment, long memberNo) {
+		Map<String, Object> param = new HashMap<>();
+		param.put("memberDepartment", memberDepartment);
+		param.put("memberNo", memberNo);
+		return sqlSession.selectList("member.findByDepartment", param);
 	}
 	public boolean insert(MemberDto memberDto) {
 		long memberNo = sqlSession.selectOne("member.sequence");
