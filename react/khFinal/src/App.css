@@ -11,6 +11,33 @@
       color: rgb(58, 58, 58);
       transition: all 0.3s ease;
   }
+  .chat-item {
+    transition: all 0.2s ease-in-out;
+}
+
+/* 모바일: 450px 이하 */
+@media (max-width: 450px) {
+  .chat-text {
+      display: none;
+  }
+
+  .chat-item {
+      justify-content: center;
+      position: relative;
+  }
+
+  .chat-item:hover::after {
+      content: attr(title);
+      position: absolute;
+      bottom: -25px;
+      background: rgba(0, 0, 0, 0.75);
+      color: white;
+      font-size: 0.8rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+  }
+}
 
   /* 화면이 992px보다 작으면 사이드바 너비 줄임 (부트스트랩 기준 md breakpoint) */
 @media (max-width: 991.98px) {
