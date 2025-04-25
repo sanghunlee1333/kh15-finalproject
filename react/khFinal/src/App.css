@@ -12,6 +12,11 @@
       transition: all 0.3s ease;
   }
 
+  /* 전역 body 디자인 수정 */
+  body {
+    overflow-y: auto; /* 세로 스크롤 허용 */
+  }
+
   /* 화면이 992px보다 작으면 사이드바 너비 줄임 (부트스트랩 기준 md breakpoint) */
 @media (max-width: 991.98px) {
     .sidebar {
@@ -50,10 +55,17 @@
     }
   }
   
-  /* 768px 이하: 사이드바 너비 150px */
+  /* 768px 이하: 사이드바 너비 200px */
   @media (max-width: 767.98px) {
     .main-content {
       margin-left: 150px;
+    }
+  }
+  
+  /* 768px 이하: 사이드바 너비 150px */
+  @media (max-width: 767.98px) {
+    .main-content {
+      margin-left: 70px;
     }
   }
   
