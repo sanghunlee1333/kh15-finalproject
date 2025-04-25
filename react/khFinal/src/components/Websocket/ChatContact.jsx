@@ -1,13 +1,12 @@
 import { FaMagnifyingGlass } from "react-icons/fa6";
 import { IoIosPhonePortrait } from "react-icons/io";
 import { RiContactsBook3Fill } from "react-icons/ri";
-import { FaRegCalendarPlus } from "react-icons/fa";
 
 export default function ChatContact() {
 
-
+    //view
     return (<>
-
+    
         <div className="row mt-2">
             <div className="col-sm-3 text-nowrap">
                 <h2>
