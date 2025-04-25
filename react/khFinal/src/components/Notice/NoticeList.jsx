@@ -4,42 +4,77 @@ import axios from "axios";
 import Jumbotron from "../template/Jumbotron";
 import moment from "moment";
 
-
-import { FaPlus, FaTrash } from "react-icons/fa";
+import { FaPlus, FaSearch, FaTrash } from "react-icons/fa";
+import { TbCircleLetterNFilled } from "react-icons/tb";
+import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { Modal } from "bootstrap";
 
-
-
 export default function NoticeList() {
-    //recoil
+    //recoil - 관리자인지 
 
     //state
     const [notices, setNotices] = useState([]);
-    const [selectedNotices, setSelectedNotices] = useState([]);
-
+    const [column, setColumn] = useState("");
+    const [keyword, setKeyword] = useState("");
+    const [count, setCount] = useState(0);
+    const [page, setPage] = useState(1); //현재 페이지
+    const [size, setSize] = useState(10); //고정된 보여줄 게시글 수
+    
     //some = 자바스크립트 배열에 내장된 메서드로, 배열 안에 하나라도 주어진 조건을 만족하는 요소가 있는지 체크해 주는 함수
     //조건을 만족하는 요소가 나오면, 즉시 true를 반환하고 더 이상 나머지 요소는 검사X
     const hasChecked = notices.some(notice => notice.choice);
     const hasCheckedAll = notices.length > 0 && notices.every(notice=>notice.choice)
+    const totalPage = Math.ceil(count / size); //ceil = 소수점 올림
+    const startPage = Math.floor((page - 1) / 10) * 10 + 1; //소수점 버림
+    const endPage = Math.min(startPage + 9, totalPage); //최솟값 찾기
 
     //ref
     const modal = useRef();
 
-    
-
     //effect
+    //처음 컴포넌트가 로드될때 가져온 게시글을 뿌려주는 함수
     useEffect(() => {
         loadNotices();
-    }, []);
+    }, [page]);
 
     //callback
+    //게시글 가져오기 함수(+검색 포함)
     const loadNotices = useCallback(async () => {
-        const { data } = await axios.get("/notice/");
-        console.log(data);
-        setNotices(data);
-    }, []);
+        // if(column === ""){
+        //     return;
+        // }
 
-    //체크박스 개별 체크
+        // //키워드가 비어있을 경우, 전체 목록을 불러오고 종료
+        // if(keyword.length === 0) {
+        //     loadNotices();
+        //     return;
+        // }
+
+        //사용자가 선택한 column, 입력한 keyword를 자바스크립트 객체(JSON객체 형태)로 전달
+        const params = {
+            column: column || null,
+            keyword,
+            page,
+            size
+        };
+
+        const resp = await axios.post("/notice/search", params); //서버에 데이터와 함께 요청하고 응답을 받을 때까지 기다림
+        console.log(resp.data);
+        setNotices(resp.data.list); //게시글 목록
+        setCount(resp.data.count);
+    }, [column, keyword, page, size]);
+
+    const searchNotice = useCallback(()=>{
+        setPage(1); // 먼저 1페이지로 설정하고
+        // 비동기 반영을 기다리지 않고 바로 실행
+        setTimeout(() => {
+            loadNotices(); // 검색 실행
+        }, 0);
+    
+    }, [column, keyword, size, loadNotices]);
+
+
+    //체크박스 개별 체크 함수
     const changeNoticeChoice = useCallback((e, target)=>{ //target은 파라미터 이름일 뿐
         setNotices(notices.map(notice=>{
 
@@ -57,7 +92,7 @@ export default function NoticeList() {
         }));
     }, [notices]);
 
-    //체크박스 전체 체크
+    //체크박스 전체 체크 함수
     const changeNoticeAll = useCallback(e=>{
         const isChecked = e.target.checked;
         setNotices(notices=>
@@ -93,6 +128,7 @@ export default function NoticeList() {
     }
     */
 
+    //게시글 삭제 함수
     const deleteNotice = useCallback(async ()=>{
         //notices 배열을 순회하며 notice.choice === true 인 공지 객체들만 따로 모아 checkedList라는 새로운 배열을 만듦 
         const checkedList = notices.filter(notice=>notice.choice);
@@ -128,17 +164,20 @@ export default function NoticeList() {
         <Jumbotron subject="공지 게시판" />
 
         <div className="row mt-4">
-            <div className="col text-end">
-                {hasChecked && (
-                <button className="btn btn-danger" onClick={openModal}>
-                    <FaTrash className="align-middle me-1" />
-                    <span className="align-middle text-nowrap">삭제</span>
-                </button>
-                )}
-                <Link to="/notice/write" className="btn btn-success ms-2">
-                    <FaPlus className="align-middle me-1" />
-                    <span className="align-middle text-nowrap">게시글 작성</span>
-                </Link>
+            <div className="col">
+                <div className="d-flex justify-content-end">
+                    <select name="keyword" style={{ width: "15%", minWidth: "14vh" }} className="form-select" value={column} onChange={e=>setColumn(e.target.value)}>
+                        <option value="">선택</option>
+                        <option value="notice_title">제목</option>
+                        <option value="notice_content">내용</option>
+                    </select>
+                    <input type="text" style={{ width: "20%", minWidth: "15vh" }} className="form-control ms-2" 
+                        placeholder="제목" value={keyword} onChange={e=>setKeyword(e.target.value)}/>
+                    <button type="button" style={{ width: "5%", minWidth: "7vh" }} onClick={searchNotice}
+                        className="btn btn-secondary ms-2 d-flex align-items-center justify-content-center text-nowrap">
+                            <FaSearch/>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -156,7 +195,8 @@ export default function NoticeList() {
                     {notices.map(notice=>(
                     <li className="list-group-item d-flex align-items-center text-center" key={notice.noticeNo} style={{width: '100%'}}>
                         <div checked={notice.choice === true} onChange={e=>changeNoticeChoice(e, notice)} style={{width: '5%'}}>
-                            <input type="checkbox" checked={notice.choice === true ? true : false}/>
+                            <input type="checkbox" checked={notice.choice === true ? true : false} 
+                                onChange={(e) => changeNoticeChoice(e, notice)}/>
                         </div>
                         <div className="ms-1" style={{width: '10%'}}>
                             {notice.noticeNo}
@@ -164,14 +204,62 @@ export default function NoticeList() {
                         <div className="text-start" style={{width: '65%'}}>
                             <Link className="text-decoration-none d-inline-block text-truncate" to={`/notice/detail/${notice.noticeNo}`} style={{width: '85%'}}>
                                 {notice.noticeTitle}
+                                {moment(notice.noticeWriteDate).isAfter(moment().startOf('day')) && (
+                                    <TbCircleLetterNFilled className="ms-2 text-danger"/>
+                                ) 
+                            }
                             </Link>
                         </div>
                         <div style={{width: '20%'}}>
-                            {moment(notice.noticeWriteDate).format('YYYY-MM-DD')}
+                            {moment(notice.noticeWriteDate).isBefore(moment().startOf('day')) 
+                                ? (
+                                    <span>{moment(notice.noticeWriteDate).format('YYYY-MM-DD')}</span>
+                                )
+                                : (
+                                    <span>{moment(notice.noticeWriteDate).format("HH:mm")}</span>
+                                ) 
+                            }
                         </div>
                     </li>
                     ))}
                 </ul>
+            </div>
+        </div>
+
+        <div className="row mt-4">
+            <div className="col text-start">
+                <Link to="/notice/write" className="btn btn-success">
+                    <FaPlus className="align-middle me-1" />
+                    <span className="align-middle text-nowrap">작성</span>
+                </Link>
+                {hasChecked && (
+                <button className="btn btn-danger ms-2" onClick={openModal}>
+                    <FaTrash className="align-middle me-1" />
+                    <span className="align-middle text-nowrap">삭제</span>
+                </button>
+                )} 
+            </div>
+        </div>
+
+        <div className="row mt-4">
+            <div className="col-6 offset-3 d-flex justify-content-center">
+                {/* <div className="btn-group"> */}
+                    {startPage > 1 && (
+                        <button onClick={()=>setPage(startPage-1)} className="btn me-2 fw-bold">
+                            <IoIosArrowBack />
+                        </button>
+                    )}
+                    {Array.from({
+                        length: endPage - startPage + 1
+                    }, (_, i)=>startPage + i).map(p=>(
+                        <button key={p} onClick={()=>setPage(p)} className={`btn ${p === page ? "btn-primary ms-2 fw-bold" : "ms-2"}`}>{p}</button>
+                    ))}
+                    {endPage < totalPage && (
+                        <button onClick={()=>setPage(endPage+1)} className="btn ms-2 fw-bold">
+                            <IoIosArrowForward />
+                        </button>
+                    )}
+                {/* </div> */}
             </div>
         </div>
 

@@ -1,8 +1,18 @@
+  /* 메인화면 css */
+  .main-content {
+    margin-left: 65px;        /* 사이드바 너비 */
+    padding: 7vw;
+    padding-top: 11vh;         /* navbar 높이만큼만 여백 주기 */
+    min-height: calc(100vh - 56px);
+    overflow-y: auto;
+    transition: margin-left 0.1s ease;
+  }
+
   /* 전역 body 디자인 수정 */
   body {
     overflow-y: auto; /* 세로 스크롤 허용 */
   }
-
+  
   /* 점보트론 */
   .jumbotron {
     background-color: #e6e6e6;
@@ -17,6 +27,7 @@
     background-color: #444;
     border: none;
     border-radius: 3px;
+
   }
 
   /* 메인화면 css */

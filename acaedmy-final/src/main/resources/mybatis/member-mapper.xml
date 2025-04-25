@@ -15,7 +15,19 @@
 		select * from member where member_id = #{memberId}
 	</select>
 	<insert id="join" >
-		insert into member(member_id, member_pw) values(#{memberId}, #{memberPw})
+		insert into member(
+		member_no, member_id, member_pw, member_department, member_name, 
+		member_resident_no, member_contact, member_email, member_post, 
+		member_address1, member_address2,
+		member_rank, member_bank, member_bank_no,  member_state
+		) values(
+		#{memberNo},
+		#{memberId}, #{memberPw}, #{memberDepartment}, #{memberName}
+		, #{memberResidentNo}, #{memberContact}, #{memberEmail}, #{memberPost}
+		, #{memberAddress1}, #{memberAddress2}
+		, #{memberRank}, #{memberBank}, #{memberBankNo}, #{memberState}
+		)
+		
 	</insert>
 	<select id="findByNo" resultType ="MemberDto">
 		select * from member where member_no = #{memberNo}

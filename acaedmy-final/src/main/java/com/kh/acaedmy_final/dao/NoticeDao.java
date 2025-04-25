@@ -30,23 +30,27 @@ public class NoticeDao {
 	}
 	
 	//목록 조회
-		public List<NoticeDto> selectList(){
-			return sqlSession.selectList("notice.list");
-		}
+	public List<NoticeDto> selectList(){
+		return sqlSession.selectList("notice.list");
+	}
 	//상세 조회
 	public NoticeDto selectOne(long noticeNo) {
 		return sqlSession.selectOne("notice.detail", noticeNo);
 	}
-	//검색 조회(컬럼-키워드)
+	//(미사용)검색 조회(컬럼-키워드)
 	public List<NoticeDto> selectList(String column, String keyword){
 		Map<String, Object> param = new HashMap<>();
 		param.put("column", column);
 		param.put("keyword", keyword);
 		return sqlSession.selectList("notice.listOrSearch", param);
 	}
+	//검색 결과 수 조회
+	public int count(SearchVO searchVO) {
+		return sqlSession.selectOne("notice.count", searchVO);
+	}
 	//목록 + 검색 조회
 	public List<NoticeDto> selectList(SearchVO searchVO){
-		return sqlSession.selectList("notice.listOrSearch", searchVO);
+		return sqlSession.selectList("notice.search", searchVO);
 	}
 	
 	

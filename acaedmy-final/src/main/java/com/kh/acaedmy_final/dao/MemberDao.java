@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Repository;
 
 import com.kh.acaedmy_final.dto.MemberDto;
@@ -12,6 +13,8 @@ import com.kh.acaedmy_final.dto.MemberDto;
 public class MemberDao {
 	@Autowired
 	private SqlSessionTemplate sqlSession;
+	@Autowired
+	private PasswordEncoder encoder;
 	
 	public List<MemberDto> selectList() {
 		return sqlSession.selectList("member.all");
@@ -27,7 +30,16 @@ public class MemberDao {
 	}
 	public boolean insert(MemberDto memberDto) {
 		long memberNo = sqlSession.selectOne("member.sequence");
+		//System.out.println("nonononononno");
 		memberDto.setMemberNo(memberNo);
+		//System.out.println(memberNo);
+		//System.out.println(memberDto.getMemberPw() + "  "+ memberDto.getMemberJoin());
+		//System.out.println(encoder.encode(memberDto.getMemberResidentNo()));
+		//System.out.println(memberId);
+		memberDto.setMemberPw(encoder.encode(memberDto.getMemberPw()));
+		memberDto.setMemberResidentNo(encoder.encode(memberDto.getMemberResidentNo()));
+		String memberId = memberDto.getMemberId() + memberNo;
+		memberDto.setMemberId(memberId);
 		return sqlSession.insert("member.join", memberDto)> 0;
 	}
 	
