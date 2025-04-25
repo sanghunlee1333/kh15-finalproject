@@ -11,9 +11,25 @@
 	<select id="all" resultType="MemberDto">
 		select * from member
 	</select>
+	
 	<select id="find" resultType = "MemberDto">
 		select * from member where member_id = #{memberId}
 	</select>
+	
+	<select id="findByNo" resultType ="MemberDto">
+		select * from member where member_no = #{memberNo}
+	</select>
+	
+	<!-- 부서 전체 조회 -->
+	
+	
+	<!-- 부서 전체중 나를 제외한 조회 -->
+	<select id="findByDepartmentExceptMe" resultType="MemberDto">
+		select * from member 
+		where member_department = #{memberDepartment}
+		and member_no != #{memberNo}
+	</select>
+	
 	<insert id="join" >
 		insert into member(
 		member_no, member_id, member_pw, member_department, member_name, 
@@ -27,11 +43,7 @@
 		, #{memberAddress1}, #{memberAddress2}
 		, #{memberRank}, #{memberBank}, #{memberBankNo}, #{memberState}
 		)
-		
 	</insert>
-	<select id="findByNo" resultType ="MemberDto">
-		select * from member where member_no = #{memberNo}
-	</select>
 	
 </mapper>
 
