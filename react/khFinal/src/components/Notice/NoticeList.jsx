@@ -5,7 +5,8 @@ import Jumbotron from "../template/Jumbotron";
 import moment from "moment";
 
 import { FaPlus, FaSearch, FaTrash } from "react-icons/fa";
-import { TbCircleLetterNFilled } from "react-icons/tb";     
+import { TbCircleLetterNFilled } from "react-icons/tb";
+import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { Modal } from "bootstrap";
 
 export default function NoticeList() {
@@ -15,11 +16,17 @@ export default function NoticeList() {
     const [notices, setNotices] = useState([]);
     const [column, setColumn] = useState("");
     const [keyword, setKeyword] = useState("");
+    const [count, setCount] = useState(0);
+    const [page, setPage] = useState(1); //현재 페이지
+    const [size, setSize] = useState(10); //고정된 보여줄 게시글 수
     
     //some = 자바스크립트 배열에 내장된 메서드로, 배열 안에 하나라도 주어진 조건을 만족하는 요소가 있는지 체크해 주는 함수
     //조건을 만족하는 요소가 나오면, 즉시 true를 반환하고 더 이상 나머지 요소는 검사X
     const hasChecked = notices.some(notice => notice.choice);
     const hasCheckedAll = notices.length > 0 && notices.every(notice=>notice.choice)
+    const totalPage = Math.ceil(count / size); //ceil = 소수점 올림
+    const startPage = Math.floor((page - 1) / 10) * 10 + 1; //소수점 버림
+    const endPage = Math.min(startPage + 9, totalPage); //최솟값 찾기
 
     //ref
     const modal = useRef();
@@ -28,38 +35,43 @@ export default function NoticeList() {
     //처음 컴포넌트가 로드될때 가져온 게시글을 뿌려주는 함수
     useEffect(() => {
         loadNotices();
-    }, []);
+    }, [page]);
 
     //callback
-    //게시글 가져오기 함수
+    //게시글 가져오기 함수(+검색 포함)
     const loadNotices = useCallback(async () => {
-        const { data } = await axios.get("/notice/");
-        // console.log(data);
-        setNotices(data);
-    }, []);
+        // if(column === ""){
+        //     return;
+        // }
 
-    //검색 요청 함수
-    const searchNotice = useCallback(async ()=>{
-        if(column === ""){
-            return;
-        }
+        // //키워드가 비어있을 경우, 전체 목록을 불러오고 종료
+        // if(keyword.length === 0) {
+        //     loadNotices();
+        //     return;
+        // }
 
-        //키워드가 비어있을 경우, 전체 목록을 불러오고 종료
-        if(keyword.length === 0) {
-            loadNotices();
-            return;
-        }
-
-        //사용자가 선택한 column, 입력한 keyword를 자바스크립 객체(JSON객체 형태로 전달)
+        //사용자가 선택한 column, 입력한 keyword를 자바스크립트 객체(JSON객체 형태)로 전달
         const params = {
-            column,
-            keyword
+            column: column || null,
+            keyword,
+            page,
+            size
         };
 
         const resp = await axios.post("/notice/search", params); //서버에 데이터와 함께 요청하고 응답을 받을 때까지 기다림
-        // console.log(resp.data);
-        setNotices(resp.data);
-    }, [column, keyword]);
+        console.log(resp.data);
+        setNotices(resp.data.list); //게시글 목록
+        setCount(resp.data.count);
+    }, [column, keyword, page, size]);
+
+    const searchNotice = useCallback(()=>{
+        setPage(1); // 먼저 1페이지로 설정하고
+        // 비동기 반영을 기다리지 않고 바로 실행
+        setTimeout(() => {
+            loadNotices(); // 검색 실행
+        }, 0);
+    
+    }, [column, keyword, size, loadNotices]);
 
 
     //체크박스 개별 체크 함수
@@ -214,18 +226,40 @@ export default function NoticeList() {
             </div>
         </div>
 
-        <div className="row mt-2">
-            <div className="col text-end">
+        <div className="row mt-4">
+            <div className="col text-start">
+                <Link to="/notice/write" className="btn btn-success">
+                    <FaPlus className="align-middle me-1" />
+                    <span className="align-middle text-nowrap">작성</span>
+                </Link>
                 {hasChecked && (
-                <button className="btn btn-danger" onClick={openModal}>
+                <button className="btn btn-danger ms-2" onClick={openModal}>
                     <FaTrash className="align-middle me-1" />
                     <span className="align-middle text-nowrap">삭제</span>
                 </button>
                 )} 
-                <Link to="/notice/write" className="btn btn-success ms-2">
-                    <FaPlus className="align-middle me-1" />
-                    <span className="align-middle text-nowrap">게시글 작성</span>
-                </Link>
+            </div>
+        </div>
+
+        <div className="row mt-4">
+            <div className="col-6 offset-3 d-flex justify-content-center">
+                {/* <div className="btn-group"> */}
+                    {startPage > 1 && (
+                        <button onClick={()=>setPage(startPage-1)} className="btn me-2 fw-bold">
+                            <IoIosArrowBack />
+                        </button>
+                    )}
+                    {Array.from({
+                        length: endPage - startPage + 1
+                    }, (_, i)=>startPage + i).map(p=>(
+                        <button key={p} onClick={()=>setPage(p)} className={`btn ${p === page ? "btn-primary ms-2 fw-bold" : "ms-2"}`}>{p}</button>
+                    ))}
+                    {endPage < totalPage && (
+                        <button onClick={()=>setPage(endPage+1)} className="btn ms-2 fw-bold">
+                            <IoIosArrowForward />
+                        </button>
+                    )}
+                {/* </div> */}
             </div>
         </div>
 
