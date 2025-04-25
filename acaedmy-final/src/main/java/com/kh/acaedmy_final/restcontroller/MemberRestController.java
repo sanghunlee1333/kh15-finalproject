@@ -1,6 +1,7 @@
 package com.kh.acaedmy_final.restcontroller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,6 +32,23 @@ public class MemberRestController {
 	private TokenProperties tokenProperties;
 	@Autowired
 	private TokenDao tokenDao;
+
+//	PasswordEncoder encoder;
+	
+	
+	@PostMapping("/")
+	public boolean join(@RequestBody MemberDto memberDto) {
+		
+		System.out.println("ggwgwgwgw");
+		System.out.println(memberDto);
+		
+		
+		// 유효성 검사
+		boolean isValid = memberDao.insert(memberDto);
+		//String newNo = encoder.encode(memberDto.getMemberResidentNo());
+		
+		return isValid;
+	}
 	
 	
 	//PasswordEncoder encoder;
@@ -79,6 +97,7 @@ public class MemberRestController {
 					.refreshToken(tokenService.generateRefreshToken(memberDto))
 				.build();
 	}
+
 	
 	
 }
