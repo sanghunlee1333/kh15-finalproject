@@ -1,11 +1,15 @@
-import { FaAsterisk, FaUser } from "react-icons/fa6";
+import { FaAsterisk, FaEye, FaEyeSlash, FaMagnifyingGlassPlus, FaUser } from "react-icons/fa6";
 import Jumbotron from "../template/Jumbotron";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HiUserGroup, HiUserAdd } from "react-icons/hi";
 import { FaUserCircle } from "react-icons/fa";
 import axios from "axios";
-
+import './MemberJoin.css';  
+import Postcode from "../template/Postcode";
 export default function MemberJoin(){
+    // ref
+    
+
     // state
 
     const [member, setMember] = useState({
@@ -16,17 +20,115 @@ export default function MemberJoin(){
     const [memberResidentNumber, setMemberResidentNumber] = useState({
         frontNo:"", rearNo:"",
     })
-
+    
+    const [memberPwRe, setMemberPwRe] = useState("");
     const [memberNameValid, setMemberNameValid] = useState(null);
     const [memberIdValid, setMemberIdValid] = useState(null);
-    const [memberPwValid, setMemberPwValid] = useState(null);
     const [memberContactValid, setMemberContactValid] = useState(null);
     const [memberEmailValid, setMemberEmailValid] = useState(null);
     const [memberDepartmentValid, setMemberDepartmentValid] = useState(null);
+    const [memberPwReValid,setMemberPwReValid] = useState(null);
+    const [frontNoValid, setFrontNoValid] = useState(null);
+    const [rearNoValid, setRearNoValid] = useState(null);
 
+    const [pwComponentsValid, setPwComponentsValid] = useState({
+        uppercase: null, lowercase:null, number:null, special:null, count:null,
+    });
+    const [memberPwValid, setMemberPwValid] = useState(null);
 
+    const [pwReEye, setPwReEye] = useState(true);
+    const [pwEye, setPwEye] = useState(true);
 
+ 
     //callback
+    const changeAddress = useCallback((post,address1)=>{
+        setMember(prev=>({
+            ...prev,
+            memberPost:post,
+            memberAddress1:address1,
+        }))
+    },[member])
+    const changeMemberPw = useCallback((e)=>{
+        setMember(prev=>({
+            ...prev, [e.target.name] : e.target.value,
+        }));
+    },[member]);
+    useEffect(()=>{
+        setPwComponentsValid({
+            lowercase: /(?=.*[a-z])/.test(member.memberPw),
+            uppercase: /(?=.*[A-Z])/.test(member.memberPw),
+            number: /(?=.*[0-9])/.test(member.memberPw),
+            special: /(?=.*[!@#$])/.test(member.memberPw),
+            count:/^.{8,16}$/.test(member.memberPw),
+        });
+
+        if(member.memberPw.length === 0){
+            setPwComponentsValid({
+                lowercase: null,
+                uppercase: null,
+                number: null,
+                special: null,
+                count:null,
+            });
+        }
+    },[member.memberPw])
+    const [memberAddressValid, setMemberAddressValid] = useState(null);
+    const checkMemberAddress = useCallback(()=>{
+        const regex = /^[가-힣0-9]+$/;
+        const validPost = member.memberPost.length === 0 && member.memberAddress1 === 0;
+        const isValid = regex.test(member.memberAddress2);
+        setMemberAddressValid(isValid);
+        if(validPost && member.memberAddress2 === null){
+            setMemberAddressValid(null);
+        }
+        
+
+    },[member.memberAddress2])
+
+    const memberAddressClass = useMemo(()=>{
+        if(memberAddressValid === null) return "";
+        return memberAddressValid === true ? "is-valid" : "is-invalid";
+    },[memberAddressValid])
+
+    const calculateTextClass = useCallback((value)=>{
+        if(value === null) return "";
+        return value === true ? "text-success" : "text-danger";
+    },[])
+
+    const pwComponentsClass = useMemo(()=>{
+      return{
+        lowercase:calculateTextClass(pwComponentsValid.lowercase),
+        uppercase:calculateTextClass(pwComponentsValid.uppercase),
+        number:calculateTextClass(pwComponentsValid.number),
+        special:calculateTextClass(pwComponentsValid.special),
+        count:calculateTextClass(pwComponentsValid.count),
+      }
+    },[pwComponentsValid])
+    
+    const memberPwClass = useMemo(()=>{
+        if(memberPwValid === null) return "";
+        return memberPwValid === true ? "is-valid" : "is-invalid";
+    },[memberPwValid])
+
+    // const checkPwComponents = useMemo(()=>{
+    //     return pwComponentsValid.lowercase && pwComponentsValid.uppercase && pwComponentsValid.number && pwComponentsValid.special && pwComponentsValid.count;
+    // },[pwComponentsValid]) 
+
+    const checkMemberPw = useCallback(()=>{
+        const isValid =  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,16}$/.test(member.memberPw); 
+        // const isValid = checkPwComponents && /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,16}$/.test(member.memberPw); 
+        setMemberPwValid(isValid);
+        if(member.memberPw.length === 0){
+            setMemberPwValid(null);
+        }
+    },[member.memberPw])
+    const checkMemberPwRe = useCallback(()=>{
+        const isValid = member.memberPw === memberPwRe;
+        setMemberPwReValid(isValid);
+        if(member.memberPw === "" && memberPwRe === ""){
+            setMemberPwReValid(null);
+        }
+    },[memberPwRe])
     const changeMemberContact = useCallback(e=>{
         const value = e.target.value;
         const regex = /^[0-9]*$/; 
@@ -37,58 +139,67 @@ export default function MemberJoin(){
           }));
         }
     }, [member])
-    
-
-
     const changeMember = useCallback(e=>{
         setMember(prev=>({
             ...prev, [e.target.name] : e.target.value,
         }));
 
     },[member])
-    const changeResidentNo = useCallback(e=>{
-        memberResidentNumber(prev=>({
-            ...prev, [e.target.name] : e.target.value,
-        }));
-    },[member])
     const checkMemberName = useCallback(()=>{
         const regex = /^[가-힣]+$/;
         const isValid = regex.test(member.memberName);
         setMemberNameValid(isValid);
+        if(member.memberName.length === 0){
+            setMemberNameValid(null);
+        }
     },[member])
     const checkMemberId = useCallback(()=>{
         const regex = /^[가-힣a-zA-Z0-9]+$/;
         const isValid = regex.test(member.memberId);
         setMemberIdValid(isValid);
+        if(member.memberId.length === 0){
+            setMemberIdValid(null);
+        }
     },[member])
     const checkMemberResidentNoFront = useCallback(()=>{
         const regex = /^[0-9]{6}$/;
-        if(memberResidentNumber.frontNo.length > 6){
-            
+        const isValid = regex.test(memberResidentNumber.frontNo);
+        setFrontNoValid(isValid);
+        if(memberResidentNumber.frontNo.length === 0){
+            setFrontNoValid(null);
         }
-
     },[memberResidentNumber])
     const checkMemberResidentNoRear = useCallback(()=>{
-        const regex = /^[0-9]{7}$/;
+        const regex = /^[1234]{1}[0-9]{6}$/;
         const isValid = regex.test(memberResidentNumber.rearNo);
-        console.log(isValid);
-
+        setRearNoValid(isValid);
+        if(memberResidentNumber.rearNo.length === 0){
+            setRearNoValid(null);
+        }
     },[memberResidentNumber])
     const checkMemberContact = useCallback(()=>{
         const regex = /^010[0-9]{8}$/;
         const isValid = regex.test(member.memberContact);
-        console.log(isValid);
         setMemberContactValid(isValid);
+        if(member.memberContact.length === 0){
+            setMemberContactValid(null);
+        }
     },[member])
     const checkMemberDepartment = useCallback(()=>{
         const regex = /^[가-힣]+$/;
         const isValid =regex.test(member.memberDepartment ?? '');
         setMemberDepartmentValid(isValid);
+        if(member.memberDepartment.length === 0){
+            setMemberDepartmentValid(null);
+        }
     },[member])
     const checkMemberEmail = useCallback(()=>{
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const isValid = regex.test(member.memberEmail);
         setMemberEmailValid(isValid);
+        if(member.memberEmail.length === 0){
+            setMemberEmailValid(null);
+        }
     },[member])
     const changeResidentNoFrontNo = useCallback(e=>{
         const value = e.target.value;
@@ -101,7 +212,7 @@ export default function MemberJoin(){
           }));
         }
       
-    },[])
+    },[memberResidentNumber])
     const changeResidentNoRearNo = useCallback(e=>{
         const value = e.target.value;
         const regex = /^[0-9]*$/; 
@@ -113,28 +224,25 @@ export default function MemberJoin(){
           }));
         }
       
-    },[])
+    },[memberResidentNumber])
 
 
     const submitForm = useCallback(async ()=>{
-        
-        setMember((prev)=>({
-            ...prev,
-            memberResidentNo:memberResident,
-        }));
-        const isValid = await axios.post("/member/", member);
-        console.log(isValid);
-        console.log(member);
+
+        // setMember((prev)=>({
+        //     ...prev,
+        //     memberResidentNo:memberResident,
+        // })); 순서보장X
+
+        const updatedMember = {
+            ...member,
+            memberResidentNo: memberResident,
+          };
+        const isValid = await axios.post("/member/", updatedMember);
+       
     },[memberResidentNumber])
 
-    useEffect (()=>{
-       
-      
-      //  console.log(member.memberResidentNo);
-    },[member.memberResidentNo])
-
-
-
+  
 
     // memo 
     const memberNameClass = useMemo(()=>{
@@ -145,10 +253,7 @@ export default function MemberJoin(){
         if(memberIdValid === null) return "";
       return memberIdValid === true ? "is-valid" : "is-invalid";
     },[memberIdValid])
-    const memberPwClass = useMemo(()=>{
-        if(memberPwValid === null) return "";
-      return memberPwValid === true ? "is-valid" : "is-invalid";
-    },[memberPwValid])
+    
     const memberContactClass = useMemo(()=>{
         if(memberContactValid === null) return "";
       return memberContactValid === true ? "is-valid" : "is-invalid";
@@ -161,9 +266,33 @@ export default function MemberJoin(){
         if(memberEmailValid === null) return "";
       return memberEmailValid === true ? "is-valid" : "is-invalid";
     },[memberEmailValid])
+    const memberPwReClass = useMemo(()=>{
     
-    // 주민번호값 계산
+        if(memberPwReValid === null) return "";
+        return memberPwReValid === true ? "is-valid" : "is-invalid";
+    },[memberPwReValid])
 
+    const frontNoClass = useMemo(()=>{
+        if(frontNoValid === null) return "";
+        return frontNoValid === true ? "is-valid" : "is-invalid";
+    },[frontNoValid])
+    const rearNoClass = useMemo(()=>{
+        if(rearNoValid === null) return "";
+        return rearNoValid === true ? "is-valid" : "is-invalid";
+    },[rearNoValid])
+
+    const pwType = useCallback(()=>{
+        const isValid = !pwEye;
+        setPwEye(isValid);
+    },[pwEye])
+
+    const pwReType = useCallback(()=>{
+        const isValid = !pwReEye;
+        setPwReEye(isValid);
+    },[pwReEye])
+ 
+
+    // 주민번호값 계산
     const memberResident = useMemo(()=>{
         const front = memberResidentNumber?.frontNo ?? '';
         const rear = memberResidentNumber?.rearNo ?? '';
@@ -173,9 +302,6 @@ export default function MemberJoin(){
     //view
     return (<>
         <Jumbotron subject="회원가입" ></Jumbotron>
-       <div>
-        <h1>주민번호 : {memberResident}</h1>
-       </div>
 
         <div className="row mt-4">
             <label className="col-sm-3 col-form-label">아이디</label>
@@ -184,19 +310,105 @@ export default function MemberJoin(){
             </div>
         </div>
 
-        <div className="row mt-4">
+
+     
+
+       {/* <div className="row mt-4">
             <label className="col-sm-3 col-form-label">비밀번호 </label>
             <div className="col-sm-9">
-                <input type="text" name="memberPw" value={member.memberPw} onChange={changeMember} className={`form-control`} placeholder="비밀번호 입력"></input>
+                    <div className="badge">
+                    <FaEye className="text-muted ms-1"/>
+                    </div>
+
+                <input type="password" name="memberPw" value={member.memberPw} onChange={e=>{changeMemberPw(e)}} 
+                className={`form-control ${memberPwClass}`} placeholder="비밀번호 입력" onBlur={checkMemberPw} ></input>
+
+                <div className="d-flex flex-column text-muted border mt-2">
+                <span className={` extra-small ${pwComponentsClass.lowercase}`}>영어 소문자 최소 1개이상을 포함해야 합니다.</span>
+                <span className={` extra-small ${pwComponentsClass.uppercase}`}>영어 대문자 최소 1개이상을 포함해야 합니다.</span>
+                <span className={` extra-small ${pwComponentsClass.number}`}>숫자 최소 1개이상을 포함해야 합니다.</span>
+                <span className={` extra-small ${pwComponentsClass.special}`}>특수기호 !@#$%^&* 중에 최소 1개이상을 포함해야 합니다.</span>
+                <span className={` extra-small ${pwComponentsClass.count}`}>비밀번호 길이는 8자에서 16자여야만 합니다</span>
+                </div>
             </div>
-        </div>
+            
+        </div>  */}
+
+<div className="row mt-4">
+  <label className="col-sm-3 col-form-label">비밀번호</label>
+  <div className="col-sm-9">
+    <div className="input-group">
+      <input 
+        type={pwEye === true ? "password":"text"} 
+        name="memberPw" 
+        value={member.memberPw} 
+        onChange={e => changeMemberPw(e)} 
+        className={`form-control ${memberPwClass}`} 
+        placeholder="비밀번호 입력" 
+        onBlur={checkMemberPw} 
+      />
+      <span className="input-group-text" style={{backgroundColor:"white"}}>
+                    {/* true 면 보이게해서 아이콘은 슬래시 */}
+                    {pwEye === false ?(
+                        <FaEyeSlash onClick={pwType}/>
+                    ) : (
+                        <FaEye onClick={pwType} />
+                    )}
+
+
+                    {/* <FaEyeSlash onClick={pwReType}/> */}
+
+                    
+                </span>
+    </div>
+
+    <div className="d-flex flex-column text-muted border mt-2">
+      <span className={`extra-small ${pwComponentsClass.lowercase}`}>영어 소문자 최소 1개이상을 포함해야 합니다.</span>
+      <span className={`extra-small ${pwComponentsClass.uppercase}`}>영어 대문자 최소 1개이상을 포함해야 합니다.</span>
+      <span className={`extra-small ${pwComponentsClass.number}`}>숫자 최소 1개이상을 포함해야 합니다.</span>
+      <span className={`extra-small ${pwComponentsClass.special}`}>특수기호 !@#$%^&* 중에 최소 1개이상을 포함해야 합니다.</span>
+      <span className={`extra-small ${pwComponentsClass.count}`}>비밀번호 길이는 8자에서 16자여야만 합니다</span>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+        
+
 
         <div className="row mt-4">
             <label className="col-sm-3 col-form-label">비밀번호 확인</label>
             <div className="col-sm-9">
-                <input type="text" name="memberPw" value={member.memberPw} onChange={changeMember} className={`form-control`} placeholder="비밀번호 입력"></input>
+            <div className="input-group">
+
+                <input type={pwReEye === true ? "password" : "text"} name="memberPwRe" value={memberPwRe} onChange={e=>setMemberPwRe(e.target.value)} 
+                onBlur={checkMemberPwRe}
+                className={`form-control ${memberPwReClass}`} placeholder="비밀번호 재입력"></input>
+                <span className="input-group-text" style={{backgroundColor:"white"}}>
+                    {/* true 면 보이게해서 아이콘은 슬래시 */}
+                    {pwReEye === false ?(
+                        <FaEyeSlash onClick={pwReType}/>
+                    ) : (
+                        <FaEye onClick={pwReType} />
+                    )}
+
+
+                    {/* <FaEyeSlash onClick={pwReType}/> */}
+
+                    
+                </span>
             </div>
+            </div>
+                <div className="valid-feedback">비밀번호가 일치합니다.</div>
+                <div className="invalid-feedback">비밀번호가 일치하지 않습니다.</div>
         </div>
+
+
+
+
         <div className="row mt-4">
             <label className="col-sm-3 col-form-label">이름</label>
             <div className="col-sm-9">
@@ -214,11 +426,11 @@ export default function MemberJoin(){
                 <div className="input-group">
                 <input type="text" inputMode="numeric" onBlur={checkMemberResidentNoFront} 
                 name="frontNo" value={memberResidentNumber.frontNo} onChange={changeResidentNoFrontNo} 
-                className={`form-control`} placeholder="주민번호 앞자리" maxLength={6}></input>
+                className={`form-control ${frontNoClass}`} placeholder="주민번호 앞자리" maxLength={6}></input>
                 <span className="me-2 ms-2">-</span>
                 <input type="text" inputMode="numeric" onBlur={checkMemberResidentNoRear} 
                 name="rearNo" value={memberResidentNumber.rearNo} onChange={changeResidentNoRearNo} maxLength={7}
-                className={`form-control`} placeholder="뒷자리"  ></input>
+                className={`form-control ${rearNoClass}`} placeholder="뒷자리"  ></input>
                 </div>
             </div>
         </div>
@@ -240,11 +452,22 @@ export default function MemberJoin(){
         <div className="row mt-4">
             <label className="col-sm-3 col-form-label">주소</label>
             <div className="col-sm-9">
-                <input type="text" name="" className={`form-control`}  placeholder="우편번호"></input>
-                <input type="text" name="" className={`form-control`} placeholder="기본주소"></input>
-                <input type="text" name="" className={`form-control`} placeholder="상세주소"></input>
+                <div className="d-flex">
+
+                <input type="text" name="memberPost" readOnly value={member.memberPost} 
+                className={`form-control w-auto ${memberAddressClass}`} size={6} maxLength={6} onChange={changeAddress} placeholder="우편번호"></input>
+            <Postcode className="btn btn-light btn-outline-dark ms-2"  onAddressSelected={changeAddress}><FaMagnifyingGlassPlus/>주소 검색하기</Postcode>
+                </div>
+                <input type="text" name="memberAddress1" readOnly value={member.memberAddress1} 
+                className={`form-control mt-1 ${memberAddressClass}`} onChange={changeAddress} placeholder="기본주소"></input>
+                <input type="text" name="memberAddress2" value={member.memberAddress2} className={`form-control mt-1 ${memberAddressClass}`} 
+                onChange={changeMember} onBlur={checkMemberAddress} placeholder="상세주소"></input>
             </div>
         </div>
+
+        
+
+
         
         <div className="row mt-4">
             <label className="col-sm-3 col-form-label">부서</label>
@@ -271,7 +494,7 @@ export default function MemberJoin(){
         <div className="row mt-4">
             <label className="col-sm-3 col-form-label">은행</label>
             <div className="col-sm-9">
-            <select className="form-select">
+            <select className="form-select" >
                     <option value="">선택하세요</option>
                     <option>신한은행</option>
                     <option>농협은행</option>
