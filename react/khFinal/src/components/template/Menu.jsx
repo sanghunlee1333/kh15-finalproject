@@ -36,7 +36,7 @@ export default function Menu() {
 
                         {/* 연락처 Link */}
                         <li className="nav-item">
-                            <Link to="/chat/contact" className="nav-link">
+                            <Link to="/member/contact" className="nav-link">
                                 <i className="fa-solid fa-list-ul"></i>
                                 연락처
                             </Link>
