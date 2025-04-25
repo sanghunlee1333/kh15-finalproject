@@ -7,6 +7,11 @@
     overflow-y: auto;
     transition: margin-left 0.1s ease;
   }
+
+  /* 전역 body 디자인 수정 */
+  body {
+    overflow-y: auto; /* 세로 스크롤 허용 */
+  }
   
   /* 점보트론 */
   .jumbotron {
@@ -23,10 +28,3 @@
     border: none;
     border-radius: 3px;
   }
-
-  /* 전역 body 디자인 수정 */
-  body {
-    overflow-y: auto; /* 세로 스크롤 허용 */
-  }
-
-  

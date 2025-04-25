@@ -44,10 +44,10 @@ function App() {
           <Route path="/chat/group" element={<GroupChat/>}></Route>
         </Routes>
 
-
+        <Footer/>
       </div>
       
-      <Footer/>
+      
     </>
   )
 }
