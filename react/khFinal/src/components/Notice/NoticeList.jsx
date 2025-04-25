@@ -4,13 +4,12 @@ import axios from "axios";
 import Jumbotron from "../template/Jumbotron";
 import moment from "moment";
 
-import { FaPlus, FaTrash } from "react-icons/fa";
+import { FaPlus, FaSearch, FaTrash } from "react-icons/fa";
+import { TbCircleLetterNFilled } from "react-icons/tb";     
 import { Modal } from "bootstrap";
 
-
-
 export default function NoticeList() {
-    //recoil
+    //recoil - 관리자인지 
 
     //state
     const [notices, setNotices] = useState([]);
@@ -41,6 +40,10 @@ export default function NoticeList() {
 
     //검색 요청 함수
     const searchNotice = useCallback(async ()=>{
+        if(column === ""){
+            return;
+        }
+
         //키워드가 비어있을 경우, 전체 목록을 불러오고 종료
         if(keyword.length === 0) {
             loadNotices();
@@ -54,7 +57,7 @@ export default function NoticeList() {
         };
 
         const resp = await axios.post("/notice/search", params); //서버에 데이터와 함께 요청하고 응답을 받을 때까지 기다림
-        console.log(resp.data);
+        // console.log(resp.data);
         setNotices(resp.data);
     }, [column, keyword]);
 
@@ -133,8 +136,6 @@ export default function NoticeList() {
         loadNotices(); //목록 갱신
     }, [notices]);
 
-    //
-
     const openModal = useCallback(()=>{
         if (!modal.current) return;   
         const target = Modal.getOrCreateInstance(modal.current);
@@ -151,17 +152,20 @@ export default function NoticeList() {
         <Jumbotron subject="공지 게시판" />
 
         <div className="row mt-4">
-            <div className="col text-end">
-                {hasChecked && (
-                <button className="btn btn-danger" onClick={openModal}>
-                    <FaTrash className="align-middle me-1" />
-                    <span className="align-middle text-nowrap">삭제</span>
-                </button>
-                )}
-                <Link to="/notice/write" className="btn btn-success ms-2">
-                    <FaPlus className="align-middle me-1" />
-                    <span className="align-middle text-nowrap">게시글 작성</span>
-                </Link>
+            <div className="col">
+                <div className="d-flex justify-content-end">
+                    <select name="keyword" style={{ width: "15%", minWidth: "14vh" }} className="form-select" value={column} onChange={e=>setColumn(e.target.value)}>
+                        <option value="">선택</option>
+                        <option value="notice_title">제목</option>
+                        <option value="notice_content">내용</option>
+                    </select>
+                    <input type="text" style={{ width: "20%", minWidth: "15vh" }} className="form-control ms-2" 
+                        placeholder="제목" value={keyword} onChange={e=>setKeyword(e.target.value)}/>
+                    <button type="button" style={{ width: "5%", minWidth: "7vh" }} onClick={searchNotice}
+                        className="btn btn-secondary ms-2 d-flex align-items-center justify-content-center text-nowrap">
+                            <FaSearch/>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -188,36 +192,40 @@ export default function NoticeList() {
                         <div className="text-start" style={{width: '65%'}}>
                             <Link className="text-decoration-none d-inline-block text-truncate" to={`/notice/detail/${notice.noticeNo}`} style={{width: '85%'}}>
                                 {notice.noticeTitle}
+                                {moment(notice.noticeWriteDate).isAfter(moment().startOf('day')) && (
+                                    <TbCircleLetterNFilled className="ms-2 text-danger"/>
+                                ) 
+                            }
                             </Link>
                         </div>
-                        {/* <div style={{width: '20%'}}>
-                            {moment(notice.noticeWriteDate).isAfter(moment) && (
-                                {moment(notice.noticeWriteDate).format('YYYY-MM-DD')}
-                            ) ? (
-                                {moment(notice.noticeWriteDate).format("HH:mm")}
-                            )}
-                        </div> */}
+                        <div style={{width: '20%'}}>
+                            {moment(notice.noticeWriteDate).isBefore(moment().startOf('day')) 
+                                ? (
+                                    <span>{moment(notice.noticeWriteDate).format('YYYY-MM-DD')}</span>
+                                )
+                                : (
+                                    <span>{moment(notice.noticeWriteDate).format("HH:mm")}</span>
+                                ) 
+                            }
+                        </div>
                     </li>
                     ))}
                 </ul>
             </div>
         </div>
 
-        <div className="row mt-4 justify-content-end">
-            <div className="col">
-                <div className="d-flex justify-content-center">
-                    <select name="keyword" style={{ width: "15%", minWidth: "5vh" }} className="form-select" value={column} onChange={e=>setColumn(e.target.value)}>
-                        <option value="">선택하세요</option>
-                        <option value="notice_title">제목</option>
-                        <option value="notice_content">내용</option>
-                    </select>
-                    <input type="text" style={{ width: "20%", minWidth: "15vh" }} className="form-control ms-2" 
-                        placeholder="제목" value={keyword} onChange={e=>setKeyword(e.target.value)}/>
-                    <button type="button" style={{ width: "5%", minWidth: "10vh" }} 
-                        className="btn btn-secondary ms-2 text-nowrap" onClick={searchNotice}>
-                        검색
-                    </button>
-                </div>
+        <div className="row mt-2">
+            <div className="col text-end">
+                {hasChecked && (
+                <button className="btn btn-danger" onClick={openModal}>
+                    <FaTrash className="align-middle me-1" />
+                    <span className="align-middle text-nowrap">삭제</span>
+                </button>
+                )} 
+                <Link to="/notice/write" className="btn btn-success ms-2">
+                    <FaPlus className="align-middle me-1" />
+                    <span className="align-middle text-nowrap">게시글 작성</span>
+                </Link>
             </div>
         </div>
 
