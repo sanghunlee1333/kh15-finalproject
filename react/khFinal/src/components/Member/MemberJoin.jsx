@@ -7,9 +7,7 @@ import axios from "axios";
 import './MemberJoin.css';  
 import Postcode from "../template/Postcode";
 export default function MemberJoin(){
-    // ref
     
-
     // state
 
     const [member, setMember] = useState({
@@ -38,7 +36,11 @@ export default function MemberJoin(){
 
     const [pwReEye, setPwReEye] = useState(true);
     const [pwEye, setPwEye] = useState(true);
+    const [memberAddressValid, setMemberAddressValid] = useState(null);
 
+    const [memberRankValid, setMemberRankValid] = useState(null);
+    const [memberBankValid, setMemberBankValid] = useState(null);
+    const [memberBankNoValid, setMemberBankNoValid] = useState(null);
  
     //callback
     const changeAddress = useCallback((post,address1)=>{
@@ -71,8 +73,10 @@ export default function MemberJoin(){
                 count:null,
             });
         }
-    },[member.memberPw])
-    const [memberAddressValid, setMemberAddressValid] = useState(null);
+    },[member.memberPw]);
+    
+    
+
     const checkMemberAddress = useCallback(()=>{
         const regex = /^[가-힣0-9]+$/;
         const validPost = member.memberPost.length === 0 && member.memberAddress1 === 0;
@@ -226,6 +230,25 @@ export default function MemberJoin(){
       
     },[memberResidentNumber])
 
+    const changeMemberBankNo = useCallback((e) => {
+        const regex = /^[0-9]*$/; 
+    
+        if (regex.test(e.target.value)) {
+            setMember((prev) => ({
+                ...prev,
+                [e.target.name]: e.target.value,
+            }));
+        }
+    }, [member.memberBankNo]);
+ 
+    const checkMemberBankNo = useCallback(()=>{
+        const regex = /^[0-9]+$/;
+        const isValid = regex.test(member.memberBankNo);
+        setMemberBankNoValid(isValid);
+        if(member.memberBankNo.length === 0){
+            setMemberBankNoValid(null);
+        }
+    },[member]);
 
     const submitForm = useCallback(async ()=>{
 
@@ -239,7 +262,7 @@ export default function MemberJoin(){
             memberResidentNo: memberResident,
           };
         const isValid = await axios.post("/member/", updatedMember);
-       
+       console.log(updatedMember);
     },[memberResidentNumber])
 
   
@@ -290,7 +313,15 @@ export default function MemberJoin(){
         const isValid = !pwReEye;
         setPwReEye(isValid);
     },[pwReEye])
- 
+
+    const checkMemberRank = useCallback(()=>{
+        const selected = member.memberRank.length > 0;
+        setMemberRankValid(selected);
+    },[member.memberRank]);
+    const checkMemberBank = useCallback(()=>{
+        const selected = member.memberBank.length > 0;
+        setMemberBankValid(selected);
+    },[member.memberBank]);
 
     // 주민번호값 계산
     const memberResident = useMemo(()=>{
@@ -298,6 +329,55 @@ export default function MemberJoin(){
         const rear = memberResidentNumber?.rearNo ?? '';
         return String(front) + String(rear);
     },[memberResidentNumber.frontNo, memberResidentNumber.rearNo])
+
+    const memberRankClass = useMemo(()=>{
+        if(memberRankValid === null) return "";
+        return memberRankValid === true ? "is-valid" : "is-invalid";
+    },[memberRankValid])
+    const memberBankClass = useMemo(()=>{
+        if(memberBankValid === null) return "";
+        return memberBankValid === true ? "is-valid" : "is-invalid";
+    },[memberBankValid])
+
+   
+
+    const memberBankNoClass = useMemo(()=>{
+        if(memberBankNoValid === null) return "";
+        return memberBankNoValid === true ? "is-valid" : "is-invalid";
+    },[memberBankNoValid])
+
+
+
+
+    const submitButton = useMemo(() => {
+        return (
+          memberIdValid &&
+          memberPwValid &&
+          memberPwReValid &&
+          memberNameValid &&
+          memberEmailValid &&
+          memberAddressValid &&
+          memberDepartmentValid &&
+          memberRankValid &&
+          memberBankValid &&
+          memberBankNoValid &&
+          rearNoValid &&
+          frontNoValid
+        );
+      }, [
+        memberIdValid,
+        memberPwValid,
+        memberPwReValid,
+        memberNameValid,
+        memberEmailValid,
+        memberAddressValid,
+        memberDepartmentValid,
+        memberRankValid,
+        memberBankValid,
+        memberBankNoValid,
+        rearNoValid,
+        frontNoValid,
+      ]);
 
     //view
     return (<>
@@ -334,52 +414,42 @@ export default function MemberJoin(){
             
         </div>  */}
 
-<div className="row mt-4">
-  <label className="col-sm-3 col-form-label">비밀번호</label>
-  <div className="col-sm-9">
-    <div className="input-group">
-      <input 
-        type={pwEye === true ? "password":"text"} 
-        name="memberPw" 
-        value={member.memberPw} 
-        onChange={e => changeMemberPw(e)} 
-        className={`form-control ${memberPwClass}`} 
-        placeholder="비밀번호 입력" 
-        onBlur={checkMemberPw} 
-      />
-      <span className="input-group-text" style={{backgroundColor:"white"}}>
-                    {/* true 면 보이게해서 아이콘은 슬래시 */}
-                    {pwEye === false ?(
-                        <FaEyeSlash onClick={pwType}/>
-                    ) : (
-                        <FaEye onClick={pwType} />
-                    )}
-
-
-                    {/* <FaEyeSlash onClick={pwReType}/> */}
-
-                    
-                </span>
-    </div>
-
-    <div className="d-flex flex-column text-muted border mt-2">
-      <span className={`extra-small ${pwComponentsClass.lowercase}`}>영어 소문자 최소 1개이상을 포함해야 합니다.</span>
-      <span className={`extra-small ${pwComponentsClass.uppercase}`}>영어 대문자 최소 1개이상을 포함해야 합니다.</span>
-      <span className={`extra-small ${pwComponentsClass.number}`}>숫자 최소 1개이상을 포함해야 합니다.</span>
-      <span className={`extra-small ${pwComponentsClass.special}`}>특수기호 !@#$%^&* 중에 최소 1개이상을 포함해야 합니다.</span>
-      <span className={`extra-small ${pwComponentsClass.count}`}>비밀번호 길이는 8자에서 16자여야만 합니다</span>
-    </div>
-  </div>
-</div>
-
-
-
-
-
-        
-
-
         <div className="row mt-4">
+        <label className="col-sm-3 col-form-label">비밀번호</label>
+        <div className="col-sm-9">
+            <div className="input-group">
+            <input 
+                type={pwEye === true ? "password":"text"} 
+                name="memberPw" 
+                value={member.memberPw} 
+                onChange={e => changeMemberPw(e)} 
+                className={`form-control ${memberPwClass}`} 
+                placeholder="비밀번호 입력" 
+                onBlur={checkMemberPw} 
+            />
+            <span className="input-group-text" style={{backgroundColor:"white"}}>
+                            {/* true 면 보이게해서 아이콘은 슬래시 */}
+                            {pwEye === false ?(
+                                <FaEyeSlash onClick={pwType}/>
+                            ) : (
+                                <FaEye onClick={pwType} />
+                            )}
+
+                        </span>
+            </div>
+
+            <div className="d-flex flex-column text-muted border mt-2">
+            <span className={`extra-small ${pwComponentsClass.lowercase}`}>영어 소문자 최소 1개이상을 포함해야 합니다.</span>
+            <span className={`extra-small ${pwComponentsClass.uppercase}`}>영어 대문자 최소 1개이상을 포함해야 합니다.</span>
+            <span className={`extra-small ${pwComponentsClass.number}`}>숫자 최소 1개이상을 포함해야 합니다.</span>
+            <span className={`extra-small ${pwComponentsClass.special}`}>특수기호 !@#$%^&* 중에 최소 1개이상을 포함해야 합니다.</span>
+            <span className={`extra-small ${pwComponentsClass.count}`}>비밀번호 길이는 8자에서 16자여야만 합니다</span>
+            </div>
+        </div>
+        </div>
+
+
+         <div className="row mt-4">
             <label className="col-sm-3 col-form-label">비밀번호 확인</label>
             <div className="col-sm-9">
             <div className="input-group">
@@ -405,9 +475,6 @@ export default function MemberJoin(){
                 <div className="valid-feedback">비밀번호가 일치합니다.</div>
                 <div className="invalid-feedback">비밀번호가 일치하지 않습니다.</div>
         </div>
-
-
-
 
         <div className="row mt-4">
             <label className="col-sm-3 col-form-label">이름</label>
@@ -465,10 +532,7 @@ export default function MemberJoin(){
             </div>
         </div>
 
-        
-
-
-        
+                
         <div className="row mt-4">
             <label className="col-sm-3 col-form-label">부서</label>
             <div className="col-sm-9">
@@ -476,37 +540,41 @@ export default function MemberJoin(){
             </div>
         </div>
 
+
         <div className="row mt-4">
             <label className="col-sm-3 col-form-label">직급</label>
             <div className="col-sm-9">
-                <select className={`form-select`}>
+                <select className={`form-select ${memberRankClass}`} name="memberRank" value={member.memberRank} onChange={changeMember} onBlur={checkMemberRank}>
                     <option value="">선택하세요</option>
-                    <option>부장</option>
-                    <option>차장</option>
-                    <option>과장</option>
-                    <option>대리</option>
-                    <option>주임</option>
-                    <option>사원</option>
-                    <option>인턴</option>
+                    <option value="부장">부장</option>
+                    <option value="차장">차장</option>
+                    <option value="과장">과장</option>
+                    <option value="대리">대리</option>
+                    <option value="주임">주임</option>
+                    <option value="사원">사원</option>
+                    <option value="인턴">인턴</option>
                 </select>
+                <div className="invalid-feedback">한개 이상을 선택하셔야 합니다</div>
             </div>
         </div>
         <div className="row mt-4">
             <label className="col-sm-3 col-form-label">은행</label>
             <div className="col-sm-9">
-            <select className="form-select" >
+            <select className={`form-select ${memberBankClass}`} name="memberBank" value={member.memberBank} onChange={changeMember} onBlur={checkMemberBank}>
                     <option value="">선택하세요</option>
-                    <option>신한은행</option>
-                    <option>농협은행</option>
-                    <option>우리은행</option>
-                    <option>하나은행</option>
+                    <option value="신한은행">신한은행</option>
+                    <option value="농협은행">농협은행</option>
+                    <option value="우리은행">우리은행</option>
+                    <option value="하나은행">하나은행</option>
                 </select>
-            <input type="text" inputMode="numeric" className="form-control" placeholder="계좌번호"></input>
+                <div className="invalid-feedback">한개 이상을 선택하셔야 합니다</div>
+            <input type="text" name="memberBankNo" value={member.memberBankNo} inputMode="numeric" className={`form-control ${memberBankNoClass}`}
+            onBlur={checkMemberBankNo} maxLength={15} onChange={changeMemberBankNo} placeholder="계좌번호"></input>
             </div>
         </div>
         <div className="row mt-4">
             <div className="col d-flex">
-                <button onClick={submitForm} className="btn btn-success ms-auto "><FaUserCircle className="align-middle me-1"/> 회원가입</button>
+                <button onClick={submitForm} className="btn btn-success ms-auto " disabled={!submitButton}><FaUserCircle className="align-middle me-1"/> 회원가입</button>
             </div>
         </div>
         <div style={{minHeight: 150}}></div>

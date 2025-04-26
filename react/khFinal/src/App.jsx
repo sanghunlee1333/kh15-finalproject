@@ -11,6 +11,8 @@ import ChatContact from './components/Websocket/ChatContact'
 import GroupChat from './components/Websocket/GroupChat'
 import ChatRoom from './components/Websocket/ChatRoom'
 import MemberJoin from './components/Member/MemberJoin'
+import MemberList from './components/Admin/MemberList'
+import MemberManage from './components/Admin/MemberManage'
 
 function App() {
 
@@ -31,6 +33,10 @@ function App() {
           {/* Member */}
           <Route path="/member/login" element={<MemberLogin/>}></Route>
           <Route path="/member/join" element={<MemberJoin/>}></Route>
+
+          {/* Admin */}
+          <Route path="/admin/member/list" element={<MemberList/>}></Route>
+          <Route path="/admin/member/detail" element={<MemberManage/>}></Route>
 
           {/* Notice */}
           <Route path="/notice/list" element={<NoticeList/>}></Route>
