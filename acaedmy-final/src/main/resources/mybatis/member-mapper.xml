@@ -26,6 +26,14 @@
 		select * from member where member_no = #{memberNo}
 	</select>
 	
+	<!-- 검색 -->
+	<select id="search" resultType="MemberDto">
+		select * from member
+		where (member_name like concat('%', #{search}, '%') or
+					member_department like concat('%', #{search}, '%'))
+		order by member_department ASC, member_name ASC
+	</select>
+	
 	<insert id="join" >
 		insert into member(
 		member_no, member_id, member_pw, member_department, member_name, 

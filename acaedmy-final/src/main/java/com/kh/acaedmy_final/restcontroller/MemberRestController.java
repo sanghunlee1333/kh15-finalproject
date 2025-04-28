@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.acaedmy_final.configuration.TokenProperties;
@@ -103,12 +104,18 @@ public class MemberRestController {
 	
 	//연락처 부서별로 전체 회원 목록 가져오기
 	@GetMapping("/contact")
-	public Map<String, List<MemberDto>> getContacts() {
-		//전체 회원 목록 가져오기
-	    List<MemberDto> members = memberDao.selectList();
-	    
+	public Map<String, List<MemberDto>> getContacts(@RequestParam(value = "search", required = false) String search) {
 	    //  부서별로 그룹화
 	    Map<String, List<MemberDto>> groupByDepartment = new LinkedHashMap<>();
+	    
+	    //검색어가 있으면 검색 결과 , 없으면 전체 목록 불러오기
+	    List<MemberDto> members;
+	    if(search != null && !search.isEmpty()) {
+	    	members = memberDao.seachContacts(search);
+	    }
+	    else {
+	    	members = memberDao.selectList();//전체 목록 가져오기
+	    }
 	    
 	    // 각 부서별로 회원 정보를 그룹화
 	    for (MemberDto member : members) {

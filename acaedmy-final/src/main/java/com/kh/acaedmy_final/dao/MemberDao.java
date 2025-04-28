@@ -1,8 +1,6 @@
 package com.kh.acaedmy_final.dao;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +41,9 @@ public class MemberDao {
 		String memberId = memberDto.getMemberId() + memberNo;
 		memberDto.setMemberId(memberId);
 		return sqlSession.insert("member.join", memberDto)> 0;
+	}
+	public List<MemberDto> seachContacts(String search) {
+		return sqlSession.selectList("member.search", search); 
 	}
 	
 }
