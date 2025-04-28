@@ -12,6 +12,7 @@ import ChatRoom from './components/Websocket/ChatRoom'
 import MemberJoin from './components/Member/MemberJoin'
 import MemberContact from './components/Member/MemberContact'
 import Footer from './components/template/Footer'
+import NoticeWrite from './components/Notice/NoticeWrite'
 
 
 function App() {
@@ -36,8 +37,8 @@ function App() {
 
           {/* Notice */}
           <Route path="/notice/list" element={<NoticeList/>}></Route>
-          <Route path="/notice/detail" element={<NoticeDetail/>}></Route>
-          <Route path="/notice/write" element={<MemberLogin/>}></Route>
+          <Route path="/notice/detail/:noticeNo" element={<NoticeDetail/>}></Route>
+          <Route path="/notice/write" element={<NoticeWrite/>}></Route>
           
           {/* Contact */}
           <Route path="/member/contact" element={<MemberContact/>}></Route>

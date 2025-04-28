@@ -10,7 +10,7 @@
 
   /* 전역 body 디자인 수정 */
   body {
-    overflow-y: auto; /* 세로 스크롤 허용 */
+    overflow-y: auto; 세로 스크롤 허용
   }
   
   /* 점보트론 */

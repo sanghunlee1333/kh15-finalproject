@@ -9,7 +9,13 @@
 	</select>
 
 	<select id="all" resultType="MemberDto">
-		select * from member
+		select 
+			member_no, member_id, member_pw, member_department, member_name, 
+           	member_resident_no, member_contact, member_email, member_post, 
+           	member_address1, member_address2, member_rank, 
+           	member_bank, member_bank_no, member_join, member_state 
+    	from member
+    	order by member_department ASC, member_name ASC
 	</select>
 	
 	<select id="find" resultType = "MemberDto">
@@ -18,16 +24,6 @@
 	
 	<select id="findByNo" resultType ="MemberDto">
 		select * from member where member_no = #{memberNo}
-	</select>
-	
-	<!-- 부서 전체 조회 -->
-	
-	
-	<!-- 부서 전체중 나를 제외한 조회 -->
-	<select id="findByDepartmentExceptMe" resultType="MemberDto">
-		select * from member 
-		where member_department = #{memberDepartment}
-		and member_no != #{memberNo}
 	</select>
 	
 	<insert id="join" >
