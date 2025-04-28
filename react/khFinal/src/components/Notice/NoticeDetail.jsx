@@ -39,7 +39,7 @@ export default function NoticeDetail() {
 
     const moveList = useCallback(()=>{
         navigate("/notice/list");
-    } ,[navigate]);
+    }, [navigate]);
 
     const openModal = useCallback(()=>{
         if (!modal.current) return;
@@ -74,7 +74,7 @@ export default function NoticeDetail() {
 
         <div className="row mt-4">
             <div className="col">
-                <span>{notice.noticeContent}</span>
+                <div dangerouslySetInnerHTML={{ __html: notice.noticeContent }}></div>
             </div>
         </div>
 

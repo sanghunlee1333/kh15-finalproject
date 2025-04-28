@@ -61,7 +61,7 @@ export default function NoticeList() {
         };
 
         const resp = await axios.post("/notice/search", params); //서버에 데이터와 함께 요청하고 응답을 받을 때까지 기다림
-        console.log(resp.data);
+        // console.log(resp.data);
         setNotices(resp.data.list); //게시글 목록
         setCount(resp.data.count);
     }, [column, keyword, page, size]);
@@ -74,6 +74,10 @@ export default function NoticeList() {
         }, 0);
 
     }, [column, keyword, size, loadNotices]);
+
+    const writeNotice = useCallback(()=>{
+
+    }, []);
 
 
     //체크박스 개별 체크 함수
@@ -209,10 +213,10 @@ export default function NoticeList() {
                                 <span className="align-middle">{notice.noticeNo}</span>
                             </div>
                             <div className="text-start" style={{ width: '60%' }}>
-                                <Link className="text-decoration-none d-inline-block text-truncate align-middle" to={`/notice/detail/${notice.noticeNo}`} style={{ width: '85%' }}>
-                                    {notice.noticeTitle}
+                                <Link className="text-decoration-none d-inline-flex text-truncate align-items-center" to={`/notice/detail/${notice.noticeNo}`} style={{ width: '85%' }}>
+                                    <span className="align-middle">{notice.noticeTitle}</span>
                                     {moment(notice.noticeWriteDate).isAfter(moment().startOf('day')) && (
-                                        <TbCircleLetterNFilled className="ms-2 text-danger" />
+                                        <TbCircleLetterNFilled className="ms-1 text-danger" />
                                     )
                                     }
                                 </Link>
