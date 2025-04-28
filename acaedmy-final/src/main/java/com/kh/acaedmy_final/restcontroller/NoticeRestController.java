@@ -49,6 +49,14 @@ public class NoticeRestController {
 		return noticeDao.selectList();
 	}
 	
+	//상세
+	@GetMapping("/{noticeNo}")
+	public NoticeDto find(@PathVariable long noticeNo) {
+		NoticeDto noticeDto = noticeDao.selectOne(noticeNo);
+		if(noticeDto == null) throw new TargetNotFoundException();
+		return noticeDto;
+	}
+	
 	//(미사용)검색 조회(컬럼-키워드)
 	@GetMapping("/column/{column}/keyword/{keyword}")
 	public List<NoticeDto> list(@PathVariable String column, String keyword){

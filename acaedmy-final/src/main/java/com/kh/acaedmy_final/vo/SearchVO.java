@@ -8,7 +8,7 @@ public class SearchVO {
 	private int size = 10; //한 페이지에 몇 개씩 보여줄 건지
 	private String column;
 	private String keyword;
-	
+	 
 	public int getBeginRow() {
 		return (page - 1) * size + 1;
 	}

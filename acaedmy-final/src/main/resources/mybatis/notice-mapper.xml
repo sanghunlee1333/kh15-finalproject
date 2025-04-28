@@ -4,14 +4,10 @@
   "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="notice">
-	<!-- 시퀀스 생성 및 등록 -->
-	<select id="sequence" resultType="int">
-		select pokemon_seq.nextval from dual
-	</select>
 	<!-- 공지글 작성 -->
 	<insert id="write">
 		insert into notice(notice_no, notice_title, notice_content)
-		values(#{noticeNo}, #{noticeTitle}, #{noticeContent})
+		values(notice_seq.nextval, #{noticeTitle}, #{noticeContent})
 	</insert>
 	
 	<!-- 공지글 목록 조회 -->

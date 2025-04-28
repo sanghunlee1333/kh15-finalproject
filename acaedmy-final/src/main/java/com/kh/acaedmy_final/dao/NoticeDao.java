@@ -17,9 +17,6 @@ public class NoticeDao {
 	private SqlSession sqlSession;
 	
 	//등록
-	public int sequence() {
-		return sqlSession.selectOne("notice.sequence");
-	}
 	public void insert(NoticeDto noticeDto) {
 		sqlSession.insert("notice.write", noticeDto);
 	}

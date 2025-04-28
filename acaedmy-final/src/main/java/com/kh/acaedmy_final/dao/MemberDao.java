@@ -30,12 +30,6 @@ public class MemberDao {
 	public MemberDto selectOne(long memberNo) {
 		return sqlSession.selectOne("member.findByNo", memberNo);
 	}
-	public List<MemberDto> findByDepartment(String memberDepartment, long memberNo) {
-		Map<String, Object> param = new HashMap<>();
-		param.put("memberDepartment", memberDepartment);
-		param.put("memberNo", memberNo);
-		return sqlSession.selectList("member.findByDepartment", param);
-	}
 	public boolean insert(MemberDto memberDto) {
 		long memberNo = sqlSession.selectOne("member.sequence");
 		//System.out.println("nonononononno");
