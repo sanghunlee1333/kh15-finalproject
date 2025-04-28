@@ -1,7 +1,9 @@
 package com.kh.acaedmy_final.restcontroller;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -18,7 +20,6 @@ import com.kh.acaedmy_final.dao.TokenDao;
 import com.kh.acaedmy_final.dto.MemberDto;
 import com.kh.acaedmy_final.service.TokenService;
 import com.kh.acaedmy_final.vo.ClaimVO;
-import com.kh.acaedmy_final.vo.ContactVO;
 import com.kh.acaedmy_final.vo.LoginResponseVO;
 import com.kh.acaedmy_final.vo.LoginVO;
 
@@ -99,28 +100,27 @@ public class MemberRestController {
 					.refreshToken(tokenService.generateRefreshToken(memberDto))
 				.build();
 	}
-
+	
+	//연락처 부서별로 전체 회원 목록 가져오기
 	@GetMapping("/contact")
-	public List<ContactVO> getContacts() {
-		    
+	public Map<String, List<MemberDto>> getContacts() {
+		//전체 회원 목록 가져오기
 	    List<MemberDto> members = memberDao.selectList();
 	    
-	    // ContactVO 리스트를 생성하여 반환
-	    List<ContactVO> contacts = new ArrayList<>();
+	    //  부서별로 그룹화
+	    Map<String, List<MemberDto>> groupByDepartment = new LinkedHashMap<>();
 	    
-	    for (MemberDto memberDto : members) {
-	        ContactVO contact = ContactVO.builder()
-	                	.memberNo(memberDto.getMemberNo())
-	                	.memberName(memberDto.getMemberName())
-	                	.memberDepartment(memberDto.getMemberDepartment())
-	                	.memberContact(memberDto.getMemberContact())
-	                	.memberEmail(memberDto.getMemberEmail())
-	                .build();
-	        
-	        contacts.add(contact);  // 생성한 ContactVO 객체를 리스트에 추가
+	    // 각 부서별로 회원 정보를 그룹화
+	    for (MemberDto member : members) {
+	    	String department = member.getMemberDepartment();
+	    	
+	    	// 해당 부서가 없으면 새로 리스트를 생성하고 있으면 기존 리스트에 추가
+	    	groupByDepartment.putIfAbsent(department, new ArrayList<>());
+	    	groupByDepartment.get(department).add(member);
 	    }
 	    
-	    return contacts;  // 연락처 리스트 반환
+	    //부서별로 그룹화된 데이터 변환
+	    return groupByDepartment;
 	}
 }
 

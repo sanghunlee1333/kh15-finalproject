@@ -6,29 +6,19 @@ import { RiContactsBook3Fill } from "react-icons/ri";
 
 export default function MemberContact() {
     //state
-    const [contacts, setContacts] = useState([]);//연락처 목록
-    
+    const [groupContacts, setGroupContacts] = useState({});
+
     //callback
     //연락처 불러오기
-    const loadContacts = useCallback(async ()=>{
-        // const token = localStorage.getItem("accessToken");
-        // const {data} = await axios.get("/member/contact", {
-        //     // headers: {
-        //     //     Authorization: `Bearer ${token}`,
-        //     // },
-        // });
-        const {data} = await axios.get("/member/contact");
+    const loadContacts = useCallback(async () => {
+        const { data } = await axios.get("/member/contact");
+        setGroupContacts(data);
+    }, [groupContacts]);
 
-         // 확인용 로그 추가
-        console.log("불러온 연락처:", data);
-
-        setContacts(data);
-    }, [contacts]);
-    
     //effect
-    useEffect(()=>{
+    useEffect(() => {
         loadContacts();
-    }, []);
+    }, [loadContacts]);
 
     //view
     return (<>
@@ -53,48 +43,54 @@ export default function MemberContact() {
 
         {/* 연락처 리스트 */}
         <div className="list-group">
-            {/* 구분 바 */}
-            {/* <div className="bg-light px-3 py-2 border-top fw-semibold text-secondary">
-                개발팀
-            </div> */}
-            {contacts.map((contact)=>(
-                <div className="list-group-item d-flex justify-content-between align-items-center"
-                    key={contact.memberNo}>
-                    {/* 프로필 이미지 */}
-                    <img
-                        src="https://ui-avatars.com/api/?name=이&background=random&rounded=true"
-                        alt=""
-                        className="rounded-circle me-3"
-                        style={{ width: "48px", height: "48px", objectFit: "cover" }}
-                    />
-
-                    {/* 텍스트 정보 */}
-                    <div className="flex-grow-1">
-                        <div className="d-flex align-items-center mb-1">
-                            <h5 className="mb-0 me-2">{contact.memberName}</h5>
-                            <span className="border border-primary text-primary px-2 py-1 rounded-pill small">
-                                {contact.memberRank}
-                            </span>
-                        </div>
-                        <div className="d-flex flex-column">
-                            <div className="d-flex align-items-center text-muted ms-1" style={{ fontSize: '0.875rem' }}>
-                                <span>{contact.memberEmail}</span>
-                            </div>
-                            <div className="d-flex align-items-center">
-                                <IoMdPhonePortrait className="text-primary" size={15} />
-                                <span className="fw-semibold text-muted">
-                                    {contact.memberContact}
-                                </span>
-                            </div>
-                        </div>
+            {Object.keys(groupContacts).map((department) => (
+                <div key={department}>
+                    {/* 부서명 표시 */}
+                    <div className="bg-light px-3 py-2 border-top fw-semibold text-secondary">
+                        {department}
                     </div>
-                
-                {/* 버튼 */}
-                <div className="d-flex align-items-center gap-2 text-nowrap">
-                    <button className="btn btn-outline-primary btn-sm">채팅</button>
-                </div>
-            </div>
 
+                    {/* 해당 부서의 회원 리스트 */}
+                    {groupContacts[department].map((contact) => (
+                        <div className="list-group-item d-flex justify-content-between align-items-center"
+                            key={contact.memberNo}>
+                            {/* 프로필 이미지 */}
+                            {/* 회원 프로필별로 이미지 나오게 구현해야함 */}
+                            <img
+                                src="https://ui-avatars.com/api/?name=이&background=random&rounded=true"
+                                alt=""
+                                className="rounded-circle me-3"
+                                style={{ width: "48px", height: "48px", objectFit: "cover" }}
+                            />
+
+                            {/* 텍스트 정보 */}
+                            <div className="flex-grow-1">
+                                <div className="d-flex align-items-center mb-1">
+                                    <h5 className="mb-0 me-2">{contact.memberName}</h5>
+                                    <span className="border border-primary text-primary px-2 py-1 rounded-pill small">
+                                        {contact.memberRank}
+                                    </span>
+                                </div>
+                                <div className="d-flex flex-column">
+                                    <div className="d-flex align-items-center text-muted ms-1" style={{ fontSize: '0.875rem' }}>
+                                        <span>{contact.memberEmail}</span>
+                                    </div>
+                                    <div className="d-flex align-items-center">
+                                        <IoMdPhonePortrait className="text-primary" size={15} />
+                                        <span className="fw-semibold text-muted">
+                                            {contact.memberContact}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 개인 채팅하기 버튼 */}
+                            <div className="d-flex align-items-center gap-2 text-nowrap">
+                                <button className="btn btn-outline-primary btn-sm">채팅</button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             ))}
         </div>
 
