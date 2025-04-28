@@ -1,0 +1,28 @@
+.pagination-button { /* */
+    padding: 0 !important; /* .btn 클래스 기본 패딩(양쪽 0.75rem)이 숫자 정렬을 망침 -> !important를 붙여야 Bootstrap 기본 패딩을 강제로 덮어씀 */ 
+    
+    font-size: 0.9rem;
+    min-width: 2.5rem; /* 숫자 크기(1~1000..)에 따라 최소 버튼 가로 폭은 유지하도록 */
+    width: 2.5rem; /* 숫자 크기에 따라 버튼 가로 폭이 늘어나도록 */
+    height: 2.5rem; /* 숫자 크기에 따라 버튼 세로 폭이 늘어나도록 (가로 폭과 맞춰서 정사각형 모양 유지) */
+    
+    display: flex; /* 버튼 내부를 Flexbox 레이아웃으로 만들어서, 숫자를 가로 세로 중앙에 정확히 배치할 준비 */
+    justify-content: center; /* Flexbox 안에서 가로 방향(수평) 중앙 정렬 */
+    align-items: center; /* Flexbox 안에서 세로 방향(수직) 중앙 정렬 */
+}
+
+.w-30 {
+    width: 10vw !important;
+}
+
+/* 
+1. rem
+root em: html 태그에 설정된 폰트 크기를 기준으로 계산 
+- 언제나 기준이 같음 (html { font-size: 16px; }면 1rem = 16px)
+- 결과가 안정적 (예측하기 쉬움)
+
+2.em
+element em: 자기 자신의 폰트 크기를 기준으로 계산
+- 부모 요소나 자기 요소 폰트 크기에 따라 계속 변할 수 있음
+- 결과가 가변적 (부모 폰트 크기에 따라 달라짐)
+*/
