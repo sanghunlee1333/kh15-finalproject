@@ -85,7 +85,7 @@ public class MemberRestController {
 		return tokenDao.deleteByTarget(claimVO.getMemberNo());
 	}
 	
-	@GetMapping("/refresh")
+	@PostMapping("/refresh")
 	public LoginResponseVO refresh(@RequestHeader ("Authorization") String refreshToken) {
 		ClaimVO claimVO = tokenService.parseBearerToken(refreshToken);
 		boolean isValid = tokenService.checkBearerToken(claimVO, refreshToken);
@@ -93,7 +93,7 @@ public class MemberRestController {
 			//에러
 		}
 		MemberDto memberDto = memberDao.selectOne(claimVO.getMemberNo());
-		
+			
 		return LoginResponseVO.builder()
 					.memberNo(claimVO.getMemberNo())
 					.memberDepartment(claimVO.getMemberDepartment())
