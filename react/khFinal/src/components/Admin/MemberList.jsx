@@ -4,11 +4,13 @@ import axios from "axios";
 import { FaImage, FaMagnifyingGlass, FaTrash } from "react-icons/fa6";
 import {Modal} from "bootstrap";
 import dayjs from 'dayjs';
+import { Link } from "react-router";
 
 export default function MemberList(){
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(2);
     const [search, setSearch] = useState({
+        memberNo:"",
         memberId:"", memberName:"", memberDepartment:"", memberRank:"", memberContact:"", memberEmail:"",
         beginRow:1, endRow:2, order:"", column:null, keyword:null, memberDepartmentCk:"",
     });
@@ -299,9 +301,9 @@ export default function MemberList(){
                 <tbody>
                 {(members && members.length > 0) ? (
                     members.map(member => (
-                        <tr key={member.memberId}>
+                        <tr key={member.memberNo}>
                             <td>{member.memberId}</td>
-                            <td>{member.memberName}</td>
+                            <td><Link to={`/admin/member/${member.memberNo}`}>{member.memberName}</Link></td>
                             <td>{member.memberDepartment}</td>
                             <td>{member.memberRank}</td>
                             <td>{member.memberContact}</td>

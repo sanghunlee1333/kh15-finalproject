@@ -40,7 +40,7 @@ const refreshLogin = useCallback(async ()=>{
   }
   try{
     axios.defaults.headers.common["Authorization"] = `Bearer ${refreshToken}`;
-    const resp = await axios.get("/member/refresh");
+    const resp = await axios.post("/member/refresh");
     setUserNo(resp.data.userNo);
     setUserDepartment(resp.data.userDepartment);
     axios.defaults.headers.common["Authorization"] = `Bearer ${resp.data.accessToken}`;
@@ -83,7 +83,7 @@ useEffect(()=>{refreshLogin();},[])
 
           {/* Admin */}
           <Route path="/admin/member/list" element={<MemberList/>}></Route>
-          <Route path="/admin/member/detail" element={<MemberManage/>}></Route>
+          <Route path="/admin/member/:memberNo" element={<MemberManage/>}></Route>
 
           {/* Notice */}
           <Route path="/notice/list" element={<NoticeList/>}></Route>
