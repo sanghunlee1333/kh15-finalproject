@@ -13,8 +13,53 @@ import ChatRoom from './components/Websocket/ChatRoom'
 import MemberJoin from './components/Member/MemberJoin'
 import MemberList from './components/Admin/MemberList'
 import MemberManage from './components/Admin/MemberManage'
+import { useRecoilState, useRecoilValue } from 'recoil'
+import { loginState, userDepartmentState, userLoadingState, userNoState } from './components/utils/stroage'
+import { useCallback, useEffect } from 'react'
+import axios from 'axios'
 
 function App() {
+const [userNo, setUserNo] = useRecoilState(userNoState);
+const [userDepartment, setUserDepartment] = useRecoilState(userDepartmentState);
+const [loading, setLoading] = useRecoilState(userLoadingState);
+const login = useRecoilValue(loginState);
+
+let stay = false;
+const refreshLogin = useCallback(async ()=>{
+  let refreshToken = window.sessionStorage.getItem("refreshToken");
+  if(refreshToken === null) {
+      refreshToken = window.localStorage.getItem("refreshToken");
+    if(refreshToken === null) {
+      setLoading(true); 
+      return;
+    }else{
+      stay = true;
+    }
+  }
+  try{
+    axios.defaults.headers.common["Authorization"] = `Bearer ${refreshToken}`;
+    const resp = await axios.get("/member/refresh");
+    setUserNo(resp.data.userNo);
+    setUserDepartment(resp.data.userDepartment);
+    axios.defaults.headers.common["Authorization"] = `Bearer ${resp.data.accessToken}`;
+    if(stay){
+      window.sessionStorage.removeItem("refreshToken");
+      window.localStorage.setItem("refreshToken", resp.data.refreshToken);
+    }
+    else{
+        window.localStorage.removeItem("refreshToken");
+        window.sessionStorage.setItem("refreshToken", resp.data.refreshToken);
+    }
+    setLoading(true);
+  }
+  catch(e){
+    setLoading(true);
+  }
+},[])
+
+useEffect(()=>{refreshLogin();},[])
+
+
 
   return (
     <>
