@@ -224,7 +224,8 @@ export default function MemberList(){
               
                  await axios.delete("/admin/member/"+selectedDeleteMember);
         closeDeleteModal();
-       
+       setCurrentPage(1);
+       loadList();
     },[members, selectedDeleteMember])
 
    // useEffect(()=>{console.log(count)},[count])
@@ -258,8 +259,8 @@ export default function MemberList(){
                             <option value="memberName">이름</option>
                             <option value="memberDepartment">부서</option>
                             <option value="memberRank">직급</option>
-                            <option value="memberContact">연락처</option>
-                            <option value="memberEmail">이메일</option>
+                            {/* <option value="memberContact">연락처</option>
+                            <option value="memberEmail">이메일</option> */}
                 </select>
 
                 <input
@@ -287,15 +288,14 @@ export default function MemberList(){
             <table className="table table-hover">
                 <thead>
                     <tr>
-                   
-                    <th>아이디</th>
-                    <th>이름</th>
-                    <th>부서</th>
-                    <th>직급</th>
-                    <th>연락처</th>
-                    <th>이메일</th>
-                    <th>가입일</th>
-                    <th>관리</th>
+                        <th style={{ width: "10%" }}>아이디</th>
+                        <th style={{ width: "10%" }}>이름</th>
+                        <th style={{ width: "10%" }}>부서</th>
+                        <th style={{ width: "10%" }}>직급</th>
+                        {/* <th style={{ width: "15%" }}>연락처</th>
+                        <th style={{ width: "20%" }}>이메일</th> */}
+                        <th style={{ width: "15%" }}>가입일</th>
+                        <th style={{ width: "10%" }}>관리</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -303,11 +303,11 @@ export default function MemberList(){
                     members.map(member => (
                         <tr key={member.memberNo}>
                             <td>{member.memberId}</td>
-                            <td><Link to={`/admin/member/${member.memberNo}`}>{member.memberName}</Link></td>
+                            <td><Link  style={{ textDecoration: 'none', color: 'inherit' }} to={`/admin/member/${member.memberNo}`}>{member.memberName}</Link></td>
                             <td>{member.memberDepartment}</td>
                             <td>{member.memberRank}</td>
-                            <td>{member.memberContact}</td>
-                            <td>{member.memberEmail}</td>
+                            {/* <td>{member.memberContact}</td>
+                            <td>{member.memberEmail}</td> */}
                             <td>{transDate(member.memberJoin)}</td>
                             <td>
                             <FaTrash className="text-danger" onClick={e => memberDelete(member)} />
