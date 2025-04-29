@@ -1,127 +1,24 @@
-import { FaFacebookMessenger } from "react-icons/fa6";
 
 export default function Sidebar() {
-    return (<>
-        {/* 고정된 사이드바 - 채팅 목록 */}
-        <div className="sidebar p-3 col-sm">
+    const rooms = [
+        { id: 1, imgSrc: "/path/to/room1.jpg" },
+        { id: 2, imgSrc: "/path/to/room2.jpg" },
+        { id: 3, imgSrc: "/path/to/room3.jpg" },
+        // 더 많은 채팅방들 추가 가능
+    ];
 
-            <h4 className="m-2">
-                <FaFacebookMessenger className="fs-4 text-primary"/>
-            </h4>
+    return (
 
-            <hr className="hr-stick mt-4"/>
-
-            <ul className="list-group mb-1">
-                <li className="list-group-item">
-                    <h6>
-                        Title
-                        <span className="text-muted ms-2">4</span>
-                    </h6>
-                    <span>content</span>
-                </li>
-            </ul>
-            <ul className="list-group mb-1">
-                <li className="list-group-item">
-                    <h6>
-                        Title
-                        <span className="text-muted ms-2">3</span>
-                    </h6>
-                    <span>content</span>
-                </li>
-            </ul>
-            <ul className="list-group mb-1">
-                <li className="list-group-item">
-                    <h6>
-                        Title
-                        <span className="text-muted ms-2">7</span>
-                    </h6>
-                    <span>content</span>
-                </li>
-            </ul>
-            <ul className="list-group mb-1">
-                <li className="list-group-item">
-                    <h6>
-                        Title
-                        <span className="text-muted ms-2">6</span>
-                    </h6>
-                    <span>content</span>
-                </li>
-            </ul>
-            <ul className="list-group mb-1">
-                <li className="list-group-item">
-                    <h6>
-                        Title
-                        <span className="text-muted ms-2">5</span>
-                    </h6>
-                    <span>content</span>
-                </li>
-            </ul>
-            <ul className="list-group mb-1">
-                <li className="list-group-item">
-                    <h6>
-                        Title
-                        <span className="text-muted ms-2">5</span>
-                    </h6>
-                    <span>content</span>
-                </li>
-            </ul>
-            <ul className="list-group mb-1">
-                <li className="list-group-item">
-                    <h6>
-                        Title
-                        <span className="text-muted ms-2">8</span>
-                    </h6>
-                    <span>content</span>
-                </li>
-            </ul>
-            <ul className="list-group mb-1">
-                <li className="list-group-item">
-                    <h6>
-                        Title
-                        <span className="text-muted ms-2">3</span>
-                    </h6>
-                    <span>content</span>
-                </li>
-            </ul>
-            <ul className="list-group mb-1">
-                <li className="list-group-item">
-                    <h6>
-                        Title
-                        <span className="text-muted ms-2">2</span>
-                    </h6>
-                    <span>content</span>
-                </li>
-            </ul>
-            <ul className="list-group mb-1">
-                <li className="list-group-item">
-                    <h6>
-                        Title
-                        <span className="text-muted ms-2">4</span>
-                    </h6>
-                    <span>content</span>
-                </li>
-            </ul>
-            <ul className="list-group mb-1">
-                <li className="list-group-item">
-                    <h6>
-                        Title
-                        <span className="text-muted ms-2">3</span>
-                    </h6>
-                    <span>content</span>
-                </li>
-            </ul>
-            <ul className="list-group mb-1">
-                <li className="list-group-item">
-                    <h6>
-                        Title
-                        <span className="text-muted ms-2">7</span>
-                    </h6>
-                    <span>content</span>
-                </li>
-            </ul>
-            
+        <div className="sidebar">
+            {/* 채팅방 목록 */}
+            <div className="sidebar-list">
+                {rooms.map((room) => (
+                    <div key={room.id} className="sidebar-room">
+                        <img src={room.imgSrc} alt={room.name} className="room-img" />
+                        <div className="room-title">{room.name}</div>
+                    </div>
+                ))}
+            </div>
         </div>
-
-    </>
     );
 }

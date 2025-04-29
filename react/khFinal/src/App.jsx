@@ -7,16 +7,12 @@ import Sidebar from './components/template/Sidebar'
 import MemberLogin from './components/Member/MemberLogin'
 import NoticeList from './components/Notice/NoticeList'
 import NoticeDetail from './components/Notice/NoticeDetail'
-import ChatContact from './components/Websocket/ChatContact'
 import GroupChat from './components/Websocket/GroupChat'
 import ChatRoom from './components/Websocket/ChatRoom'
 import MemberJoin from './components/Member/MemberJoin'
-import MemberList from './components/Admin/MemberList'
-import MemberManage from './components/Admin/MemberManage'
-import { useRecoilState, useRecoilValue } from 'recoil'
-import { loginState, userDepartmentState, userLoadingState, userNoState } from './components/utils/stroage'
-import { useCallback, useEffect } from 'react'
-import axios from 'axios'
+import MemberContact from './components/Member/MemberContact'
+import Footer from './components/template/Footer'
+import NoticeWrite from './components/Notice/NoticeWrite'
 
 function App() {
 const [userNo, setUserNo] = useRecoilState(userNoState);
@@ -85,16 +81,21 @@ useEffect(()=>{refreshLogin();},[])
 
           {/* Notice */}
           <Route path="/notice/list" element={<NoticeList/>}></Route>
-          <Route path="/notice/detail" element={<NoticeDetail/>}></Route>
-          <Route path="/notice/write" element={<MemberLogin/>}></Route>
+          <Route path="/notice/detail/:noticeNo" element={<NoticeDetail/>}></Route>
+          <Route path="/notice/write" element={<NoticeWrite/>}></Route>
           
-          {/* ChatContact */}
-          <Route path="/chat/contact" element={<ChatContact/>}></Route>
+          {/* Contact */}
+          <Route path="/member/contact" element={<MemberContact/>}></Route>
+
+          {/* Chat */}
           <Route path="/chat/room" element={<ChatRoom/>}></Route>
           <Route path="/chat/group" element={<GroupChat/>}></Route>
         </Routes>
 
+        <Footer/>
       </div>
+      
+      
     </>
   )
 }

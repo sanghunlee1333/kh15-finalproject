@@ -39,7 +39,7 @@ export default function Menu() {
 
                         {/* 연락처 Link */}
                         <li className="nav-item">
-                            <Link to="/chat/contact" className="nav-link">
+                            <Link to="/member/contact" className="nav-link">
                                 <i className="fa-solid fa-list-ul"></i>
                                 연락처
                             </Link>
@@ -89,13 +89,12 @@ export default function Menu() {
 
                         {/* 전체 알림 */}
                         <li className="nav-item me-4">
-                            <a className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button"
-                                aria-haspopup="true" aria-expanded="false">
-                                <i className="fa-solid fa-database"></i>
-                                <FaLightbulb className="fs-4 text-warning"/>
-                            </a>
+                            <Link to="#" className="nav-link">
+                                <i className="fa-solid fa-list-ul"></i>
+                                <FaLightbulb className="fs-5 text-warning"/>
+                            </Link>
                         </li>
-
+                
                         {/* 로그인, 로그아웃 Link */}
                         <li className="nav-item">
                             {/* 로그아웃 */}
