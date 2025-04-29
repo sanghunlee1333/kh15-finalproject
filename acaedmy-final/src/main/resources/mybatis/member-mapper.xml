@@ -7,13 +7,8 @@
 	<select id="sequence" resultType="Long">
 		select member_seq.nextval from dual
 	</select>
-
+	
 	<select id="all" resultType="MemberDto">
-
-		<include refid="top-n-header"></include>
-		select * from member
-		<include refid="top-n-footer"></include>
-
 		select 
 			member_no, member_id, member_pw, member_department, member_name, 
            	member_resident_no, member_contact, member_email, member_post, 
@@ -28,9 +23,7 @@
 		select * from member where member_id = #{memberId}
 	</select>
 	
-	<select id="findByNo" resultType ="MemberDto">
-		select * from member where member_no = #{memberNo}
-	</select>
+	
 	
 	<!-- 검색 -->
 	<select id="search" resultType="MemberDto">
