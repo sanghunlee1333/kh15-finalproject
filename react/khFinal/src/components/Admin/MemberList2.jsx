@@ -6,108 +6,25 @@ import {Modal} from "bootstrap";
 import dayjs from 'dayjs';
 
 export default function MemberList(){
+    // state
+    const [members, setMembers] = useState([])
+    const [selectedDeleteMember, setSelectedDeleteMember] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(2);
+    const [pageSize, setPageSize] = useState(10);
     const [search, setSearch] = useState({
         memberId:"", memberName:"", memberDepartment:"", memberRank:"", memberContact:"", memberEmail:"",
-        beginRow:1, endRow:2, order:"", column:null, keyword:null, memberDepartmentCk:"",
-    });
-    const [searching, setSearching] = useState({
-        col:"", key:"",
+        beginRow:1, endRow:10, order:"", column:null, keyword:null, memberDepartmentCk:"",
     })
-    const [members, setMembers] = useState([])
+    const [keyword,setKeyword] = useState("")
+    const [column, setColumn] = useState("")
+  
+    const [lastPage, setLastPage] = useState("");
     const [blockSize, setBlockSize] = useState(5);
     const [count, setCount] = useState("");
    
-    useEffect(()=>{loadList()},[])
-    const loadList = useCallback(async()=>{
-       const resp = await axios.post("/admin/member", search);
-       setMembers(resp.data.list);
-       setCount(resp.data.count);
-    },[])
-
-    const selectColumn = useCallback((e)=>{
-        const value = e.target.value;
-        setSearching((prev)=>({
-            ...prev,
-            col:value,
-        }));
-    },[]);
-
-    const setKeyword = useCallback((e)=>{
-        const value = e.target.value;
-        setSearching((prev)=>({
-            ...prev,
-            key:value,
-        }));
-    },[])
-
-    const sendSearch = useCallback(async ( ) => {
-        const beginRow = (currentPage - 1) * pageSize + 1;
-        const endRow = currentPage * pageSize;
-       
-        const newSearch = {
-            ...search,
-            column: searching.col,
-            keyword: searching.key,
-            beginRow: beginRow,
-            endRow: endRow,
-        };
     
-        setSearch(newSearch);
-        
-        try {
-            setCurrentPage(1);   
-        } catch (err) {
-            
-        } finally{
-            const resp = await axios.post("/admin/member", newSearch);
-            setMembers(resp.data.list);
-            setCount(resp.data.count);
-           
-        }
-    }, [search, searching, currentPage, pageSize]);
-
-    const changePage = useCallback(async (target) => {
-        setCurrentPage(target);
-        const beginRow = (target - 1) * pageSize + 1;
-        const endRow = target * pageSize;
-      
-        const newSearch = {
-            ...search,
-            column: searching.col,
-            keyword: searching.key,
-            beginRow: beginRow,
-            endRow: endRow,
-        };
+   
     
-        setSearch(newSearch);
-    
-        try {
-            const resp = await axios.post("/admin/member", newSearch);
-            setMembers(resp.data.list);
-            setCount(resp.data.count);
-            
-        } catch (err) {
-            
-        }
-    }, [search, searching, currentPage, pageSize]);
-
-    useEffect(()=>{
-
-    },[currentPage])
-
-    useEffect(()=>{
-        const beginRow = (currentPage - 1) * pageSize +1;
-        const endRow= currentPage * pageSize;
-
-        setSearch((prev)=>({
-            ...prev,
-            beginRow:beginRow,
-            endRow:endRow,
-        }));
-    },[currentPage, pageSize]);
-
     const getBeginBlock = (currentPage, blockSize) => {
         return Math.floor((currentPage - 1) / blockSize) * blockSize + 1;
     }
@@ -117,79 +34,171 @@ export default function MemberList(){
         const totalPages = Math.ceil(count / pageSize);
         return Math.min(number, totalPages);
     };
-
-    const [start, setStart] = useState("");
-    const [end, setEnd] = useState("");
+    
+    const [start, setStart] = useState(getBeginBlock(currentPage, blockSize));
+    const [end, setEnd] = useState(0);
     const [numbers, setNumbers] = useState([]);
-    useEffect(()=>{
-        setStart(getBeginBlock(currentPage, blockSize));
+  
+    useEffect(() => {
         setEnd(getFinishBlock(currentPage, blockSize, count, pageSize));
-    },[currentPage, blockSize, count, pageSize])
+        setStart(getBeginBlock(currentPage, blockSize));
+        // console.log(count);
+        // console.log(currentPage  + "  curcurcur");
+    }, [count, currentPage]); 
+  
+
+    // callback
+  
+
+    const loadList = useCallback(async ()=>{
+       
+        const resp = await axios.post("/admin/member", search);
+        
+        setMembers(resp.data.list);
+        setCount(resp.data.count);
+       
+    },[search])
+ 
+ 
+  
+    useEffect(()=>{
+        
+        setSearch((prev)=>({
+            ...prev,
+            beginRow:(currentPage - 1) * pageSize +1,
+            endRow:currentPage * pageSize
+        }));
+
+      //  console.log(getBeginBlock(currentPage, blockSize));
+
+      //  console.log(getFinishBlock(currentPage, blockSize, count, pageSize));
+        console.log("begin " + search.beginRow);
+        console.log("endend " + search.endRow);
+    },[currentPage]);
 
     useEffect(()=>{
-        if(start !== null && end !== null){
-            const newNumbers = Array.from({ length: end - start + 1 }, (_, index) => start + index);
-            setNumbers(newNumbers);
-        }
-    },[start, end]);
+       // console.log("end is " + end);
+    //    console.log("count is " + count);
+       if(end > 0){
+        renewPagination();
+       }
+    },[end]);
 
-    const orderClick = useCallback(async (orderColumn)=>{
-        const beginRow = (currentPage - 1) * pageSize + 1;
-        const endRow = currentPage * pageSize;
-    
-        const newSearch = {
-            ...search,
-            column: searching.col,
-            keyword: searching.key,
-            beginRow,
-            endRow,
-            order: orderColumn
-        };
-    
-        setSearch(newSearch);
-    
-        try {
-            const resp = await axios.post("/admin/member", newSearch);
-            setMembers(resp.data.list);
-            setCount(resp.data.count);
-            setCurrentPage(1)
-        } catch (err) {
-           
-        }
-    }, [search, searching, currentPage, pageSize]);
+    const renewPagination = useCallback(()=>{
+        const newNumbers = Array.from({ length: end - start + 1 }, (_, index) => start + index);
+        setNumbers(newNumbers);
+       
+    },[end]);
 
 
-    const prevButton = useCallback(()=>{
-        if(start > 1){
+    useEffect(()=>{
+        loadList();
+    },[search.endRow])
 
-            changePage(start-1);
-        }else{changePage(1)};
+    const [selectedMember, setSelectedMember] = useState("")
+    const modal = useRef(); 
+    const deleteModal = useRef();
 
-        //changePage(end+1);
-        console.log(count +  "  " + currentPage);
-    },[start, end, currentPage, pageSize]);
-    const nextButton = useCallback(()=>{
-        const totalPages = Math.ceil(count / pageSize);
-        console.log(totalPages);
-        if(totalPages > end+1){
+    const openModal = useCallback((member)=>{
+        setSelectedMember(member);
+        const target = Modal.getOrCreateInstance(modal.current);
+        target.show();
+    },[modal, members])
 
-            changePage(end+1);
-        }
-        else{
-            changePage(totalPages);
-        }
-
-
-    },[start, end, currentPage]);
+    const closeModal = useCallback(()=>{
+        const target = Modal.getInstance(modal.current);
+        target.hide();
+    },[modal])
 
 
+    const memberDelete = useCallback( (member)=>{ // 쓰레기통(삭제버튼) 클릭
+        setSelectedDeleteMember(member.memberNo);
+        openDeleteModal();
+    },[members])
+   
 
-   // useEffect(()=>{console.log(count)},[count])
-   // useEffect(()=>{console.log(searching)},[searching])
-    //useEffect(()=>{console.log(search.column + "  " + search.keyword)},[search])
+    const openDeleteModal = useCallback(()=>{
+
+        const target = Modal.getOrCreateInstance(deleteModal.current);
+        target.show();
+
+    },[deleteModal])
+    const closeDeleteModal = useCallback(()=>{
+        
+            const target = Modal.getInstance(deleteModal.current);
+            if (target) target.hide();
+       
+    },[deleteModal])
+
+    const sendMemberNo = useCallback( async ()=>{ // 예 버튼
+              
+                 await axios.delete("/admin/member/"+selectedDeleteMember);
+        closeDeleteModal();
+       
+    },[members, selectedDeleteMember])
+
     // 그냥 함수
     const transDate = (dateStr) => dayjs(dateStr).format('YYYY-MM-DD'); 
-    const lastPage = numbers.length > 0 ? numbers[numbers.length - 1] : null;
+    //dayjs()
+
+
+    const submitSearch = useCallback(async()=>{ //  여기서 페이징 처리도 되게끔 해야함
+        const params = {column:column, keyword:keyword};
+        setSearch((prev)=>({
+            ...prev,
+            beginRow:(currentPage - 1) * pageSize +1,
+            endRow:currentPage * pageSize,
+            column:column, keyword:keyword,
+        }));
+
+            const resp = await axios.post("/admin/member", search);
+            setMembers(resp.data.list);
+            setCount(resp.data.count);
+            
+
+            renewPagination();
+           
+    },[column, keyword, currentPage]);
+
+    const changeKeyword = useCallback((e)=>{setKeyword(e.target.value)},[keyword])
+    const changeColumn = useCallback((e)=>{setColumn(e.target.value)},[column])
+
+    const changePage = useCallback( (target)=>{
+        setCurrentPage(target);
+        setSearch((prev)=>({
+            ...prev,
+            beginRow:(currentPage - 1) * pageSize +1,
+            endRow:currentPage * pageSize
+        }));
+       
+    },[currentPage, search]);
+
+    const prevButton = useCallback(()=>{
+        const newPage = start;
+        changePage(newPage);
+    },[currentPage]);
+    const nextButton = useCallback(()=>{
+        // const isValid
+        // setCurrentPage(6);
+        const newPage = start + blockSize;
+       // setCurrentPage(newPage);
+//        console.log(currentPage + " curcrucrucru");
+        changePage(newPage);
+       // console.log(newPage + " newpage");
+    },[currentPage]);
+
+    const clickOrder = useCallback(async (e)=>{
+        console.log(e.target.value);
+        console.log("searchasearcgh");
+        console.log(members);
+        const updated = { ...search, order: e.target.value };
+        setSearch(updated);
+        const resp = await axios.post("/admin/member", updated);
+       
+        setMembers(resp.data.list);
+        setCount(resp.data.count);
+    },[search, members])
+   
     // view
     return(<>
         <Jumbotron subject="사원 리스트"/>
@@ -200,27 +209,15 @@ export default function MemberList(){
                 {numbers.map((page) => (
           <button className="btn btn-light" onClick={e=>changePage(page)} key={page}>{page}</button>
         ))}
-       
-            <button className="btn btn Light" onClick={e=>changePage(1)}>1111</button>
-            <button className="btn btn Light" onClick={e=>changePage(6)}>6666</button>
             <button className="btn btn-light" onClick={nextButton}>다음</button>
-            <span>start lastPage end = {start}, {lastPage}, {end}</span>
             </div>
         </div>
-        <div className="row mt-4">
-            <div className="col">
-                <button className="btn btn-light" onClick={() => orderClick("memberName")}>이름순</button>
-                <button className="btn btn-light" onClick={() => orderClick("memberJoin")}>가입순</button>
-            </div>
-        </div>
-
-        
 
      
         <div className="row mt-4">
             <div className="col d-flex">
                 <div className="ms-auto d-flex align-items-center">
-                <select className="form-select w-auto" onChange={selectColumn} >
+                <select className="form-select w-auto" name="column" onChange={changeColumn}>
                     
                       <option value="">선택하세요</option>
                             <option value="memberId">아이디</option>
@@ -236,9 +233,10 @@ export default function MemberList(){
                     className="form-control w-auto"
                     maxLength={10}
                     placeholder="검색어를 입력해주세요"
-                    onBlur={setKeyword}
+                    value={keyword}
+                    onChange={changeKeyword}
                 />
-                <button className="btn btn-outline-secondary" onClick={sendSearch}>
+                <button className="btn btn-outline-secondary" onClick={submitSearch}>
                     <FaMagnifyingGlass />
                 </button>
                 </div>
@@ -247,7 +245,8 @@ export default function MemberList(){
         
         <div className="row">
             <div className="col">
-               
+                <button className="btn btn-light" value="memberName" onClick={clickOrder}>이름순</button>
+                <button className="btn btn-light" value="memberJoin" onClick={clickOrder}>가입일순 </button>
             </div>
         </div>
 
@@ -279,7 +278,8 @@ export default function MemberList(){
                             <td>{member.memberEmail}</td>
                             <td>{transDate(member.memberJoin)}</td>
                             <td>
-                              
+                                <FaTrash className="text-danger" onClick={e => memberDelete(member)} />
+                                <FaImage className="ms-1 text-warning" onClick={e => openModal(member)} />
                             </td>
                         </tr>
                     ))
@@ -287,13 +287,13 @@ export default function MemberList(){
                         <tr>
                             <td colSpan="8" className="text-center">검색결과 없음!</td>
                         </tr>
-                    )} 
+                    )}
                 </tbody>
                 
                 </table>
 
 
-                {/* <div className="modal fade" tabIndex="-1" role="dialog" ref={modal} data-bs-backdrop="static">
+                <div className="modal fade" tabIndex="-1" role="dialog" ref={modal} data-bs-backdrop="static">
                     <div className="modal-dialog modal-xl" role="document">
                     <div className="modal-content">
                         <div className="modal-header">
@@ -383,8 +383,8 @@ export default function MemberList(){
                         
                         </div>
                     </div>
-                    </div>*/}
-                </div> 
+                    </div>
+                </div>
           
         </div>
     </>)
