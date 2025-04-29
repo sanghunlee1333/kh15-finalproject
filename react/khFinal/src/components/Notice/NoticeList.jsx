@@ -6,10 +6,11 @@ import axios from "axios";
 import Jumbotron from "../template/Jumbotron";
 import moment from "moment";
 
-import { FaPlus, FaSearch, FaTrash } from "react-icons/fa";
+import { FaSearch, FaTrash } from "react-icons/fa";
 import { TbCircleLetterNFilled } from "react-icons/tb";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { Modal } from "bootstrap";
+import { FaPencil } from 'react-icons/fa6';
 
 export default function NoticeList() {
     //recoil - 관리자인지 
@@ -42,16 +43,6 @@ export default function NoticeList() {
     //callback
     //게시글 가져오기 함수(+검색 포함)
     const loadNotices = useCallback(async () => {
-        // if(column === ""){
-        //     return;
-        // }
-
-        // //키워드가 비어있을 경우, 전체 목록을 불러오고 종료
-        // if(keyword.length === 0) {
-        //     loadNotices();
-        //     return;
-        // }
-
         //사용자가 선택한 column, 입력한 keyword를 자바스크립트 객체(JSON객체 형태)로 전달
         const params = {
             column: column || null,
@@ -74,11 +65,6 @@ export default function NoticeList() {
         }, 0);
 
     }, [column, keyword, size, loadNotices]);
-
-    const writeNotice = useCallback(()=>{
-
-    }, []);
-
 
     //체크박스 개별 체크 함수
     const changeNoticeChoice = useCallback((e, target) => { //target은 파라미터 이름일 뿐
@@ -213,8 +199,8 @@ export default function NoticeList() {
                                 <span className="align-middle">{notice.noticeNo}</span>
                             </div>
                             <div className="text-start" style={{ width: '60%' }}>
-                                <Link className="text-decoration-none d-inline-flex text-truncate align-items-center" to={`/notice/detail/${notice.noticeNo}`} style={{ width: '85%' }}>
-                                    <span className="align-middle">{notice.noticeTitle}</span>
+                                <Link className="text-decoration-none d-inline-flex align-items-center align-middle" to={`/notice/detail/${notice.noticeNo}`} style={{ width: '85%' }}>
+                                    <span className="align-middle text-truncate" style={{ maxWidth: 'calc(100% - 1.5rem)' }}>{notice.noticeTitle}</span>
                                     {moment(notice.noticeWriteDate).isAfter(moment().startOf('day')) && (
                                         <TbCircleLetterNFilled className="ms-1 text-danger" />
                                     )
@@ -240,7 +226,7 @@ export default function NoticeList() {
         <div className="row mt-4">
             <div className="col text-start">
                 <Link to="/notice/write" className="btn btn-success">
-                    <FaPlus className="align-middle me-1" />
+                    <FaPencil className="align-middle me-1" />
                     <span className="align-middle text-nowrap">작성</span>
                 </Link>
                 {hasChecked && (
