@@ -7,6 +7,8 @@ import App from './App.jsx'
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootswatch/dist/litera/bootstrap.min.css";
 import "bootstrap";
+import 'summernote/dist/summernote-lite.css';
+import 'summernote/dist/summernote-lite.js';
 import { BrowserRouter } from 'react-router';
 
 //axios 기본 주소 설정

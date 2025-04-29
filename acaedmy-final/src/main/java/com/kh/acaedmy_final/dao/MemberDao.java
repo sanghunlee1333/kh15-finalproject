@@ -47,6 +47,7 @@ public class MemberDao {
 		return sqlSession.insert("member.join", memberDto) > 0;
 	}
 
+
 	public boolean delete(long memberNo) {
 		return sqlSession.delete("member.remove", memberNo) > 0;
 	}
@@ -57,6 +58,10 @@ public class MemberDao {
 
 	public List<AdminMemberListVO> selectIntegratedList(AdminMemberListVO adminMemberListVO) {
 		return sqlSession.selectList("member.integratedList", adminMemberListVO);
+	}
+
+	public List<MemberDto> seachContacts(String search) {
+		return sqlSession.selectList("member.search", search); 
 	}
 
 	

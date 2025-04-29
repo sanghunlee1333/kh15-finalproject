@@ -9,14 +9,37 @@
 	</select>
 
 	<select id="all" resultType="MemberDto">
+
 		<include refid="top-n-header"></include>
 		select * from member
 		<include refid="top-n-footer"></include>
-		
+
+		select 
+			member_no, member_id, member_pw, member_department, member_name, 
+           	member_resident_no, member_contact, member_email, member_post, 
+           	member_address1, member_address2, member_rank, 
+           	member_bank, member_bank_no, member_join, member_state 
+    	from member
+    	order by member_department ASC, member_name ASC
+
 	</select>
+	
 	<select id="find" resultType = "MemberDto">
 		select * from member where member_id = #{memberId}
 	</select>
+	
+	<select id="findByNo" resultType ="MemberDto">
+		select * from member where member_no = #{memberNo}
+	</select>
+	
+	<!-- 검색 -->
+	<select id="search" resultType="MemberDto">
+		select * from member
+		where (member_name like concat('%', #{search}, '%') or
+					member_department like concat('%', #{search}, '%'))
+		order by member_department ASC, member_name ASC
+	</select>
+	
 	<insert id="join" >
 		insert into member(
 		member_no, member_id, member_pw, member_department, member_name, 
@@ -30,8 +53,8 @@
 		, #{memberAddress1}, #{memberAddress2}
 		, #{memberRank}, #{memberBank}, #{memberBankNo}, #{memberState}
 		)
-		
 	</insert>
+
 	<select id="findByNo" resultType ="MemberDto">
 		select * from member where member_no = #{memberNo}
 	</select>

@@ -1,6 +1,8 @@
 package com.kh.acaedmy_final.restcontroller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -47,16 +49,32 @@ public class NoticeRestController {
 		return noticeDao.selectList();
 	}
 	
-	//검색 조회(컬럼-키워드)
+	//상세
+	@GetMapping("/{noticeNo}")
+	public NoticeDto find(@PathVariable long noticeNo) {
+		NoticeDto noticeDto = noticeDao.selectOne(noticeNo);
+		if(noticeDto == null) throw new TargetNotFoundException();
+		return noticeDto;
+	}
+	
+	//(미사용)검색 조회(컬럼-키워드)
 	@GetMapping("/column/{column}/keyword/{keyword}")
 	public List<NoticeDto> list(@PathVariable String column, String keyword){
 		return noticeDao.selectList(column, keyword);
 	}
-	//검색 조회
+	//(사용)검색 조회
 	@PostMapping("/search")
-	public List<NoticeDto> list(@RequestBody SearchVO searchVO){
-		return noticeDao.selectList(searchVO);
+	public Map<String, Object> searchList(@RequestBody SearchVO searchVO){
+		int count = noticeDao.count(searchVO);
+		List<NoticeDto> list = noticeDao.selectList(searchVO);
+		
+		Map<String, Object> obj = new HashMap<>();
+		obj.put("list", list);
+		obj.put("count", count);
+		return obj;
 	}
+	
+	
 	
 	
 	

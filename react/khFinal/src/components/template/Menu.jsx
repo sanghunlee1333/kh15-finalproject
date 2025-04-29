@@ -6,6 +6,9 @@ import { FaLightbulb } from "react-icons/fa6";
 
 export default function Menu() {
 
+
+
+
     return (<>
         {/* 메뉴(Navbar) */}
         <nav className="navbar navbar-expand-lg bg-dark fixed-top" data-bs-theme="dark">
@@ -36,7 +39,7 @@ export default function Menu() {
 
                         {/* 연락처 Link */}
                         <li className="nav-item">
-                            <Link to="/chat/contact" className="nav-link">
+                            <Link to="/member/contact" className="nav-link">
                                 <i className="fa-solid fa-list-ul"></i>
                                 연락처
                             </Link>
