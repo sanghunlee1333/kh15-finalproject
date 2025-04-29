@@ -1,4 +1,4 @@
-package com.kh.acaedmy_final.dto;
+package com.kh.acaedmy_final.vo;
 
 import java.time.LocalDateTime;
 
@@ -8,13 +8,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
-public class MemberDto {
+public class MemberDetailResponseVO {
 	private long memberNo;
 	private String memberId;
-	private String memberPw;
 	private String memberDepartment;
 	private String memberName;
-	private String memberResidentNo;
 	private String memberContact;
 	private String memberEmail;
 	private String memberPost;
