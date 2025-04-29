@@ -19,6 +19,7 @@ import { useCallback, useEffect } from 'react'
 import axios from 'axios'
 import MemberList from './components/Admin/MemberList'
 import MemberManage from './components/Admin/MemberManage'
+import NoticeUpdate from './components/Notice/NoticeUpdate'
 
 function App() {
 const [userNo, setUserNo] = useRecoilState(userNoState);
@@ -87,8 +88,9 @@ useEffect(()=>{refreshLogin();},[])
 
           {/* Notice */}
           <Route path="/notice/list" element={<NoticeList/>}></Route>
-          <Route path="/notice/detail/:noticeNo" element={<NoticeDetail/>}></Route>
           <Route path="/notice/write" element={<NoticeWrite/>}></Route>
+          <Route path="/notice/detail/:noticeNo" element={<NoticeDetail/>}></Route>
+          <Route path="/notice/update/:noticeNo" element={<NoticeUpdate/>}></Route>
           
           {/* Contact */}
           <Route path="/member/contact" element={<MemberContact/>}></Route>
