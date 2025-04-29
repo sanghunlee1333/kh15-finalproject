@@ -8,6 +8,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import com.kh.acaedmy_final.dto.AttachmentDto;
 import com.kh.acaedmy_final.dto.NoticeDto;
 import com.kh.acaedmy_final.vo.SearchVO;
 
@@ -17,8 +18,11 @@ public class NoticeDao {
 	private SqlSession sqlSession;
 	
 	//등록
-	public void insert(NoticeDto noticeDto) {
+	public NoticeDto insert(NoticeDto noticeDto) {
+		long sequence = sqlSession.selectOne("notice.sequence");
+		noticeDto.setNoticeNo(sequence);
 		sqlSession.insert("notice.write", noticeDto);
+		return sqlSession.selectOne("notice.detail", sequence);
 	}
 	
 	//삭제
@@ -50,6 +54,29 @@ public class NoticeDao {
 		return sqlSession.selectList("notice.search", searchVO);
 	}
 	
+	//첨부파일 연결
+	public void connect(NoticeDto noticeDto, AttachmentDto attachmentDto) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("noticeNo", noticeDto.getNoticeNo());
+		params.put("attachmentNo", attachmentDto.getAttachmentNo());
+		sqlSession.insert("notice.connect", params); //여기에 하나 밖에 못써서 위에서 map으로 하나로 합쳐서 보내야 함
+	}
+	//첨부파일 찾기
+	public List<AttachmentDto> selectAttachList(long noticeNo) {
+		return sqlSession.selectList("notice.findAttachList", noticeNo);
+	}
 	
+	//서머노트 이미지 연결
+	public void connectEditor(long noticeNo, int attachmentNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("noticeNo", noticeNo);
+		params.put("attachmentNo", attachmentNo);
+		sqlSession.insert("notice.connectEditor", params); //여기에 하나 밖에 못써서 위에서 map으로 하나로 합쳐서 보내야 함
+	}
+	//서머노트 이미지 찾기
+	public List<AttachmentDto> selectEditorAttachList(long noticeNo) {
+		return sqlSession.selectList("notice.findEditorAttachList", noticeNo);
+	}
 	
+
 }
