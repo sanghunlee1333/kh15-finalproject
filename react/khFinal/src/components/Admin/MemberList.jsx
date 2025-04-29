@@ -166,11 +166,11 @@ export default function MemberList(){
         }else{changePage(1)};
 
         //changePage(end+1);
-        console.log(count +  "  " + currentPage);
+        //console.log(count +  "  " + currentPage);
     },[start, end, currentPage, pageSize]);
     const nextButton = useCallback(()=>{
         const totalPages = Math.ceil(count / pageSize);
-        console.log(totalPages);
+       // console.log(totalPages);
         if(totalPages > end+1){
 
             changePage(end+1);
@@ -182,7 +182,48 @@ export default function MemberList(){
 
     },[start, end, currentPage]);
 
+    const [selectedMember, setSelectedMember] = useState("")
+    const [selectedDeleteMember, setSelectedDeleteMember] = useState(0);
+    const modal = useRef(); 
+    const deleteModal = useRef();
 
+    const openModal = useCallback((member)=>{
+        setSelectedMember(member);
+        const target = Modal.getOrCreateInstance(modal.current);
+        target.show();
+    },[modal, members])
+
+    const closeModal = useCallback(()=>{
+        const target = Modal.getInstance(modal.current);
+        target.hide();
+    },[modal])
+
+
+    const memberDelete = useCallback( (member)=>{ // 쓰레기통(삭제버튼) 클릭
+        setSelectedDeleteMember(member.memberNo);
+        openDeleteModal();
+    },[members])
+   
+
+    const openDeleteModal = useCallback(()=>{
+
+        const target = Modal.getOrCreateInstance(deleteModal.current);
+        target.show();
+
+    },[deleteModal])
+    const closeDeleteModal = useCallback(()=>{
+        
+            const target = Modal.getInstance(deleteModal.current);
+            if (target) target.hide();
+       
+    },[deleteModal])
+
+    const sendMemberNo = useCallback( async ()=>{ // 예 버튼
+              
+                 await axios.delete("/admin/member/"+selectedDeleteMember);
+        closeDeleteModal();
+       
+    },[members, selectedDeleteMember])
 
    // useEffect(()=>{console.log(count)},[count])
    // useEffect(()=>{console.log(searching)},[searching])
@@ -194,19 +235,7 @@ export default function MemberList(){
     return(<>
         <Jumbotron subject="사원 리스트"/>
         
-        <div className="row mt-2">
-            <div className="col text-center">
-                <button className="btn btn-light" onClick={prevButton}>이전</button>
-                {numbers.map((page) => (
-          <button className="btn btn-light" onClick={e=>changePage(page)} key={page}>{page}</button>
-        ))}
        
-            <button className="btn btn Light" onClick={e=>changePage(1)}>1111</button>
-            <button className="btn btn Light" onClick={e=>changePage(6)}>6666</button>
-            <button className="btn btn-light" onClick={nextButton}>다음</button>
-            <span>start lastPage end = {start}, {lastPage}, {end}</span>
-            </div>
-        </div>
         <div className="row mt-4">
             <div className="col">
                 <button className="btn btn-light" onClick={() => orderClick("memberName")}>이름순</button>
@@ -279,7 +308,9 @@ export default function MemberList(){
                             <td>{member.memberEmail}</td>
                             <td>{transDate(member.memberJoin)}</td>
                             <td>
-                              
+                            <FaTrash className="text-danger" onClick={e => memberDelete(member)} />
+                                <FaImage className="ms-1 text-warning" onClick={e => openModal(member)} />
+                           
                             </td>
                         </tr>
                     ))
@@ -293,7 +324,7 @@ export default function MemberList(){
                 </table>
 
 
-                {/* <div className="modal fade" tabIndex="-1" role="dialog" ref={modal} data-bs-backdrop="static">
+                <div className="modal fade" tabIndex="-1" role="dialog" ref={modal} data-bs-backdrop="static">
                     <div className="modal-dialog modal-xl" role="document">
                     <div className="modal-content">
                         <div className="modal-header">
@@ -383,9 +414,20 @@ export default function MemberList(){
                         
                         </div>
                     </div>
-                    </div>*/}
+                    </div>
                 </div> 
-          
+                <div className="row mt-2">
+            <div className="col text-center">
+                <button className="btn btn-light" onClick={prevButton}>이전</button>
+                {numbers.map((page) => (
+          <button className="btn btn-light" onClick={e=>changePage(page)} key={page}>{page}</button>
+        ))}
+       
+           
+            <button className="btn btn-light" onClick={nextButton}>다음</button>
+            {/* <span>start lastPage end = {start}, {lastPage}, {end}</span> */}
+            </div>
+        </div>
         </div>
     </>)
 }
