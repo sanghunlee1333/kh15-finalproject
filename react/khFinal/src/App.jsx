@@ -13,9 +13,55 @@ import MemberJoin from './components/Member/MemberJoin'
 import MemberContact from './components/Member/MemberContact'
 import Footer from './components/template/Footer'
 import NoticeWrite from './components/Notice/NoticeWrite'
-
+import { loginState, userDepartmentState, userLoadingState, userNoState } from './components/utils/stroage'
+import { useRecoilState, useRecoilValue } from 'recoil'
+import { useCallback, useEffect } from 'react'
+import axios from 'axios'
+import MemberList from './components/Admin/MemberList'
+import MemberManage from './components/Admin/MemberManage'
 
 function App() {
+const [userNo, setUserNo] = useRecoilState(userNoState);
+const [userDepartment, setUserDepartment] = useRecoilState(userDepartmentState);
+const [loading, setLoading] = useRecoilState(userLoadingState);
+const login = useRecoilValue(loginState);
+
+let stay = false;
+const refreshLogin = useCallback(async ()=>{
+  let refreshToken = window.sessionStorage.getItem("refreshToken");
+  if(refreshToken === null) {
+      refreshToken = window.localStorage.getItem("refreshToken");
+    if(refreshToken === null) {
+      setLoading(true); 
+      return;
+    }else{
+      stay = true;
+    }
+  }
+  try{
+    axios.defaults.headers.common["Authorization"] = `Bearer ${refreshToken}`;
+    const resp = await axios.get("/member/refresh");
+    setUserNo(resp.data.userNo);
+    setUserDepartment(resp.data.userDepartment);
+    axios.defaults.headers.common["Authorization"] = `Bearer ${resp.data.accessToken}`;
+    if(stay){
+      window.sessionStorage.removeItem("refreshToken");
+      window.localStorage.setItem("refreshToken", resp.data.refreshToken);
+    }
+    else{
+        window.localStorage.removeItem("refreshToken");
+        window.sessionStorage.setItem("refreshToken", resp.data.refreshToken);
+    }
+    setLoading(true);
+  }
+  catch(e){
+    setLoading(true);
+  }
+},[])
+
+useEffect(()=>{refreshLogin();},[])
+
+
 
   return (
     <>
@@ -34,6 +80,10 @@ function App() {
           {/* Member */}
           <Route path="/member/login" element={<MemberLogin/>}></Route>
           <Route path="/member/join" element={<MemberJoin/>}></Route>
+
+          {/* Admin */}
+          <Route path="/admin/member/list" element={<MemberList/>}></Route>
+          <Route path="/admin/member/detail" element={<MemberManage/>}></Route>
 
           {/* Notice */}
           <Route path="/notice/list" element={<NoticeList/>}></Route>

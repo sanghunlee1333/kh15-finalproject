@@ -10,6 +10,11 @@ const userDepartmentState = atom({
     default:null,
 })
 
+const userLoadingState = atom({
+    key:"userLoadingState",
+    default:false,
+})
+
 const loginState = selector({
     key:"loginState",
     get:(state)=>{
@@ -20,4 +25,4 @@ const loginState = selector({
     }
 });
 
-export{userNoState, userDepartmentState, loginState};
+export{userNoState, userDepartmentState, loginState, userLoadingState};
