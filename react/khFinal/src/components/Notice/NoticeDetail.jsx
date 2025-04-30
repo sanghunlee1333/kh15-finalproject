@@ -97,7 +97,7 @@ export default function NoticeDetail() {
                         {attachList.map(file=>(
                         <li key={file.attachmentNo} className="list-group-item d-flex justify-content-start align-items-center border-0 p-1">
                             <FaRegCircleCheck className="text-success"/>
-                            <a href={`http://localhost:8080/attachment/${file.attachmentNo}`} 
+                            <a href={`http://localhost:8080/api/attachment/${file.attachmentNo}`} 
                                 target="_blank" rel="noreferrer" className="text-decoration-none ms-1">
                                 {file.attachmentName}
                             </a>

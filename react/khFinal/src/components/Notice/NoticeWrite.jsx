@@ -190,7 +190,8 @@ export default function NoticeWrite() {
         <div className="row mt-4">
             <div className="col">
                 {/* input[type=file]은 보안 상 value 설정이 불가능 */}
-                <input type="file" className="form-control" accept=".png, jpg, jpeg" onChange={addAttach} multiple ref={fileTag}/>
+                <input type="file" className="form-control" accept=".png,.jpg,.jpeg,.txt,.pdf,.doc,.docx,.hwp,.ppt,.pptx,.xls,.xlsx,.zip"
+                    onChange={addAttach} multiple ref={fileTag}/>
             </div>
         </div>
 
