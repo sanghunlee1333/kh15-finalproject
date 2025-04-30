@@ -3,9 +3,13 @@ import Jumbotron from "../template/Jumbotron";
 import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 
+import { FaRegCircleCheck } from "react-icons/fa6";
 import { MdNotificationImportant } from "react-icons/md";
+import { FaCloudDownloadAlt } from "react-icons/fa";
 import moment from "moment";
 import { Modal } from "bootstrap";
+import { FaTrash } from "react-icons/fa";
+import { FaListUl } from "react-icons/fa6";
 
 export default function NoticeDetail() {
     //param
@@ -16,6 +20,7 @@ export default function NoticeDetail() {
 
     //state
     const [notice, setNotice] = useState({});
+    const [attachList, setAttachList] = useState([]);
 
     //navigate
     const navigate = useNavigate();
@@ -24,6 +29,11 @@ export default function NoticeDetail() {
     useEffect(()=>{
         loadNotice();
     }, []);
+
+    useEffect(()=>{
+        axios.get(`/notice/${noticeNo}/attach`)
+            .then(resp=>setAttachList(resp.data));
+    }, [noticeNo]);
 
     //callback
     const loadNotice = useCallback(async ()=>{
@@ -64,7 +74,6 @@ export default function NoticeDetail() {
 
         <div className="row mt-2">
             <div className="col">
-                {/* <span className="text-secondary">번호 : {notice.noticeNo}번</span> */}
                 <h1 className="inline-block" style={{ marginBottom: 0 }}>{notice.noticeTitle}</h1>
                 <span className="text-secondary">{moment(notice.noticeWriteDate).format("YYYY-MM-DD HH:mm")}</span>
             </div>
@@ -78,12 +87,43 @@ export default function NoticeDetail() {
             </div>
         </div>
 
-        <hr className="mt-4"/>
+        <hr className="mt-2"/>
+
+        <div className="row mt-4">
+            <div className="col">
+                <h6 className="fw-bold">첨부파일</h6>
+                {attachList.length > 0 ? (
+                    <ul className="list-group">
+                        {attachList.map(file=>(
+                        <li key={file.attachmentNo} className="list-group-item d-flex justify-content-start align-items-center border-0 p-1">
+                            <FaRegCircleCheck className="text-success"/>
+                            <a href={`http://localhost:8080/api/attachment/${file.attachmentNo}`} 
+                                target="_blank" rel="noreferrer" className="text-decoration-none ms-1">
+                                {file.attachmentName}
+                            </a>
+                            <span className="badge bg-secondary ms-2 p-2 fw-semibold d-inline-flex align-items-center">
+                                <FaCloudDownloadAlt className="me-1" />
+                                {(file.attachmentSize / 1024).toFixed(1)} KB
+                            </span>
+                        </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <div className="text-muted">첨부된 파일이 없습니다</div>
+                )}
+            </div>
+        </div>
 
         <div className="row mt-4">
             <div className="col text-end">
-                <button type="button" className="btn btn-danger" onClick={openModal}>삭제</button>
-                <button type="button" className="btn btn-info ms-2" onClick={moveList}>목록</button> 
+                <button type="button" className="btn btn-danger align-items-center" onClick={openModal}>
+                    <FaTrash className="align-middle me-1" />
+                    <span className="align-middle text-nowrap">삭제</span>
+                </button>
+                <button type="button" className="btn btn-secondary align-items-center ms-2" onClick={moveList}>
+                    <FaListUl className="align-middle me-1" />
+                    <span className="align-middle text-nowrap">목록</span>
+                </button> 
             </div>
         </div>
 

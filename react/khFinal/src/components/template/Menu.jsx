@@ -6,6 +6,9 @@ import { FaLightbulb } from "react-icons/fa6";
 
 export default function Menu() {
 
+
+
+
     return (<>
         {/* 메뉴(Navbar) */}
         <nav className="navbar navbar-expand-lg bg-dark fixed-top" data-bs-theme="dark">
