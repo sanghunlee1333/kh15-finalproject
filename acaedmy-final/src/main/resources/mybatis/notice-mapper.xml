@@ -5,9 +5,12 @@
 
 <mapper namespace="notice">
 	<!-- 공지글 작성 -->
+	<select id="sequence" resultType="long">
+		select notice_seq.nextval from dual
+	</select>
 	<insert id="write">
 		insert into notice(notice_no, notice_title, notice_content)
-		values(notice_seq.nextval, #{noticeTitle}, #{noticeContent})
+		values(#{noticeNo}, #{noticeTitle}, #{noticeContent})
 	</insert>
 	
 	<!-- 공지글 목록 조회 -->
@@ -49,9 +52,7 @@
 		where rn > (#{page} - 1) * #{size}
 		]]>
 	</select>
-	
-	<!-- 아래는 선택 사항 -->
-	
+		
 	<!-- 공지글 수정 -->
 	<update id="edit">
 		update notice 
@@ -60,6 +61,28 @@
 			notice_content=#{noticeContent},
 			notice_write_date=systimestamp
 	</update>
+	
+	<!-- 첨부파일 이미지 연결 -->
+	<insert id="connect">
+		insert into notice_image(notice_no, attachment_no)
+		values(#{noticeNo}, #{attachmentNo})
+	</insert>
+	<select id="findAttachList" resultType="AttachmentDto">
+		select A.* from notice_image NI
+		join attachment A on A.attachment_no = NI.attachment_no
+		where NI.notice_no = #{noticeNo}
+	</select>
+	
+	<!-- 서머노트 이미지 연결 -->
+	<insert id="connectEditor">
+		insert into notice_editor_image(notice_no, attachment_no)
+		values(#{noticeNo}, #{attachmentNo})
+	</insert>
+	<select id="findEditorAttachList" resultType="AttachmentDto">
+		select A.* from notice_editor_image NEI
+		join attachment A on A.attachment_no = NEI.attachment_no
+		where NEI.notice_no = #{noticeNo}
+	</select>
 	
 	
 </mapper>

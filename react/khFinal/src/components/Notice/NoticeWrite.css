@@ -1,0 +1,3 @@
+.note-btn-group .dropdown-toggle::after {
+    display: none; /* 드롭다운 화살표 강제 숨김 */
+}

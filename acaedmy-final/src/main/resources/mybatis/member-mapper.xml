@@ -7,7 +7,7 @@
 	<select id="sequence" resultType="Long">
 		select member_seq.nextval from dual
 	</select>
-
+	
 	<select id="all" resultType="MemberDto">
 		select 
 			member_no, member_id, member_pw, member_department, member_name, 
@@ -16,14 +16,21 @@
            	member_bank, member_bank_no, member_join, member_state 
     	from member
     	order by member_department ASC, member_name ASC
+
 	</select>
 	
 	<select id="find" resultType = "MemberDto">
 		select * from member where member_id = #{memberId}
 	</select>
 	
-	<select id="findByNo" resultType ="MemberDto">
-		select * from member where member_no = #{memberNo}
+	
+	
+	<!-- 검색 -->
+	<select id="search" resultType="MemberDto">
+		select * from member
+		where (member_name like concat('%', #{search}, '%') or
+					member_department like concat('%', #{search}, '%'))
+		order by member_department ASC, member_name ASC
 	</select>
 	
 	<insert id="join" >
@@ -40,6 +47,95 @@
 		, #{memberRank}, #{memberBank}, #{memberBankNo}, #{memberState}
 		)
 	</insert>
+
+	<select id="findByNo" resultType ="MemberDto">
+		select * from member where member_no = #{memberNo}
+	</select>
+	<select id="findForDetail" resultType = "MemberDetailResponseVO">
+		select
+		member_no, member_id, member_department, member_name, member_contact, member_email,
+		member_post, member_address1, member_address2, member_rank, member_bank, member_bank_no,
+		member_join, member_state
+		from member where member_no = #{memberNo}
+	</select>
+	
+	
+	<delete id="remove" >
+		delete member where member_no = #{memberNo}
+	</delete>
+	<select id="departments"  resultType="String">
+		select member_department from member group by member_department
+	</select>
+	
+	<select id="integratedList" resultType = "AdminMemberListVO">
+	<include refid="top-n-header"></include>
+	<!-- 	select member_id, member_name, member_department, member_rank, member_contact, member_email, member_join
+		 from member  -->
+		  select * from member		 
+		  
+		 <include refid = "condition"></include>
+		
+	
+		order by 
+		<if test="order != null">
+		    <choose>
+		      <when test="order == 'memberJoin'">member_join asc,</when>
+        <when test="order == 'memberName'">member_name asc,</when>
+		     </choose> 
+		
+		</if> 
+		member_department asc
+		
+	<include refid = "top-n-footer"></include>
+	</select>
+	
+	<select id="count" resultType="Int">
+		select count(*) from member <include refid="condition"></include>
+	</select>
+	 
+	
+	<sql id="top-n-header">
+		<if test="beginRow != null and endRow != null">
+		select * from (
+			select rownum rn, TMP.* from(
+		</if>
+	</sql>
+	<sql id="top-n-footer">
+		<if test="beginRow != null and endRow != null">
+			)TMP
+		)where rn between #{beginRow} and #{endRow}	
+		</if>
+	</sql>
+	
+	<sql id="condition">
+  <where>
+	   <choose>
+	    <when test="column == 'member_name'">
+	        AND member_name = #{keyword}
+	    </when>
+	    <when test="column == 'member_id'">
+	        AND member_id = #{keyword}
+	    </when>
+	    <when test="column == 'member_department'">
+	        AND member_department = #{keyword}
+	    </when>
+	    <when test="column == 'member_rank'">
+	        AND member_rank = #{keyword}
+	    </when>
+	    <when test="column == 'member_contact'">
+	        AND member_contact = #{keyword}
+	    </when>
+	    <when test="column == 'member_email'">
+	        AND member_email = #{keyword}
+	    </when>
+   
+</choose>
+    </where> 
+	</sql>
+	
+
+	
+	
 	
 </mapper>
 
