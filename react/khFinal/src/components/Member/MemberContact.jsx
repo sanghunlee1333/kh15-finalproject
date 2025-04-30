@@ -6,9 +6,9 @@ import { RiContactsBook3Fill } from "react-icons/ri";
 
 export default function MemberContact() {
     //state
-    //목록
+    //연락처 전체 목록
     const [groupContacts, setGroupContacts] = useState({});
-    //검색
+    //연락처 검색
     const [searchContacts, setSearchContacts] = useState("");
     const [filterContacts, setFilterContacts] = useState({});
     const [noResults, setNoResults] = useState(false); // 검색 결과가 없을 때의 상태
@@ -35,7 +35,7 @@ export default function MemberContact() {
             if (isDepartmentSearch) {
                 //부서명 검색
                 Object.keys(groupContacts).forEach((department) => {
-                    if (department.includes(searchContacts)) {
+                    if (department && department.includes(searchContacts)) {
                         filterContacts[department] = groupContacts[department];
                         found = true;
                     }
@@ -44,9 +44,10 @@ export default function MemberContact() {
             else {
                 //이름 검색
                 Object.keys(groupContacts).forEach((department) => {
-                    const filterList = groupContacts[department].filter((contact) =>
-                        contact.memberName.includes(searchContacts)
-                    );
+                    const filterList = groupContacts[department].filter((contact) => {
+                        const memberName = contact.memberName || ' ';
+                        return memberName.includes(searchContacts)
+                    });
                     if (filterList.length > 0) {
                         filterContacts[department] = filterList;
                         found = true;//검색된 항목이 있으면 true
