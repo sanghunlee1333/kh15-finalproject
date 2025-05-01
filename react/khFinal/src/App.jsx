@@ -20,49 +20,52 @@ import axios from 'axios'
 import MemberList from './components/Admin/MemberList'
 import MemberManage from './components/Admin/MemberManage'
 import NoticeUpdate from './components/Notice/NoticeUpdate'
+import { Bounce, ToastContainer } from 'react-toastify'
 
 function App() {
-const [userNo, setUserNo] = useRecoilState(userNoState);
-const [userDepartment, setUserDepartment] = useRecoilState(userDepartmentState);
-const [loading, setLoading] = useRecoilState(userLoadingState);
-const login = useRecoilValue(loginState);
+  const [userNo, setUserNo] = useRecoilState(userNoState);
+  const [userDepartment, setUserDepartment] = useRecoilState(userDepartmentState);
+  const [loading, setLoading] = useRecoilState(userLoadingState);
+  const login = useRecoilValue(loginState);
 
-let stay = false;
-const refreshLogin = useCallback(async ()=>{
-  let refreshToken = window.sessionStorage.getItem("refreshToken");
-  if(refreshToken === null) {
-      refreshToken = window.localStorage.getItem("refreshToken");
+  let stay = false;
+  const refreshLogin = useCallback(async ()=>{
+    let refreshToken = window.sessionStorage.getItem("refreshToken");
     if(refreshToken === null) {
-      setLoading(true); 
-      return;
-    }else{
-      stay = true;
+        refreshToken = window.localStorage.getItem("refreshToken");
+      if(refreshToken === null) {
+        setLoading(true); 
+        return;
+      }else{
+        stay = true;
+      }
     }
-  }
-  try{
-    axios.defaults.headers.common["Authorization"] = `Bearer ${refreshToken}`;
-    const resp = await axios.post("/member/refresh");
-    setUserNo(resp.data.userNo);
-    setUserDepartment(resp.data.userDepartment);
-    axios.defaults.headers.common["Authorization"] = `Bearer ${resp.data.accessToken}`;
-    if(stay){
-      window.sessionStorage.removeItem("refreshToken");
-      window.localStorage.setItem("refreshToken", resp.data.refreshToken);
+    try{
+      axios.defaults.headers.common["Authorization"] = `Bearer ${refreshToken}`;
+      const resp = await axios.post("/member/refresh");
+      setUserNo(resp.data.memberNo);
+      setUserDepartment(resp.data.memberDepartment);
+      console.log(resp.data);
+      if(stay){
+        window.sessionStorage.removeItem("refreshToken");
+        window.localStorage.setItem("refreshToken", resp.data.refreshToken);
+      }
+      else{
+          window.localStorage.removeItem("refreshToken");
+          window.sessionStorage.setItem("refreshToken", resp.data.refreshToken);
+      }
+      setLoading(true);
     }
-    else{
-        window.localStorage.removeItem("refreshToken");
-        window.sessionStorage.setItem("refreshToken", resp.data.refreshToken);
+    catch(e){
+      setLoading(true);
     }
-    setLoading(true);
-  }
-  catch(e){
-    setLoading(true);
-  }
-},[])
+  },[]);
+  
+  useEffect(() => {
+    refreshLogin();
+  }, []);
 
-useEffect(()=>{refreshLogin();},[])
-
-
+  // if (!loading) return <div>로딩 중...</div>;
 
   return (
     <>
@@ -101,6 +104,21 @@ useEffect(()=>{refreshLogin();},[])
         </Routes>
 
         <Footer/>
+
+        {/* 토스트 메세지 컨테이너 */}
+        <ToastContainer
+          position="bottom-right"
+          autoClose={5000}
+          hideProgressBar
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="colored"
+          transition={Bounce}
+        />
       </div>
       
       
