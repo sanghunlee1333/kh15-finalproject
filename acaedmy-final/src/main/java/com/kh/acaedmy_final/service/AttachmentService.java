@@ -53,10 +53,12 @@ public class AttachmentService {
 		//[1]실제 파일을 지우고
 		File dir = fileuploadProperties.getRootDir();
 		File target = new File(dir, String.valueOf(attachmentNo));
-		if(target.isFile() == false) return;
 		
-		target.delete(); //파일 삭제
-		//[2]DB정보 삭제
+		if (target.exists() && target.isFile()) {
+	        target.delete(); // 물리 파일 삭제
+	    }
+		
+		//[2]DB정보 삭제 (고아 레코드 제거)
 		attachmentDao.delete(attachmentNo);
 	}
 	

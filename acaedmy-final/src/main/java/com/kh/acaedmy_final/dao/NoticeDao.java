@@ -38,13 +38,7 @@ public class NoticeDao {
 	public NoticeDto selectOne(long noticeNo) {
 		return sqlSession.selectOne("notice.detail", noticeNo);
 	}
-	//(미사용)검색 조회(컬럼-키워드)
-	public List<NoticeDto> selectList(String column, String keyword){
-		Map<String, Object> param = new HashMap<>();
-		param.put("column", column);
-		param.put("keyword", keyword);
-		return sqlSession.selectList("notice.listOrSearch", param);
-	}
+	
 	//검색 결과 수 조회
 	public int count(SearchVO searchVO) {
 		return sqlSession.selectOne("notice.count", searchVO);
@@ -73,10 +67,23 @@ public class NoticeDao {
 		params.put("attachmentNo", attachmentNo);
 		sqlSession.insert("notice.connectEditor", params); //여기에 하나 밖에 못써서 위에서 map으로 하나로 합쳐서 보내야 함
 	}
-	//서머노트 이미지 찾기
-	public List<AttachmentDto> selectEditorAttachList(long noticeNo) {
-		return sqlSession.selectList("notice.findEditorAttachList", noticeNo);
+		
+	//첨부파일 번호 찾기
+	public List<Integer> findNoticeImageAttachmentNoList(long noticeNo) {
+	    return sqlSession.selectList("notice.findNoticeImageAttachmentNoList", noticeNo);
+	}
+	public List<Integer> findEditorAttachmentNoList(long noticeNo) {
+	    return sqlSession.selectList("notice.findEditorAttachmentNoList", noticeNo);
+	}
+
+	//첨부파일 연결 해제
+	public void deleteNoticeImageConnections(long noticeNo) {
+	    sqlSession.delete("notice.deleteNoticeImageConnections", noticeNo);
 	}
 	
+	//서머노트 이미지 연결 해제
+	public void deleteEditorImageConnections(long noticeNo) {
+	    sqlSession.delete("notice.deleteEditorImageConnections", noticeNo);
+	}
 
 }

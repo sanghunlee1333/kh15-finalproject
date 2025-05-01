@@ -2,13 +2,14 @@ package com.kh.acaedmy_final.restcontroller;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,6 +29,8 @@ import com.kh.acaedmy_final.dto.NoticeDto;
 import com.kh.acaedmy_final.error.TargetNotFoundException;
 import com.kh.acaedmy_final.service.AttachmentService;
 import com.kh.acaedmy_final.service.NoticeAttachmentService;
+import com.kh.acaedmy_final.service.TokenService;
+import com.kh.acaedmy_final.vo.ClaimVO;
 import com.kh.acaedmy_final.vo.SearchVO;
 
 @CrossOrigin
@@ -34,6 +38,9 @@ import com.kh.acaedmy_final.vo.SearchVO;
 @RequestMapping("/api/notice")
 public class NoticeRestController {
 
+	@Autowired
+	private TokenService tokenService;
+	
 	@Autowired
 	private NoticeDao noticeDao;
 	
@@ -51,10 +58,25 @@ public class NoticeRestController {
 //  파일이 있으면 (multipart/form-data 형태 수신)
 //  SpringDoc에서 정상적으로 이용하려면 추가 클래스 생성이 필요
 	@PostMapping(value = "/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public void insert(@ModelAttribute NoticeDto noticeDto, @RequestParam(value = "attach", required = false) MultipartFile[] attach) throws IllegalStateException, IOException {
+	public void insert(@RequestHeader ("Authorization") String bearerToken, 
+					   @ModelAttribute NoticeDto noticeDto, 
+					   @RequestParam(value = "attach", required = false) MultipartFile[] attach, 
+					   @RequestParam(value = "editorImage", required = false) List<Integer> editorImage) throws IllegalStateException, IOException {
+		
+		//토큰에서 사용자 정보 추출
+		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+		
+		if(!claimVO.getMemberDepartment().equals("인사")) {
+			throw new AccessDeniedException("인사팀만 글을 작성할 수 있습니다");
+		}
+		//작성자 설정
+		noticeDto.setNoticeWriterNo(claimVO.getMemberNo());
+		
+		//게시글 등록
 		noticeDao.insert(noticeDto);
 		
 		//파일 유무에 따라 추가 처리
+		//일반 첨부파일 연결
 		if(attach != null) {
 			for(MultipartFile file : attach) {
 				if(!file.isEmpty()) {
@@ -63,9 +85,15 @@ public class NoticeRestController {
 				}
 			}
 		}
-		// 에디터 이미지 연결
-	    noticeAttachmentService.connectEditorImages(noticeDto.getNoticeNo(), noticeDto.getNoticeContent());
-	}
+		
+		//서머노트 이미지 연결
+		if (editorImage != null) {
+		    for (int attachmentNo : editorImage) {
+		        noticeDao.connectEditor(noticeDto.getNoticeNo(), attachmentNo);
+		    }
+		}		
+		
+	 }
 	
 	//각 게시글에 첨부된 첨부파일 리스트 조회
 	@GetMapping("/{noticeNo}/attach")
@@ -81,26 +109,14 @@ public class NoticeRestController {
 		if(noticeDto == null) {
 			throw new TargetNotFoundException(); //없으면 404
 		}
+
+		//2. 에디터 이미지 삭제 (notice_editor_image + attachment + 파일)
+	    noticeAttachmentService.deleteEditorImages(noticeNo);
 		
-		//서머노트 내부 이미지 삭제
-		String content = noticeDto.getNoticeContent();
-		
-		Pattern pattern = Pattern.compile("/attachment/(\\d+)");
-		Matcher matcher = pattern.matcher(content);
-		
-		//2. noticeContent 안에 <img src="/attachment/123"> 이런 식으로 있는 것을 정규표현식으로 모두 뽑아내기
-		while(matcher.find()) {
-			int attachmentNo = Integer.parseInt(matcher.group(1));
-			attachmentService.delete(attachmentNo); // 첨부파일 삭제 (DB + 서버파일 삭제)
-		}
-		
-		// 2. 일반 첨부파일 (notice_image 테이블에 연결된) 삭제
-	    List<AttachmentDto> attachList = noticeDao.selectAttachList(noticeNo);
-	    for (AttachmentDto attach : attachList) {
-	        attachmentService.delete(attach.getAttachmentNo());
-	    }
-		
-		//3. notice 삭제
+		//3. 일반 첨부파일 삭제 (notice_image + attachment + 파일)
+	    noticeAttachmentService.deleteNoticeImages(noticeNo);
+
+		//4. 글 삭제 (notice_image, notice_editor_image는 ON DELETE CASCADE로 날아감)
 		noticeDao.delete(noticeNo); //있으면 200
 	}
 	
@@ -118,11 +134,6 @@ public class NoticeRestController {
 		return noticeDto;
 	}
 	
-	//(미사용)검색 조회(컬럼-키워드)
-	@GetMapping("/column/{column}/keyword/{keyword}")
-	public List<NoticeDto> list(@PathVariable String column, String keyword){
-		return noticeDao.selectList(column, keyword);
-	}
 	//(사용)검색 조회
 	@PostMapping("/search")
 	public Map<String, Object> searchList(@RequestBody SearchVO searchVO){
@@ -134,9 +145,5 @@ public class NoticeRestController {
 		obj.put("count", count);
 		return obj;
 	}
-	
-	
-	
-	
 	
 }
