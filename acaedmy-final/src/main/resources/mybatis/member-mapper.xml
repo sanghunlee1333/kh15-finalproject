@@ -93,6 +93,38 @@
 		select count(*) from member <include refid="condition"></include>
 	</select>
 	 
+	 
+	 <update id="editAll">
+	 	update member set 
+	 	member_name = #{memberName}, member_department = #{memberDepartment}, member_rank = #{memberRank}, member_contact = #{memberContact},
+	 	member_email = #{memberEmail}, member_bank = #{memberBank}, member_bank_no = #{memberBankNo} where member_no = #{memberNo}
+	 </update>
+	 
+<update id="editPart" parameterType="MemberDto">
+    update member
+    <set>
+        <if test="memberName != null">member_name = #{memberName},</if>
+        <if test="memberDepartment != null">member_department = #{memberDepartment},</if>
+        <if test="memberRank != null">member_rank = #{memberRank},</if>
+        <if test="memberContact != null">member_contact = #{memberContact},</if>
+        <if test="memberEmail != null">member_email = #{memberEmail},</if>
+        <if test="memberBank != null">member_bank = #{memberBank},</if>
+        <if test="memberBankNo != null">member_bank_no = #{memberBankNo},</if>
+    </set>
+    where member_no = #{memberNo}
+</update>
+	 <update id="resetPw" >
+	 	update member set member_pw = #{memberPw} where member_no = #{memberNo}
+	 </update>
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
 	
 	<sql id="top-n-header">
 		<if test="beginRow != null and endRow != null">

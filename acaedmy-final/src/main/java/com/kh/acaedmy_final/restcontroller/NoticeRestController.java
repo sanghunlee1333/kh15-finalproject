@@ -82,16 +82,23 @@ public class NoticeRestController {
 			throw new TargetNotFoundException(); //없으면 404
 		}
 		
+		//서머노트 내부 이미지 삭제
 		String content = noticeDto.getNoticeContent();
 		
-		//2. noticeContent 안에 <img src="/attachment/123"> 이런 식으로 있는 것을 정규표현식으로 모두 뽑아내기
 		Pattern pattern = Pattern.compile("/attachment/(\\d+)");
 		Matcher matcher = pattern.matcher(content);
 		
+		//2. noticeContent 안에 <img src="/attachment/123"> 이런 식으로 있는 것을 정규표현식으로 모두 뽑아내기
 		while(matcher.find()) {
 			int attachmentNo = Integer.parseInt(matcher.group(1));
 			attachmentService.delete(attachmentNo); // 첨부파일 삭제 (DB + 서버파일 삭제)
 		}
+		
+		// 2. 일반 첨부파일 (notice_image 테이블에 연결된) 삭제
+	    List<AttachmentDto> attachList = noticeDao.selectAttachList(noticeNo);
+	    for (AttachmentDto attach : attachList) {
+	        attachmentService.delete(attach.getAttachmentNo());
+	    }
 		
 		//3. notice 삭제
 		noticeDao.delete(noticeNo); //있으면 200

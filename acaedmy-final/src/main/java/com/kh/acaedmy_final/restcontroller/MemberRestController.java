@@ -119,7 +119,7 @@ public class MemberRestController {
 	    
 	    // 각 부서별로 회원 정보를 그룹화
 	    for (MemberDto member : members) {
-	    	String department = member.getMemberDepartment();
+	    	String department = member.getMemberDepartment() != null ? member.getMemberDepartment() : "미지정";
 	    	
 	    	// 해당 부서가 없으면 새로 리스트를 생성하고 있으면 기존 리스트에 추가
 	    	groupByDepartment.putIfAbsent(department, new ArrayList<>());
