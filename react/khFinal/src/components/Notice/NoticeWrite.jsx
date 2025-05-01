@@ -6,6 +6,7 @@ import { Modal } from "bootstrap";
 import { toast } from "react-toastify";
 
 import { FaPencil } from "react-icons/fa6";
+import { FaCircleXmark } from "react-icons/fa6";
 
 import axios from "axios";
 import $ from 'jquery';
@@ -13,40 +14,33 @@ window.$ = $;
 window.jQuery = $;
 
 export default function NoticeWrite() {
+
     //ref
     const editor = useRef(null);
     const modal = useRef();
-    const fileTag = useRef();
-
+    const titleInput = useRef();
+    const attachInput = useRef();
+    
     //navigate
     const navigate = useNavigate();
 
     //state
     const [notice, setNotice] = useState({
+        noticeType: "",
         noticeTitle: "",
         noticeContent: ""
     });
-    //const [attach, setAttach] = useState(undefined); //파일 한 개인 경우
-    const [attach, setAttach] = useState([]); //파일 여러 개인 경우
+    const [attach, setAttach] = useState([]); //일반 첨부파일 (input)
 
-    const handleImageUpload = useCallback(async (files)=>{
-        console.log("handleImageUpload 호출됨", files);
-        for(let i = 0; i < files.length; i++){
-            const formData = new FormData();
-            formData.append("attach", files[i]);
+    const [editorFiles, setEditorFiles] = useState([]);
 
-            try {
-                const resp = await axios.post("/attachment/upload", formData, {
-                    headers: { "Content-Type" : "multipart/form-data" }
-                });
-                
-                const imageUrl = "http://localhost:8080/api" + resp.data.url; //서버가 보내주는 이미지 URL
-                $(editor.current).summernote('insertImage', imageUrl);
-            }
-            catch (error) {
-                toast.error("이미지 업로드에 실패했습니다");
-            }
-        }
+    const editorImageUpload = useCallback((files) => {
+        const fileArray = Array.from(files);
+        fileArray.forEach(file => {
+            const localUrl = URL.createObjectURL(file); // 미리보기용 URL
+            $(editor.current).summernote('insertImage', localUrl);
+            setEditorFiles(prev => [...prev, file]); // 서버 업로드 안 함
+        });
     }, []);
 
     //effect
@@ -62,33 +56,33 @@ export default function NoticeWrite() {
                     ["style", ["bold", "italic", "underline", "strikethrough"]],
                     ["attach", ["picture"]],
                     ["tool", ["ol", "ul", "table", "hr"]],
-                    //["action", ["undo", "redo"]],
                 ],
                 callbacks: {
-                    onImageUpload: function(files) { //Summernote는 에디터에 이미지를 끌어다 놓거나 버튼으로 업로드할 때, onImageUpload(files) 이벤트를 호출
-                        // for(let i=0; i< files.length; i++){ //files는 업로드된 이미지 파일 객체 배열
-                            // handleImageUpload(files[i]); 
-                        // }
-                        handleImageUpload(files);
-                    },
+                    onImageUpload: editorImageUpload,
                     onChange: (contents) => {
                         setNotice(prev=>({
                             ...prev,
                             noticeContent: contents
-                        })); //summernote 내용 변경 시, 업데이트
+                        }));
                     }
                 }
             });
         }
-
         return ()=>{
             if(editor.current){
                 $(editor.current).summernote("destroy");
             }
         };
-    }, [handleImageUpload]);
+    }, [editorImageUpload]);
 
     //callback
+    const changeNoticeType = useCallback(e=>{
+        setNotice(prev=>({
+            ...prev,
+            noticeType: e.target.value
+        }));
+    }, []);
+
     const changeNoticeTitle = useCallback(e=>{
         setNotice(prev=>({
             ...prev,
@@ -96,6 +90,7 @@ export default function NoticeWrite() {
         }));
     }, []);
 
+    //일반 파일첨부
     const addAttach = useCallback(e=>{
         const newFiles = Array.from(e.target.files);
         setAttach(prev=>{
@@ -107,55 +102,102 @@ export default function NoticeWrite() {
                         f.name === file.name && f.size === file.size
                     )
             );
+            e.target.value = "";
             return unique;
         })
     }, []);
 
+    //일반 파일첨부 삭제
+    const deleteAttach = useCallback((index)=>{
+        setAttach(prev=>prev.filter((_, i) => i !== index));
+    }, []);
+
     //제출
-    const submitNotice = useCallback(async ()=>{
-        if(notice.noticeTitle.length < 10 || notice.noticeContent.length < 30){
+    const submitNotice = useCallback(async () => {
+        if (notice.noticeTitle.length < 10 || notice.noticeContent.length < 30) {
             openModal();
             return;
         }
-
+    
         const formData = new FormData();
-
-        if (attach && attach.length > 0) {
-            attach.forEach(file => {
-               formData.append("attach", file); //같은 이름으로 여러 개 추가
-            });
-        }
-
-        Object.entries(notice).forEach(([key, value])=>{
-            formData.append(key, value);
+    
+        //일반 첨부파일 추가
+        attach.forEach(file => {
+            formData.append("attach", file);
         });
 
-        try{
-            await axios.post("/notice/", formData, {
-                headers: {
-                    "Content-Type" : "multipart/form-data"
-                }
-            })
-            toast.success("파일이 등록되었습니다");
+        // Summernote 이미지 파일 업로드
+        const uploadedUrls = [];
+        const editorAttachmentNo = [];
 
-            setNotice({
-                noticeTitle: "",
-                noticeContent: ""
+        for (let i = 0; i < editorFiles.length; i++) {
+            const file = editorFiles[i];
+
+            // 1. 저장 (한 번만)
+            const uploadForm = new FormData();
+            uploadForm.append("attach", file);
+            const resp = await axios.post("/attachment/upload", uploadForm);
+
+            // 2. 업로드된 파일의 번호 저장
+            const attachmentNo = resp.data.attachmentNo;
+            uploadedUrls.push(`http://localhost:8080/api/attachment/${attachmentNo}`);
+            editorAttachmentNo.push(attachmentNo); 
+        }
+
+        // Summernote 내용에서 local blob URL을 실제 URL로 바꾸기
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(notice.noticeContent, "text/html");
+        const imgs = doc.querySelectorAll("img");
+
+        let idx = 0;
+        imgs.forEach(img => {
+            // blob: 주소만 바꾼다 → 서버에서 업로드된 것만
+            if (img.src.startsWith("blob:")) {
+                img.setAttribute("src", uploadedUrls[idx++]);
+            }
+        });
+
+        const updatedContent = doc.body.innerHTML;
+        
+        // notice 정보 추가
+        formData.append("noticeType", notice.noticeType);
+        formData.append("noticeTitle", notice.noticeTitle);
+        formData.append("noticeContent", updatedContent);
+        
+        //서머노트 첨부 attachmentNo들만 전송
+        editorAttachmentNo.forEach(attachmentNo => {
+            formData.append("editorImage", attachmentNo);
+        });
+
+        try {
+            await axios.post("/notice/", formData);
+
+            //성공 시 알림
+            toast.success("공지사항이 등록되었습니다");
+
+            //비우기
+            setNotice({ 
+                noticeType: "", 
+                noticeTitle: "", 
+                noticeContent: "" 
             });
             setAttach([]);
-            fileTag.current.value = "";
-            navigate(`/notice/list`);
+            attachInput.current.value = "";
+            setEditorFiles([]);
+
+            //게시판 리스트로 이동
+            navigate("/notice/list");
+        } catch (e) {
+            toast.error("글 작성 중 오류가 발생했습니다");
         }
-        catch(e){
-            toast.error("글 작성에서 오류가 발생했습니다");
-        }
-    }, [notice.noticeTitle, notice.noticeContent, navigate, attach]);
+    }, [notice, attach, editorFiles, navigate]);
 
     //작성 취소
     const cancelWrite = useCallback(()=>{
         navigate("/notice/list");
     }, [navigate]);
 
+    //모달 열기/닫기
     const openModal = useCallback(()=>{
         if (!modal.current) return;
         const target = Modal.getOrCreateInstance(modal.current);
@@ -172,8 +214,21 @@ export default function NoticeWrite() {
             <div className="col">
                 <FaPencil className="text-info fs-3 fw-bold me-2"/>
                 <span className="align-middle fs-3 fw-bold text-nowrap">글 쓰기</span>
+                <select className="form-select mt-2" onChange={changeNoticeType} value={notice.noticeType}>
+                    <option value="">말머리 선택</option>
+                    <option>[안내]</option>
+                    <option>[긴급]</option>
+                    <option>[행사]</option>
+                    <option>[점검]</option>
+                    <option>[인사]</option>
+                    <option>[채용]</option>
+                    <option>[주의]</option>
+                    <option>[필독]</option>
+                    <option>[기타]</option>
+                    <option>[FAQ]</option>
+                </select>
                 <input type="text" className="form-control bg-outline-secondary text-dark mt-2 me-2" placeholder="제목을 입력하세요 (최소 10자, 최대 100자)" 
-                    name="noticeTitle" value={notice.noticeTitle} onChange={changeNoticeTitle}/>
+                    name="noticeTitle" value={notice.noticeTitle} onChange={changeNoticeTitle} ref={titleInput}/>
             </div>
         </div>    
 
@@ -190,15 +245,23 @@ export default function NoticeWrite() {
         <div className="row mt-4">
             <div className="col">
                 {/* input[type=file]은 보안 상 value 설정이 불가능 */}
-                <input type="file" className="form-control" accept=".png,.jpg,.jpeg,.txt,.pdf,.doc,.docx,.hwp,.ppt,.pptx,.xls,.xlsx,.zip"
-                    onChange={addAttach} multiple ref={fileTag}/>
+                <input type="file" className="form-control" accept=".png,.jpg,.jpeg,.txt,.pdf,.doc,.docx,.hwp,.ppt,.pptx,.xls,.xlsx,.zip,.7z"
+                    onChange={addAttach} multiple ref={attachInput}/>
+                <div className="text-secondary fs-6 mt-2">* 파일 용량은 최대 10MB까지 업로드 가능합니다.</div>
+                <div className="text-secondary fs-6">* 업로드 가능한 파일 확장자</div>
+                <div className="text-secondary fs-6">- 이미지 : .png, .jpg, .jpeg</div>
+                <div className="text-secondary fs-6">- 문서 : .txt, .pdf, .doc, .docx, .hwp, .ppt, .pptx, .xls, .xlsx</div>
+                <div className="text-secondary fs-6">- 압축파일 : .zip, .7z</div>
             </div>
         </div>
 
         <div className="row mt-2">
             <div className="col">
-                {Array.isArray(attach) && attach.map((file, i) => (
-                <span key={i} className="badge bg-info me-2">{file.name}</span>
+                {attach.map((file, i) => (
+                <span key={i} className="d-flex align-items-center mt-1">
+                    <span className="btn btn-outline-success btn-sm">{file.name}</span>
+                    <FaCircleXmark className="text-danger ms-1" onClick={()=>deleteAttach(i)} role="button" style={{ cursor: "pointer" }}/>
+                </span>
                 ))}
             </div>
         </div>
