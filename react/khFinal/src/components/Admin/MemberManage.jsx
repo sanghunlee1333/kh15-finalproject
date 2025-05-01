@@ -3,8 +3,10 @@ import Jumbotron from "../template/Jumbotron";
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import axios from "axios";
 import userImg from '/public/images/profile_basic.png';
-import { FaImages } from "react-icons/fa6";
+import { FaChevronLeft, FaChevronRight, FaImages } from "react-icons/fa6";
 import { Modal } from "bootstrap";
+import { FaInfoCircle } from "react-icons/fa";
+import './MemberList.css'; 
 
 export default function MemberManage(){
     const { number } = useParams(); 
@@ -30,27 +32,28 @@ export default function MemberManage(){
     const checkMemberName = useCallback((e)=>{
         const regex = /^[가-힣]*$/;
         const isValid = regex.test(e.target.value);
-        setMemberBankValid(isValid);
+       // console.log(isValid);
+        setMemberNameValid(isValid);
     },[memberNameValid]);
     const checkMemberDepartment = useCallback((e)=>{
         const regex = /^[가-힣]*$/;
         const isValid = regex.test(e.target.value);
-        setMemberBankValid(isValid);
+        setMemberDepartmentValid(isValid);
     },[memberDepartmentValid]);
     const checkMemberRank = useCallback((e)=>{
         const regex = /^[가-힣]*$/;
         const isValid = regex.test(e.target.value);
-        setMemberBankValid(isValid);
+        setMemberRankValid(isValid);
     },[memberRankValid]);
     const checkMemberContact = useCallback((e)=>{
-        const regex = /^[가-힣]*$/;
+        const regex = /^[0-9]*$/;
         const isValid = regex.test(e.target.value);
-        setMemberBankValid(isValid);
+        setMemberContactValid(isValid);
     },[memberContactValid]);
     const checkMemberEmail = useCallback((e)=>{
         const regex = /^[가-힣]*$/;
         const isValid = regex.test(e.target.value);
-        setMemberBankValid(isValid);
+        setMemberEmailValid(isValid);
     },[memberEmailValid]);
     const checkMemberBank = useCallback((e)=>{
         const regex = /^[가-힣]*$/;
@@ -58,10 +61,38 @@ export default function MemberManage(){
         setMemberBankValid(isValid);
     },[memberBankValid]);
     const checkMemberBankNo = useCallback((e)=>{
-        const regex = /^[가-힣]*$/;
+        const regex = /^[0-9]*$/;
         const isValid = regex.test(e.target.value);
-        setMemberBankValid(isValid);
+        setMemberBankNoValid(isValid);
     },[memberBankNoValid]);
+
+    const changeMemberBankNo = useCallback((e)=>{
+    //    console.log(e.target.value); 
+    //    console.log(member.memberBankNo);
+        const regex = /^[0-9]*$/; 
+    
+        if (regex.test(e.target.value)) {
+            setMember((prev) => ({
+                ...prev,
+                [e.target.name]: e.target.value,
+            }));
+        }
+       
+    },[member]);
+
+    const changeMemberContact = useCallback((e)=>{
+    //     console.log(e.target.value); 
+    //    console.log(member.memberContact);
+        const regex = /^[0-9]*$/; 
+    
+        if (regex.test(e.target.value)) {
+            setMember((prev) => ({
+                ...prev,
+                [e.target.name]: e.target.value,
+            }));
+        }
+    },[member])
+
 
     const memberNameClass = useMemo(()=>{
         if(memberNameValid === null) return "";
@@ -116,17 +147,61 @@ export default function MemberManage(){
         const target = Modal.getOrCreateInstance(editModal.current);
         target.show();
     },[editModal, member])
-    
+    const closePwModal = useCallback(()=>{
+        const target = Modal.getInstance(pwModal.current);
+        target.hide();
+       
 
+    },[pwModal, member])
+    const closeEditModal = useCallback(()=>{
+        const target = Modal.getInstance(editModal.current);
+        target.hide();
+        setMember(backup);
+    },[editModal, member]);
     const changeMember = useCallback((e)=>{
+        
         setMember(prev=>({
-            ...prev, [e.target.name] : e.target.value,
+            ...prev, 
+            [e.target.name] : e.target.value,
         }));
+       
     },[member])
 
+    const yesPw = useCallback(async()=>{
+        //console.log("hello");
+        const resp = await axios.post("/admin/member/resetPw/"+number);
+        if(resp){
+            console.log(resp.data);
+        }
+        //else console.log("erageradg");
+        //console.log(axios.defaults.headers.common['Authorization']);
+    },[]);
 
+    const yesEdit = useCallback(async ()=>{
+       
+        const updatedInfo = member;
+        // console.log(updatedInfo);
+        // console.log(member);
 
+        //const rest = await axios.patch("/admin/member/"+number, updatedInfo);
+        const rest = await axios.patch("/admin/member/", updatedInfo);
+        if(rest === true){
+           console.log("sueeccceesss");
+            loadOne();
+        }
+        else if(rest === false){
+            console.log("failfailfailfail");
+        }
+        else{
+            console.log("nunlnlunluknlu");
+        }
+        const target = Modal.getInstance(editModal.current);
+        target.hide();
+    },[member, editModal])
 
+    
+      
+    
     return(<>
         <Jumbotron subject={`${member.memberName} 님의 상세페이지`}></Jumbotron>
    
@@ -135,13 +210,13 @@ export default function MemberManage(){
     <img
       src={userImg}
       alt="기본 사용자 이미지"
-      className="rounded shadow"
-      style={{ maxWidth: 500 }}
+      className="rounded shadow w-100"
+      style={{ maxWidth: 350 }}
     />
 
     <div className="row ms-4">
-        <div className="col">
-            <h5 className=" ms-4 mb-3">사원 정보</h5>
+        <div className="col w-100">
+            <h5 className="text-center ms-4 mb-3"><FaChevronLeft/>사원 정보<FaChevronRight /></h5>
             <ul className="list-group list-group-flush ms-4">
                 <li className="list-group-item">
                 <strong>사원번호 :</strong> {member.memberNo}
@@ -165,7 +240,10 @@ export default function MemberManage(){
                 <strong>이메일 :</strong> {member.memberEmail}
                 </li>
                 <li className="list-group-item">
-                <strong>기본 주소 :</strong> [{member.memberPost}] {member.memberAddress1} 
+                <strong>우편 번호 :</strong>  [{member.memberPost}] 
+                </li>
+                <li className="list-group-item">
+                <strong>기본 주소 :</strong> {member.memberAddress1}                
                 </li>
                 <li className="list-group-item">
                 <strong>상세 주소 :</strong>  {member.memberAddress2} 
@@ -179,11 +257,13 @@ export default function MemberManage(){
                 </li>
             </ul>
                 <div style={{minHeight:50}}></div>
-            <div className="d-flex flex-column">
-                <button className="btn w-100 btn-outline-dark" onClick={openPwModal}>새 비밀번호 발급</button>
-                <button className="btn w-100 mt-1 btn-outline-dark" onClick={openEditModal}>수정하기</button>
-            </div>
       </div>
+            <div className="mt-2 ms-4">
+                <button className="btn w-100 btn-outline-dark" onClick={openPwModal}>새 비밀번호 발급</button>
+            </div>
+        <div className=" mt-2 ms-4">
+                <button className="btn w-100 mt-1 btn-outline-dark" onClick={openEditModal}>수정하기</button>
+        </div>
     </div>
 
      </div>
@@ -194,12 +274,16 @@ export default function MemberManage(){
             <h2>서류 <FaImages/></h2>
         </div>
     </div>
-
+   
+  
     <div className="row mt-1">
             <div className="col">
                 <h4>주민등록증 혹은 주민등록등본</h4>
             </div>
             <div className="d-flex">
+            {/* <input type="file" className="form-control" accept=".png,.jpg,.jpeg,.txt,.pdf,.doc,.docx,.hwp,.ppt,.pptx,.xls,.xlsx,.zip,.7z"
+                     multiple/> */}
+                     
                 <button className="btn btn-success  ms-auto"><span>사진(들)을 보기</span></button>
             </div>
         </div>
@@ -261,8 +345,8 @@ export default function MemberManage(){
                         <div className="modal-footer">
                         <div className="d-flex justify-content-between">
 
-                            <button type="button" className="btn btn-light me-auto">발급하기</button>
-                            <button type="button" className="btn btn-light ms-auto" >아니오</button>
+                            <button type="button" className="btn btn-light me-auto" onClick={yesPw}>발급하기</button>
+                            <button type="button" className="btn btn-light ms-auto" onClick={closePwModal}>아니오</button>
                         </div>
                         
                         </div>
@@ -278,7 +362,7 @@ export default function MemberManage(){
                         </button>
                         </div>
                         <div className="modal-body">
-                        <h2>회원 정보 수정</h2>
+                        <h2>{member.memberName}님의 정보 수정</h2>
         
                         <div className="row mt-4">
                             <label className="col-sm-3 col-form-label">이름</label>
@@ -289,20 +373,20 @@ export default function MemberManage(){
                         <div className="row mt-4">
                             <label className="col-sm-3 col-form-label">부서</label>
                             <div className="col-sm-9">
-                                <input type="text" name="memberDepartment" className={`form-control ${memberDepartmentClass}`} onBlur={checkMemberDepartment} value={member.memberDepartment} ></input>
+                                <input type="text" name="memberDepartment" className={`form-control ${memberDepartmentClass}`} onChange={changeMember} onBlur={checkMemberDepartment} value={member.memberDepartment} ></input>
                             </div>
                         </div>
                         <div className="row mt-4">
                             <label className="col-sm-3 col-form-label">직급</label>
                             <div className="col-sm-9">
-                                <input type="text" name="memberRank"  className={`form-control ${memberRankClass}`} onBlur={checkMemberRank} value={member.memberRank} ></input>
+                                <input type="text" name="memberRank"  className={`form-control ${memberRankClass}`} onChange={changeMember} onBlur={checkMemberRank} value={member.memberRank} ></input>
                             </div>
                         </div>
                     
                         <div className="row mt-4">
                             <label className="col-sm-3 col-form-label">연락처</label>
                             <div className="col-sm-9">
-                                <input type="text" name="memberContact"  className={`form-control ${memberContactClass}`} onBlur={checkMemberContact} onChange={changeMember} value={member.memberContact} ></input>
+                                <input type="text" name="memberContact" inputMode="numeric" className={`form-control ${memberContactClass}`} onBlur={checkMemberContact} onChange={changeMemberContact} value={member.memberContact} ></input>
                             </div>
                         </div>
                     
@@ -316,8 +400,9 @@ export default function MemberManage(){
                         <div className="row mt-4">
                             <label className="col-sm-3 col-form-label">은행명</label>
                             <div className="col-sm-9">
-                                <input type="text" name="memberBank"  className="form-control" onChange={changeMember} value={member.memberBank} ></input>
-                                <input type="text" name="memberBankNo" inputMode="numeric" onChange={changeMember}  placeholder="계좌번호를 입력해주세요" className="form-control" value={member.memberBankNo} ></input>
+                                <input type="text" name="memberBank"   className={`form-control ${memberBankClass}`} onChange={changeMember} onBlur={checkMemberBank} value={member.memberBank} ></input>
+                                <input type="text" name="memberBankNo" inputMode="numeric" onChange={changeMemberBankNo}   onBlur={checkMemberBankNo}
+                                 placeholder="계좌번호를 입력해주세요"  className={`form-control ${memberBankNoClass}`} value={member.memberBankNo} ></input>
                             </div>
                         </div>
                     
@@ -327,8 +412,8 @@ export default function MemberManage(){
                         <div className="modal-footer">
                         <div className="d-flex justify-content-between">
 
-                            <button type="button" className="btn btn-danger me-auto">예</button>
-                            <button type="button" className="btn btn-light ms-auto" >아니오</button>
+                            <button type="button" className="btn btn-danger me-auto" onClick={yesEdit}>예</button>
+                            <button type="button" className="btn btn-light ms-auto" onClick={closeEditModal}>아니오</button>
                         </div>
                         
                         </div>
@@ -336,6 +421,6 @@ export default function MemberManage(){
                     </div>
                 </div>
 
-
+                
     </>)
 }
