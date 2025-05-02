@@ -1,8 +1,9 @@
 import axios from "axios";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FaMagnifyingGlass } from "react-icons/fa6";
 import { IoMdPhonePortrait } from "react-icons/io";
 import { RiContactsBook3Fill } from "react-icons/ri";
+import { BsPersonRaisedHand } from "react-icons/bs";
 
 export default function MemberContact() {
     //state
@@ -12,14 +13,26 @@ export default function MemberContact() {
     const [searchContacts, setSearchContacts] = useState("");
     const [filterContacts, setFilterContacts] = useState({});
     const [noResults, setNoResults] = useState(false); // 검색 결과가 없을 때의 상태
+    const [myInfo, setMyInfo] = useState(null);
 
     //callback
+    // 내 정보 불러오기
+    const loadMyInfo = useCallback(async () => {
+        const { data } = await axios.get("/member/contact/me");
+        setMyInfo(data);
+    }, []);
+
     //연락처 불러오기
     const loadContacts = useCallback(async () => {
-        const { data } = await axios.get("/member/contact");
+        const token = axios.defaults.headers.common['Authorization']//저장된 토큰 가져오기
+        const { data } = await axios.get("/member/contact", {
+            headers: {
+                Authorization: token,
+            }
+        });
         setGroupContacts(data);
         setFilterContacts(data);//검색하지 않았을 경우에도 목록을 불러와야하니까
-    }, []);
+    }, [groupContacts, filterContacts, loadMyInfo]);
 
     //연락처 검색
     const searchContact = useCallback(() => {
@@ -75,7 +88,8 @@ export default function MemberContact() {
     //effect
     useEffect(() => {
         loadContacts();
-    }, [loadContacts]);
+        loadMyInfo();
+    }, []);
 
     //view
     return (<>
@@ -111,8 +125,57 @@ export default function MemberContact() {
             </div>
         )}
 
+
         {/* 연락처 리스트 */}
         <div className="list-group">
+            {myInfo && (
+                <div className="mb-4">
+                    {/* 부서명 표시 */}
+                    <div className="bg-light px-3 py-2 border-top fw-semibold text-secondary">
+                        {myInfo.memberDepartment}
+                    </div>
+
+                    {/* 본인 연락처 스타일 동일하게 표시 */}
+                    <div className="list-group-item d-flex align-items-center">
+                        <img
+                            src="/images/profile_basic.png"
+                            alt="Default Profile"
+                            className="rounded-circle me-2"
+                            style={{ width: "40px", height: "40px", objectFit: "cover" }}
+                        />
+
+                        <div className="flex-grow-1 d-flex flex-column flex-sm-row justify-content-between">
+                            <div>
+                                <div className="d-flex align-items-center mb-1">
+                                    <h5 className="mb-0 me-2 text-nowrap">{myInfo.memberName}</h5>
+                                    <span className="border border-primary text-primary px-2 py-1 rounded-pill small text-nowrap">
+                                        {myInfo.memberRank}
+                                    </span>
+                                </div>
+                                <div className="d-flex flex-column">
+                                    <div className="d-flex align-items-center text-muted ms-1" style={{ fontSize: '0.875rem' }}>
+                                        <span>{myInfo.memberEmail}</span>
+                                    </div>
+                                    <div className="d-flex align-items-center">
+                                        <IoMdPhonePortrait className="text-primary" size={15} />
+                                        <span className="fw-semibold text-muted">
+                                            {myInfo.memberContact}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="d-flex align-items-center gap-2 mt-2 mt-sm-0 justify-content-end text-sm">
+                                <span className="text-white bg-primary border border-primary rounded-pill px-2 py-1">
+                                    내 연락처
+                                </span>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            )}
+            <div className="mt-4"></div>
             {Object.keys(filterContacts).map((department) => (
                 <div key={department}>
                     {/* 부서명 표시 */}
