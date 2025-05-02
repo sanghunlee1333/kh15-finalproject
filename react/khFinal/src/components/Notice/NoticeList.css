@@ -1,3 +1,14 @@
+.notice-row {
+    height: 3.5rem;
+}
+
+.notice-cell {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .pagination-button { /* */
     padding: 0 !important; /* .btn 클래스 기본 패딩(양쪽 0.75rem)이 숫자 정렬을 망침 -> !important를 붙여야 Bootstrap 기본 패딩을 강제로 덮어씀 */ 
     
@@ -13,6 +24,30 @@
 
 .w-30 {
     width: 10vw !important;
+}
+
+@media (max-width: 992px) {
+    .list-group-item {
+      font-size: 0.85rem;
+    }
+}
+@media (max-width: 768px) {
+    .list-group-item {
+        font-size: 0.75rem;
+    }
+}
+@media (max-width: 576px) {
+    .list-group-item {
+        font-size: 0.7rem;
+    }
+}
+
+.text-responsive {
+    font-size: clamp(0.8rem, 1vw, 1rem) !important;
+}
+  
+.icon-responsive {
+    font-size: 1em !important;
 }
 
 /* 

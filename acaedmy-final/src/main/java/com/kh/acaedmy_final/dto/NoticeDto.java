@@ -10,7 +10,10 @@ import lombok.NoArgsConstructor;
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class NoticeDto {
 	private long noticeNo;
+	private String noticeType;
 	private String noticeTitle;
 	private String noticeContent;
+	private long noticeWriterNo;
+	private String noticeWriterName;
 	private Timestamp noticeWriteDate;
 }

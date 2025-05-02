@@ -11,6 +11,7 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -59,11 +60,18 @@ public class AttachmentRestController {
 	public Map<String, Object> upload(@RequestParam MultipartFile attach) throws IllegalStateException, IOException {
 		AttachmentDto attachmentDto = attachmentService.save(attach); //(DB + 파일 저장)
 		
-		String url = "/attachment/" + attachmentDto. getAttachmentNo(); //저장된 파일 URL 경로
+		String url = "/api/attachment/" + attachmentDto. getAttachmentNo(); //저장된 파일 URL 경로
 		
 		Map<String, Object> map = new HashMap<>();
 		map.put("url", url); //프론트에 반환할 것
+		map.put("attachmentNo", attachmentDto.getAttachmentNo());
+		
 		return map;
+	}
+	
+	@DeleteMapping("/{attachmentNo}")
+	public void delete(@PathVariable int attachmentNo) {
+	    attachmentService.delete(attachmentNo);
 	}
 	
 }

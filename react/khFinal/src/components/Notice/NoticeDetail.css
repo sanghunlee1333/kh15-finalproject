@@ -1,0 +1,11 @@
+.text-responsive-title {
+    font-size: clamp(0.8rem, 5vw, 2rem) !important;
+}
+
+.text-responsive {
+    font-size: clamp(0.8rem, 1vw, 1rem) !important;
+}
+  
+.icon-responsive {
+    font-size: 1em !important;
+}
