@@ -27,9 +27,9 @@ public class RoomRestController {
 	
 	@Autowired
 	private RoomService roomService;
+	
 	@Autowired
 	private RoomDao roomDao;
-	
 	
 	@PostMapping
 	public boolean createRoom(@RequestBody RoomCreateRequestDto request,
