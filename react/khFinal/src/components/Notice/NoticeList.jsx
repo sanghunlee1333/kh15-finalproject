@@ -189,19 +189,20 @@ export default function NoticeList() {
             <div className="col">
                 <div className="d-flex justify-content-end">
                     <div className="d-flex align-items-center">
-                        <select name="keyword" className="form-select flex-shrink-1 w-30" value={column}
+                        <select name="keyword" className="form-select text-responsive" value={column}
                             onChange={e => setColumn(e.target.value)}>
                             <option value="">선택</option>
                             <option value="notice_title">제목</option>
                             <option value="notice_content">내용</option>
+                            <option value="notice_writer_name">작성자</option>
                         </select>
-                        <input type="text" className="form-control flex-shrink-1 w-50 ms-2" placeholder="검색어"
+                        <input type="text" className="form-control text-responsive ms-1" placeholder="검색어"
                             value={keyword} onChange={e => setKeyword(e.target.value)}
                         />
                         <button type="button" onClick={searchNotice}
-                            className="btn btn-secondary ms-2 d-flex flex-shrink-1 w-20 
+                            className="btn btn-secondary text-responsive ms-1 d-flex 
                                 align-items-center justify-content-center text-nowrap">
-                            <FaSearch />
+                            <FaSearch className="icon-responsive" />
                         </button>
                     </div>
                 </div>
@@ -272,16 +273,16 @@ export default function NoticeList() {
         </div>
 
         <div className="row mt-4">
-            <div className="col text-start d-flex flex-wrap gap-2">
+            <div className="col text-start d-flex justify-content-between flex-wrap gap-2">
                 {userDepartment === "인사" && (
-                <button className="btn btn-success d-flex align-items-center" onClick={writeNotice}>
-                    <FaPencil className="me-1 fs-6" />
+                <button className="btn btn-success text-responsive d-flex align-items-center" onClick={writeNotice}>
+                    <FaPencil className="icon-responsive me-1" />
                     <span className="text-nowrap">작성</span>
                 </button>
                 )}
                 {hasChecked && (
-                    <button className="btn btn-danger d-flex align-items-center ms-2" onClick={openDeleteModal}>
-                        <FaTrash className="me-1 fs-6" />
+                    <button className="btn btn-danger text-responsive d-flex align-items-center ms-1" onClick={openDeleteModal}>
+                        <FaTrash className="icon-responsive me-1" />
                         <span className="text-nowrap">삭제</span>
                     </button>
                 )}

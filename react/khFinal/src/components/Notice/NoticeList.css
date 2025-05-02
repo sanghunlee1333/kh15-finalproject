@@ -42,6 +42,14 @@
     }
 }
 
+.text-responsive {
+    font-size: clamp(0.8rem, 1vw, 1rem) !important;
+}
+  
+.icon-responsive {
+    font-size: 1em !important;
+}
+
 /* 
 1. rem
 root em: html 태그에 설정된 폰트 크기를 기준으로 계산 

@@ -1,8 +1,8 @@
-import { FaEllipsisH, FaExclamationTriangle, FaExclamationCircle } from "react-icons/fa";
+import { FaExclamationTriangle, FaExclamationCircle } from "react-icons/fa";
 import { IoMdInformationCircle, IoMdPersonAdd } from "react-icons/io";
 import { MdEventAvailable } from "react-icons/md";
 import { IoPersonSharp, IoSettingsSharp } from "react-icons/io5";
-import { FaStarOfLife, FaCircleQuestion } from "react-icons/fa6";
+import { FaStarOfLife, FaCircleQuestion, FaFolderOpen } from "react-icons/fa6";
 
 
 const typeMap = {
@@ -40,7 +40,7 @@ const typeMap = {
     },
     "[기타]": {
       color : "gray",
-      icon : () => <FaEllipsisH />
+      icon : () => <FaFolderOpen />
     },
     "[FAQ]": {
       color : "dodgerblue",
