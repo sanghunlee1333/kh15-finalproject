@@ -1,15 +1,15 @@
 import './NoticeWrite.css'
 
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Modal } from "bootstrap";
 import { toast } from "react-toastify";
 
 import { FaCheck, FaPencil, FaRegCircleXmark } from "react-icons/fa6";
-import { RiArrowGoBackFill } from "react-icons/ri";
 
 import axios from "axios";
 import $ from 'jquery';
+import { RiArrowGoBackFill } from 'react-icons/ri';
 window.$ = $;
 window.jQuery = $;
 
@@ -20,6 +20,9 @@ export default function NoticeWrite() {
     const modal = useRef();
     const titleInput = useRef();
     const attachInput = useRef();
+
+    //param
+    const { noticeNo } = useParams();
     
     //navigate
     const navigate = useNavigate();
@@ -31,8 +34,9 @@ export default function NoticeWrite() {
         noticeContent: ""
     });
     const [attach, setAttach] = useState([]); //일반 첨부파일 (input)
-
     const [editorFiles, setEditorFiles] = useState([]);
+    const [deleteAttach, setDeleteAttach] = useState([]);
+    const [deleteEditorImage, setDeleteEditorImage] = useState([]);
 
     const editorImageUpload = useCallback((files) => {
         const fileArray = Array.from(files);
@@ -45,10 +49,20 @@ export default function NoticeWrite() {
 
     //effect
     useEffect(()=>{
+      axios.get(`/notice/${noticeNo}`).then(resp=>setNotice(resp.data));
+      axios.get(`/notice/${noticeNo}/attach`).then(resp=>setAttach(resp.data));
+    }, [noticeNo]);
+
+    useEffect(()=>{
+      if(notice.noticeContent && editor.current){
+        $(editor.current).summernote("code", notice.noticeContent);
+      }
+    }, [notice.noticeContent]);
+
+    useEffect(()=>{
         if(editor.current) {
             $(editor.current).summernote({
                 placeholder: "내용 입력 (1 ~ 1,000자 입력 가능)",
-                height: 300,
                 minHeight: 400, //최소높이(px)
                 maxHeight: 600, //최대높이(px)
                 toolbar: [
@@ -60,6 +74,14 @@ export default function NoticeWrite() {
                 ],
                 callbacks: {
                     onImageUpload: editorImageUpload,
+                    onMediaDelete: function(target) {
+                      const src = target[0].src;
+                      const match = src.match(/\/api\/attachment\/(\d+)/);
+                      if (match) {
+                        const attachmentNo = parseInt(match[1]);
+                        setDeleteEditorImage(prev => [...prev, attachmentNo]);
+                      }
+                    },
                     onChange: (contents) => {
                         setNotice(prev=>({
                             ...prev,
@@ -92,29 +114,23 @@ export default function NoticeWrite() {
     }, []);
 
     //일반 파일첨부
-    const addAttach = useCallback(e=>{
-        const newFiles = Array.from(e.target.files);
-        setAttach(prev=>{
-            const combined = [...prev, ...newFiles];
-            // 중복 제거(이름 + 크기로)
-            const unique = combined.filter(
-                (file, index, self) => 
-                    index === self.findIndex(f=>
-                        f.name === file.name && f.size === file.size
-                    )
-            );
-            e.target.value = "";
-            return unique;
-        })
+    const addAttachFile = useCallback(e=>{
+      setAttach(
+        prev => [
+          ...prev, 
+          ...Array.from(e.target.files)
+        ]
+      );
     }, []);
 
     //일반 파일첨부 삭제
-    const deleteAttach = useCallback((index)=>{
+    const deleteAttachFile = useCallback((index)=>{
+        setDeleteAttach(prev=>[...prev, attach[index].attachmentNo]);
         setAttach(prev=>prev.filter((_, i) => i !== index));
-    }, []);
+    }, [attach]);
 
     //제출
-    const submitNotice = useCallback(async () => {
+    const editNotice = useCallback(async () => {
         if (notice.noticeTitle.length < 10 || notice.noticeContent.length < 30) {
             openModal();
             return;
@@ -122,10 +138,10 @@ export default function NoticeWrite() {
     
         const formData = new FormData();
     
-        //일반 첨부파일 추가
-        attach.forEach(file => {
-            formData.append("attach", file);
-        });
+        // //일반 첨부파일 추가
+        // attach.forEach(file => {
+        //     formData.append("attach", file);
+        // });
 
         // Summernote 이미지 파일 업로드
         const uploadedUrls = [];
@@ -156,25 +172,54 @@ export default function NoticeWrite() {
             if (img.src.startsWith("blob:")) {
                 img.setAttribute("src", uploadedUrls[idx++]);
             }
+            else {
+              const match = img.src.match(/\/api\/attachment\/(\d+)/);
+              if(match){
+                const attachmentNo = parseInt(match[1]);
+                editorAttachmentNo.push(attachmentNo);
+              }
+            }
         });
 
         const updatedContent = doc.body.innerHTML;
         
         // notice 정보 추가
+        formData.append("noticeNo", noticeNo);
         formData.append("noticeType", notice.noticeType);
         formData.append("noticeTitle", notice.noticeTitle);
         formData.append("noticeContent", updatedContent);
         
-        //서머노트 첨부 attachmentNo들만 전송
-        editorAttachmentNo.forEach(attachmentNo => {
-            formData.append("editorImage", attachmentNo);
+        // 일반 첨부파일 추가 (추가된 것만 formData에)
+        const newFiles = attach.filter(file => !file.attachmentNo);
+        newFiles.forEach(file => {
+          formData.append("attach", file);
+        });
+
+        // 삭제 요청 파일 번호 전송
+        const uniqueDeleteAttach = [...new Set(deleteAttach)];
+          uniqueDeleteAttach.forEach(attachmentNo => {
+          formData.append("deleteAttach", attachmentNo);
+        });
+
+        // 중복 제거 후 전송
+        const uniqueEditorNo = [...new Set(editorAttachmentNo)];
+          uniqueEditorNo.forEach(attachmentNo => {
+          formData.append("editorImage", attachmentNo);
+        });
+
+        deleteAttach.forEach(attachmentNo => {
+          formData.append("deleteAttach", attachmentNo);
+        });
+
+        deleteEditorImage.forEach(attachmentNo => {
+          formData.append("deleteEditorImage", attachmentNo);
         });
 
         try {
-            await axios.post("/notice/", formData);
+            await axios.post("/notice/edit", formData);
 
             //성공 시 알림
-            toast.success("게시글이 등록되었습니다");
+            toast.success("게시글이 수정되었습니다");
 
             //비우기
             setNotice({ 
@@ -187,15 +232,15 @@ export default function NoticeWrite() {
             setEditorFiles([]);
 
             //게시판 리스트로 이동
-            navigate("/notice/list");
+            navigate(`/notice/detail/${noticeNo}`);
         } catch (e) {
             toast.error("작성 중 오류가 발생했습니다");
         }
-    }, [notice, attach, editorFiles, navigate]);
+    }, [notice, attach, editorFiles, deleteAttach, deleteEditorImage, navigate]);
 
     //작성 취소
     const cancelWrite = useCallback(()=>{
-        navigate("/notice/list");
+        navigate(`/notice/detail/${noticeNo}`);
     }, [navigate]);
 
     //모달 열기/닫기
@@ -214,7 +259,7 @@ export default function NoticeWrite() {
         <div className="row">
             <div className="col">
                 <FaPencil className="text-info fs-3 fw-bold me-2"/>
-                <span className="align-middle fs-3 fw-bold text-nowrap">글 쓰기</span>
+                <span className="align-middle fs-3 fw-bold text-nowrap">글 수정</span>
                 <select className="form-select text-responsive mt-2" onChange={changeNoticeType} value={notice.noticeType}>
                     <option value="">말머리 선택</option>
                     <option>[안내]</option>
@@ -236,7 +281,7 @@ export default function NoticeWrite() {
         <hr className="hr-stick" />
 
         <div className="row mt-4">
-            <div className="col editor-container">
+            <div className="col">
                 <textarea ref={editor}></textarea>
             </div>
         </div>
@@ -247,7 +292,7 @@ export default function NoticeWrite() {
             <div className="col">
                 {/* input[type=file]은 보안 상 value 설정이 불가능 */}
                 <input type="file" className="form-control text-responsive" accept=".png,.jpg,.jpeg,.txt,.pdf,.doc,.docx,.hwp,.ppt,.pptx,.xls,.xlsx,.zip,.7z"
-                    onChange={addAttach} multiple ref={attachInput}/>
+                    onChange={addAttachFile} multiple ref={attachInput}/>
                 <div className="text-secondary text-responsive mt-2">* 파일 용량은 최대 10MB까지 업로드 가능합니다.</div>
                 <div className="text-secondary text-responsive">* 업로드 가능한 파일 확장자</div>
                 <div className="text-secondary text-responsive">- 이미지 : .png, .jpg, .jpeg</div>
@@ -260,8 +305,8 @@ export default function NoticeWrite() {
             <div className="col">
                 {attach.map((file, i) => (
                 <span key={i} className="d-flex align-items-center mt-1">
-                    <span className="btn btn-outline-success btn-sm">{file.name}</span>
-                    <FaRegCircleXmark className="text-danger ms-1" onClick={()=>deleteAttach(i)} role="button" style={{ cursor: "pointer" }}/>
+                    <span className="btn btn-outline-success text-responsive btn-sm">{file.attachmentName || file.name}</span>
+                    <FaRegCircleXmark className="text-danger icon-responsive ms-1" onClick={()=>deleteAttachFile(i)} role="button" style={{ cursor: "pointer" }}/>
                 </span>
                 ))}
             </div>
@@ -269,13 +314,13 @@ export default function NoticeWrite() {
 
         <div className="row mt-3">
             <div className="col d-flex align-items-center justify-content-end">
-                <button type="submit" className="btn btn-success text-responsive d-flex align-items-center" onClick={submitNotice}>
-                    <FaCheck className="icon-responsive" />
-                    <span className="ms-1">제출</span>
+                <button type="submit" className="btn btn-success text-responsive d-flex align-items-center" onClick={editNotice}>
+                  <FaCheck className="icon-responsive" />
+                  <span className="ms-1">수정</span>
                 </button>
                 <button type="button" className="btn btn-danger text-responsive d-flex align-items-center ms-2" onClick={cancelWrite}>
-                    <RiArrowGoBackFill className="icon-responsive" />
-                    <span className="ms-1">취소</span>
+                  <RiArrowGoBackFill className="icon-responsive" />
+                  <span className="ms-1">취소</span>
                 </button>
             </div>
         </div>
