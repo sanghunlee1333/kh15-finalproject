@@ -40,11 +40,15 @@ export default function ChatRoom() {
 
     //연락처 불러오기
     const loadContacts = useCallback(async () => {
-        const { data } = await axios.get("/member/contact");
-        console.log(data); // 데이터 확인
+        const token = axios.defaults.headers.common['Authorization']
+        const { data } = await axios.get("/member/contact", {
+            headers: {
+                Authorization: token,
+            }
+        });
         setGroupContacts(data);
         setFilterContacts(data);//검색하지 않았을 경우에도 목록을 불러와야하니까
-    }, []);
+    }, [groupContacts, filterContacts]);
 
     //연락처 검색
     const searchContact = useCallback(() => {
@@ -186,7 +190,7 @@ export default function ChatRoom() {
     //effect
     useEffect(() => {
         loadContacts();
-    }, [loadContacts]);
+    }, []);
 
     useEffect(() => {
         loadRooms();

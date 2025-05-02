@@ -66,7 +66,7 @@ function App() {
     refreshLogin();
   }, []);
 
-  // if (!loading) return <div>로딩 중...</div>;
+  if (!loading) return <div>로딩 중...</div>;
 
   return (
     <>
