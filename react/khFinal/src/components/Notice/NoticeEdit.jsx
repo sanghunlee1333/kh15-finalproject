@@ -138,11 +138,6 @@ export default function NoticeWrite() {
     
         const formData = new FormData();
     
-        // //일반 첨부파일 추가
-        // attach.forEach(file => {
-        //     formData.append("attach", file);
-        // });
-
         // Summernote 이미지 파일 업로드
         const uploadedUrls = [];
         const editorAttachmentNo = [];
@@ -325,7 +320,6 @@ export default function NoticeWrite() {
             </div>
         </div>
 
-        {/* 태그 선택을 잘 안하는 리액트에서도 모달만큼은 ref로 연결(modal.current = document.querySelector("modal")) */}
         <div className="modal fade" tabIndex="-1" ref={modal} data-bs-backdrop="static"> {/* 모달 바깥쪽 영역. tabinden -> tabIndex */}
             <div className="modal-dialog"> {/* 모달 영역 */} 
                 <div className="modal-content">
