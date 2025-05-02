@@ -113,8 +113,8 @@ export default function ChatRoom() {
 
     const loadRooms = useCallback(async () => {
         try {
-            let token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
-
+          
+            const token = axios.defaults.headers.common['Authorization'];
             //토큰이 없다면 로그인 페이지로 리다이렉트
             if(!token) {
                 window.location.href = "/member/login"
@@ -122,7 +122,7 @@ export default function ChatRoom() {
             }
             const { data } = await axios.get("/rooms", {
                 headers: {
-                    Authorization: `Bearer ${token}`
+                    Authorization: token
                 }
             });
     
