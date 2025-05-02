@@ -14,12 +14,11 @@ import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { Modal } from "bootstrap";
 import { FaPencil } from 'react-icons/fa6';
 import { useRecoilValue } from 'recoil';
-import { userDepartmentState, userLoadingState } from '../utils/stroage';
+import { userDepartmentState } from '../utils/stroage';
 
 export default function NoticeList() {
     //recoil - 인사팀인지
     const userDepartment = useRecoilValue(userDepartmentState);
-    const loading = useRecoilValue(userLoadingState);
 
     //navigate
     const navigate = useNavigate();
