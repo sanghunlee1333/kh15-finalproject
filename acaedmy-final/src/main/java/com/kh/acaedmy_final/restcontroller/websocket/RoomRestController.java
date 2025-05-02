@@ -30,8 +30,7 @@ public class RoomRestController {
 	@Autowired
 	private RoomDao roomDao;
 	
-	
-	@PostMapping
+	@PostMapping("/")
 	public boolean createRoom(@RequestBody RoomCreateRequestDto request,
 										@RequestHeader("Authorization") String bearerToken) {
 //		//사용자 인증
@@ -62,7 +61,7 @@ public class RoomRestController {
 	}
 	
 	//사용자가 참여한 채팅방 목록 조회(상세 정보)
-	@GetMapping
+	@GetMapping("/{roomNo}")
 	public List<RoomDto> getMyRooms(@RequestHeader("Authorization") String bearerToken) {
 		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
 		
