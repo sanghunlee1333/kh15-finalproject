@@ -46,7 +46,7 @@ function App() {
       const resp = await axios.post("/member/refresh");
       setUserNo(resp.data.memberNo);
       setUserDepartment(resp.data.memberDepartment);
-      console.log(resp.data);
+      // console.log(resp.data);
       if(stay){
         window.sessionStorage.removeItem("refreshToken");
         window.localStorage.setItem("refreshToken", resp.data.refreshToken);

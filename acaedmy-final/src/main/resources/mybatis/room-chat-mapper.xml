@@ -14,36 +14,34 @@
 	<!-- 채팅 메세지 DB에 등록 -->
 	<insert id="insert" parameterType="RoomChatDto">
 		insert into room_chat(
-			room_chat_no, room_chat_sender,
-			room_chat_type, room_chat_content,
-			room_chat_time
+			room_chat_no, room_chat_sender,room_chat_origin,
+			room_chat_type, room_chat_content, room_chat_time
 		)
 		values(
-			#{roomChatNo}, #{roomChatSender},
-			#{roomChatType}, #{roomChatContent},
-			#{roomChatTime}
+			#{roomChatNo}, #{roomChatSender}, #{roomChatOrigin},
+			#{roomChatType}, #{roomChatContent}, #{roomChatTime}
 		)
 	</insert>
 	
 	<!-- 방번호 기준 모든 채팅 조회 -->
-	<select  id="listByRoom" resultType="RoomChatDto">
+	<select  id="listByRoom" parameterType="long" resultType="RoomChatDto">
 		select
 			room_chat_no, room_chat_sender, room_chat_origin,
 			room_chat_type, room_chat_content, room_chat_time
-		from room chat
+		from room_chat
 		where room_chat_origin = #{roomNo}
 		order by room_chat_time asc
 	</select>
 	
 	<!-- 최근 채팅 몇 개만 조회 -->
-	<select id="listRecent" resultType="RoomChatDto">
-		select
-			room_chat_no, room_chat_sender, room_chat_origin,
-			room_chat_type, room_chat_content, room_chat_time
-		from (
-			select * from room_chat
+	<select id="listRecent" parameterType="map" resultType="RoomChatDto">
+		select * from (
+			select
+				room_chat_no, room_chat_sender, room_chat_origin,
+				room_chat_type, room_chat_content, room_chat_time
+			from room_chat
 			where room_chat_origin = #{roomNo}
-			order by room_chat_time desc
+			order by room_chat_time desc	
 		)
 		<![CDATA[
 		where rownum <= #{count}
