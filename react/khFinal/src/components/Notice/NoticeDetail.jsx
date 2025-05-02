@@ -1,11 +1,13 @@
-import { useNavigate, useParams } from "react-router";
+import typeMap from "./typeMap";
+import './NoticeDetail.css'
+
+import { Link, useNavigate, useParams } from "react-router";
 import Jumbotron from "../template/Jumbotron";
 import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 
 import { FaRegCircleCheck } from "react-icons/fa6";
-import { MdNotificationImportant } from "react-icons/md";
-import { FaCloudDownloadAlt } from "react-icons/fa";
+import { FaCloudDownloadAlt, FaEdit } from "react-icons/fa";
 import moment from "moment";
 import { Modal } from "bootstrap";
 import { FaTrash } from "react-icons/fa";
@@ -21,6 +23,8 @@ export default function NoticeDetail() {
     //state
     const [notice, setNotice] = useState({});
     const [attachList, setAttachList] = useState([]);
+
+    const meta = typeMap[notice.noticeType] || {};
 
     //navigate
     const navigate = useNavigate();
@@ -51,6 +55,10 @@ export default function NoticeDetail() {
         navigate("/notice/list");
     }, [navigate]);
 
+    const moveEdit = useCallback(()=>{
+        navigate(`/notice/edit/${noticeNo}`);
+    }, [navigate]);
+
     const openModal = useCallback(()=>{
         if (!modal.current) return;
         const target = Modal.getOrCreateInstance(modal.current);
@@ -63,19 +71,24 @@ export default function NoticeDetail() {
 
     //view
     return(<>
-        <Jumbotron subject="게시글 상세"/>
+        <Jumbotron subject="공지 게시판"/>
         
         <div className="row mt-4">
             <div className="col">
-                <MdNotificationImportant className="text-danger align-middle"/>
-                <span className="ms-1 align-middle">공지 게시판</span>
+                <span className="d-flex align-items-center fw-semibold ms-1" style={{ color: meta.color }}>
+                    <span className="icon-responsive">{meta.icon?.()}</span>
+                    <span className="text-responsive">{notice.noticeType}</span>
+                </span>
             </div>
         </div>
 
-        <div className="row mt-2">
+        <div className="row mt-1">
             <div className="col">
-                <h1 className="inline-block" style={{ marginBottom: 0 }}>{notice.noticeTitle}</h1>
-                <span className="text-secondary">{moment(notice.noticeWriteDate).format("YYYY-MM-DD HH:mm")}</span>
+                <h1 className="text-responsive-title mb-0">{notice.noticeTitle}</h1>
+                <div className="d-flex justify-content-between mt-1">
+                    <span className="text-responsive text-end">{notice.noticeWriterName}</span>
+                    <span className="text-responsive text-secondary text-end">{moment(notice.noticeWriteDate).format("YYYY-MM-DD HH:mm")}</span>
+                </div>
             </div>
         </div>
 
@@ -83,46 +96,51 @@ export default function NoticeDetail() {
 
         <div className="row mt-4">
             <div className="col">
-                <div dangerouslySetInnerHTML={{ __html: notice.noticeContent }}></div>
+                <div className="text-responsive" dangerouslySetInnerHTML={{ __html: notice.noticeContent }}></div>
             </div>
         </div>
 
-        <hr className="mt-2"/>
+        <hr className="mt-4"/>
 
         <div className="row mt-4">
             <div className="col">
-                <h6 className="fw-bold">첨부파일</h6>
+                <h6 className="text-responsive fw-bold">첨부파일</h6>
                 {attachList.length > 0 ? (
                     <ul className="list-group">
                         {attachList.map(file=>(
                         <li key={file.attachmentNo} className="list-group-item d-flex justify-content-start align-items-center border-0 p-1">
                             <FaRegCircleCheck className="text-success"/>
-                            <a href={`http://localhost:8080/api/attachment/${file.attachmentNo}`} 
-                                target="_blank" rel="noreferrer" className="text-decoration-none ms-1">
+                            <Link to={`http://localhost:8080/api/attachment/${file.attachmentNo}`} 
+                                target="_blank" rel="noreferrer" className="text-responsive text-decoration-none ms-1">
                                 {file.attachmentName}
-                            </a>
-                            <span className="badge bg-secondary ms-2 p-2 fw-semibold d-inline-flex align-items-center">
-                                <FaCloudDownloadAlt className="me-1" />
-                                {(file.attachmentSize / 1024).toFixed(1)} KB
-                            </span>
+                            </Link>
+                            <Link className="btn btn-outline-info text-responsive d-inline-flex align-items-center ps-2 pe-2 pt-1 pb-1 ms-2"
+                                to={`http://localhost:8080/api/attachment/${file.attachmentNo}`}>
+                                <FaCloudDownloadAlt className="icon-responsive" />
+                                <span className="ms-1">{(file.attachmentSize / 1024).toFixed(2)} KB</span>
+                            </Link>
                         </li>
                         ))}
                     </ul>
                 ) : (
-                    <div className="text-muted">첨부된 파일이 없습니다</div>
+                    <div className="text-responsive text-muted">첨부된 파일이 없습니다</div>
                 )}
             </div>
         </div>
 
         <div className="row mt-4">
-            <div className="col text-end">
-                <button type="button" className="btn btn-danger align-items-center" onClick={openModal}>
-                    <FaTrash className="align-middle me-1" />
-                    <span className="align-middle text-nowrap">삭제</span>
+            <div className="col d-flex align-items-center justify-content-end">
+                <button type="button" className="btn btn-success text-responsive d-flex align-items-center" onClick={moveEdit}>
+                    <FaEdit className="icon-responsive me-1" />
+                    <span className="text-responsive text-nowrap">수정</span>
                 </button>
-                <button type="button" className="btn btn-secondary align-items-center ms-2" onClick={moveList}>
-                    <FaListUl className="align-middle me-1" />
-                    <span className="align-middle text-nowrap">목록</span>
+                <button type="button" className="btn btn-danger text-responsive d-flex align-items-center ms-2" onClick={openModal}>
+                    <FaTrash className="icon-responsive me-1" />
+                    <span className="text-responsive text-nowrap">삭제</span>
+                </button>
+                <button type="button" className="btn btn-secondary text-responsive d-flex align-items-center ms-2" onClick={moveList}>
+                    <FaListUl className="icon-responsive me-1" />
+                    <span className="text-responsive text-nowrap">목록</span>
                 </button> 
             </div>
         </div>
