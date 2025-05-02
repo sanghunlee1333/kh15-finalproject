@@ -1,6 +1,8 @@
-import './NoticeList.css'
+import './NoticeList.css';
+import typeMap from "./typeMap";
 
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import Jumbotron from "../template/Jumbotron";
@@ -11,9 +13,16 @@ import { TbCircleLetterNFilled } from "react-icons/tb";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { Modal } from "bootstrap";
 import { FaPencil } from 'react-icons/fa6';
+import { useRecoilValue } from 'recoil';
+import { userDepartmentState, userLoadingState } from '../utils/stroage';
 
 export default function NoticeList() {
-    //recoil - 관리자인지 
+    //recoil - 인사팀인지
+    const userDepartment = useRecoilValue(userDepartmentState);
+    const loading = useRecoilValue(userLoadingState);
+
+    //navigate
+    const navigate = useNavigate();
 
     //state
     const [notices, setNotices] = useState([]);
@@ -32,14 +41,15 @@ export default function NoticeList() {
     const endPage = Math.min(startPage + 4, totalPage); //최솟값 찾기
 
     //ref
-    const modal = useRef();
+    const modalWrite = useRef();
+    const modalDelete = useRef();
 
     //effect
     //처음 컴포넌트가 로드될때 가져온 게시글을 뿌려주는 함수
     useEffect(() => {
         loadNotices();
     }, [page]);
-
+    
     //callback
     //게시글 가져오기 함수(+검색 포함)
     const loadNotices = useCallback(async () => {
@@ -52,7 +62,6 @@ export default function NoticeList() {
         };
 
         const resp = await axios.post("/notice/search", params); //서버에 데이터와 함께 요청하고 응답을 받을 때까지 기다림
-        // console.log(resp.data);
         setNotices(resp.data.list); //게시글 목록
         setCount(resp.data.count);
     }, [column, keyword, page, size]);
@@ -120,6 +129,15 @@ export default function NoticeList() {
     }
     */
 
+    //게시글 등록 페이지 이동 함수
+    const writeNotice = useCallback(()=>{
+        if(userDepartment !== "인사"){
+            openWriteModal();
+            return;
+        }
+        navigate("/notice/write");
+    }, [userDepartment, navigate]);
+
     //게시글 삭제 함수
     const deleteNotice = useCallback(async () => {
         //notices 배열을 순회하며 notice.choice === true 인 공지 객체들만 따로 모아 checkedList라는 새로운 배열을 만듦 
@@ -136,42 +154,55 @@ export default function NoticeList() {
             //그래서 map의 결과는 Promise 객체들의 배열이 나옴 -> [ Promise, Promise, ... ]
             checkedList.map(notice => axios.delete(`/notice/${notice.noticeNo}`)) //요청
         );
-        closeModal(); //모달 닫기
+        closeDeleteModal(); //모달 닫기
         loadNotices(); //목록 갱신
     }, [notices]);
 
-    const openModal = useCallback(() => {
-        if (!modal.current) return;
-        const target = Modal.getOrCreateInstance(modal.current);
+    //삭제 모달 열기/닫기
+    const openDeleteModal = useCallback(() => {
+        if (!modalDelete.current) return;
+        const target = Modal.getOrCreateInstance(modalDelete.current);
         target.show();
-    }, [modal]);
-    const closeModal = useCallback(() => {
-        const target = Modal.getInstance(modal.current);
+    }, [modalDelete]);
+    const closeDeleteModal = useCallback(() => {
+        const target = Modal.getInstance(modalDelete.current);
         if (target !== null) target.hide();
-    }, [modal]);
+    }, [modalDelete]);
+
+    //작성 모달 열기/닫기
+    const openWriteModal = useCallback(() => {
+        if (!modalDelete.current) return;
+        const target = Modal.getOrCreateInstance(modalWrite.current);
+        target.show();
+    }, [modalDelete]);
+    const closeWriteModal = useCallback(() => {
+        const target = Modal.getInstance(modalWrite.current);
+        if (target !== null) target.hide();
+    }, [modalDelete]);
 
     //view
     return (<>
 
         <Jumbotron subject="공지 게시판" />
-
+        
         <div className="row mt-4">
             <div className="col">
                 <div className="d-flex justify-content-end">
                     <div className="d-flex align-items-center">
-                        <select name="keyword" className="form-select flex-shrink-1 w-30" value={column}
+                        <select name="keyword" className="form-select text-responsive" value={column}
                             onChange={e => setColumn(e.target.value)}>
                             <option value="">선택</option>
                             <option value="notice_title">제목</option>
                             <option value="notice_content">내용</option>
+                            <option value="notice_writer_name">작성자</option>
                         </select>
-                        <input type="text" className="form-control flex-shrink-1 w-50 ms-2" placeholder="검색어"
+                        <input type="text" className="form-control text-responsive ms-1" placeholder="검색어"
                             value={keyword} onChange={e => setKeyword(e.target.value)}
                         />
                         <button type="button" onClick={searchNotice}
-                            className="btn btn-secondary ms-2 d-flex flex-shrink-1 w-20 
+                            className="btn btn-secondary text-responsive ms-1 d-flex 
                                 align-items-center justify-content-center text-nowrap">
-                            <FaSearch />
+                            <FaSearch className="icon-responsive" />
                         </button>
                     </div>
                 </div>
@@ -181,33 +212,46 @@ export default function NoticeList() {
         <div className="row mt-4">
             <div className="col">
                 <ul className="list-group list-group-flush">
-                    <li className="list-group-item d-flex align-items-center align-middle text-center fw-bold text-nowrap" style={{ width: '100%' }}>
-                        <div style={{ width: '5%' }}>
+                    <li className="list-group-item d-flex text-center fw-bold text-nowrap notice-row">
+                        <div className="notice-cell" style={{ width: '5%' }}>
                             <input type="checkbox" checked={hasCheckedAll} onChange={changeNoticeAll} className="align-middle" />
                         </div>
-                        <div className="ms-1 align-middle" style={{ width: '15%' }}>번호</div>
-                        <div className="align-middle" style={{ width: '60%' }}>제목</div>
-                        <div className="align-middle" style={{ width: '20%' }}>날짜</div>
+                        <div className="notice-cell" style={{ width: '10%' }}>번호</div>
+                        <div className="notice-cell" style={{ width: '50%' }}>제목</div>
+                        <div className="notice-cell" style={{ width: '15%' }}>작성자</div>
+                        <div className="notice-cell" style={{ width: '20%' }}>날짜</div>
                     </li>
-                    {notices.map(notice => (
-                        <li className="list-group-item d-flex align-items-center text-center" key={notice.noticeNo} style={{ width: '100%' }}>
-                            <div checked={notice.choice === true} onChange={e => changeNoticeChoice(e, notice)} style={{ width: '5%' }}>
-                                <input type="checkbox" checked={notice.choice === true ? true : false}
-                                    onChange={(e) => changeNoticeChoice(e, notice)} className="align-middle" />
+                    {notices.length > 0 ? (
+                        notices.map(notice => (
+                        <li className="list-group-item d-flex text-center notice-row" key={notice.noticeNo} style={{ width: '100%' }}>
+                            {/* 개별체크박스 */}
+                            <div className="notice-cell" style={{ width: '5%' }}>
+                                <input type="checkbox" checked={notice.choice === true} onChange={(e) => changeNoticeChoice(e, notice)}/>
                             </div>
-                            <div className="ms-1" style={{ width: '15%' }}>
-                                <span className="align-middle">{notice.noticeNo}</span>
+                            {/* 번호 */}
+                            <div className="notice-cell" style={{ width: '10%' }}>
+                                {notice.noticeNo}
                             </div>
-                            <div className="text-start" style={{ width: '60%' }}>
-                                <Link className="text-decoration-none d-inline-flex align-items-center align-middle" to={`/notice/detail/${notice.noticeNo}`} style={{ width: '85%' }}>
-                                    <span className="align-middle text-truncate" style={{ maxWidth: 'calc(100% - 1.5rem)' }}>{notice.noticeTitle}</span>
+                            {/* 유형 & 제목 */}
+                            <div className="text-start d-flex align-items-center" style={{ width: '50%' }}>
+                                <Link className="text-decoration-none d-flex align-items-center w-100 text-truncate" to={`/notice/detail/${notice.noticeNo}`}>
+                                    {/* 공지 유형에 따른 색상 적용 */}
+                                    <span className="me-1 text-nowrap fw-semibold" style={{ color: typeMap[notice.noticeType]?.color }}>
+                                            {notice.noticeType}
+                                    </span>
+                                    <span className="text-truncate text-dark">{notice.noticeTitle}</span>
                                     {moment(notice.noticeWriteDate).isAfter(moment().startOf('day')) && (
-                                        <TbCircleLetterNFilled className="ms-1 text-danger" />
+                                        <TbCircleLetterNFilled className="ms-1 text-danger fs-6" />
                                     )
                                     }
                                 </Link>
                             </div>
-                            <div className="align-middle" style={{ width: '20%' }}>
+                            {/* 작성자 */}
+                            <div className="notice-cell" style={{ width: '15%' }}>
+                                <span className="text-nowrap">{notice.noticeWriterName}</span>
+                            </div>
+                            {/* 작성시간 */}
+                            <div className="notice-cell" style={{ width: '20%' }}>
                                 {moment(notice.noticeWriteDate).isBefore(moment().startOf('day'))
                                     ? (
                                         <span>{moment(notice.noticeWriteDate).format('YYYY-MM-DD')}</span>
@@ -218,21 +262,28 @@ export default function NoticeList() {
                                 }
                             </div>
                         </li>
-                    ))}
+                        ))
+                    ) : (
+                        <li className="list-group-item text-center d-block mt-4 mb-4">
+                          검색 결과가 없습니다
+                        </li>
+                      )}
                 </ul>
             </div>
         </div>
 
         <div className="row mt-4">
-            <div className="col text-start">
-                <Link to="/notice/write" className="btn btn-success">
-                    <FaPencil className="align-middle me-1" />
-                    <span className="align-middle text-nowrap">작성</span>
-                </Link>
+            <div className="col text-start d-flex justify-content-between flex-wrap gap-2">
+                {userDepartment === "인사" && (
+                <button className="btn btn-success text-responsive d-flex align-items-center" onClick={writeNotice}>
+                    <FaPencil className="icon-responsive me-1" />
+                    <span className="text-nowrap">작성</span>
+                </button>
+                )}
                 {hasChecked && (
-                    <button className="btn btn-danger ms-2" onClick={openModal}>
-                        <FaTrash className="align-middle me-1" />
-                        <span className="align-middle text-nowrap">삭제</span>
+                    <button className="btn btn-danger text-responsive d-flex align-items-center ms-1" onClick={openDeleteModal}>
+                        <FaTrash className="icon-responsive me-1" />
+                        <span className="text-nowrap">삭제</span>
                     </button>
                 )}
             </div>
@@ -261,12 +312,12 @@ export default function NoticeList() {
         </div>
 
         {/* 태그 선택을 잘 안하는 리액트에서도 모달만큼은 ref로 연결(modal.current = document.querySelector("modal")) */}
-        <div className="modal fade" tabIndex="-1" ref={modal} data-bs-backdrop="static"> {/* 모달 바깥쪽 영역. tabinden -> tabIndex */}
+        <div className="modal fade" tabIndex="-1" ref={modalDelete} data-bs-backdrop="static"> {/* 모달 바깥쪽 영역. tabinden -> tabIndex */}
             <div className="modal-dialog"> {/* 모달 영역 */}
                 <div className="modal-content">
                     <div className="modal-header">
                         <h5 className="modal-title">게시글 삭제</h5>
-                        <button type="button" className="btn-close" aria-label="Close" onClick={closeModal}></button>
+                        <button type="button" className="btn-close" aria-label="Close" onClick={closeDeleteModal}></button>
                     </div>
                     <div className="modal-body">
                         <div className="row">
@@ -275,7 +326,26 @@ export default function NoticeList() {
                     </div>
                     <div className="modal-footer">
                         <button type="button" className="btn btn-danger" onClick={deleteNotice}>삭제</button>
-                        <button type="button" className="btn btn-secondary" onClick={closeModal}>취소</button>
+                        <button type="button" className="btn btn-secondary" onClick={closeDeleteModal}>취소</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div className="modal fade" tabIndex="-1" ref={modalWrite} data-bs-backdrop="static"> {/* 모달 바깥쪽 영역. tabinden -> tabIndex */}
+            <div className="modal-dialog"> {/* 모달 영역 */}
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h5 className="modal-title">알림</h5>
+                        <button type="button" className="btn-close" aria-label="Close" onClick={closeWriteModal}></button>
+                    </div>
+                    <div className="modal-body">
+                        <div className="row">
+                            <div className="col">인사팀만 작성할 수 있습니다</div>
+                        </div>
+                    </div>
+                    <div className="modal-footer">
+                        <button type="button" className="btn btn-secondary" onClick={closeWriteModal}>취소</button>
                     </div>
                 </div>
             </div>

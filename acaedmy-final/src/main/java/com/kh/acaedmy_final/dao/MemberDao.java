@@ -1,6 +1,8 @@
 package com.kh.acaedmy_final.dao;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,12 +66,18 @@ public class MemberDao {
 		return sqlSession.selectList("member.search", search); 
 	}
 
-	
+	public boolean editAll(long memberNo, MemberDto memberDto) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("memberNo", memberNo);
+		params.put("memberDto", memberDto);
+		return sqlSession.update("member.editAll", params) > 0;
+	}
+	public boolean editPart( MemberDto memberDto) {
+		return sqlSession.update("member.editPart", memberDto) > 0;
+	}
 
-	public List<String> departments() {
-//		System.out.println("deparats");
-//		System.out.println(sqlSession.selectList("member.departments"));
-		return null;
+	public boolean resetPw(MemberDto memberDto) {
+		return sqlSession.update("member.resetPw", memberDto) > 0;
 	}
 
 }

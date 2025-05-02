@@ -19,50 +19,54 @@ import { useCallback, useEffect } from 'react'
 import axios from 'axios'
 import MemberList from './components/Admin/MemberList'
 import MemberManage from './components/Admin/MemberManage'
-import NoticeUpdate from './components/Notice/NoticeUpdate'
+import NoticeUpdate from './components/Notice/NoticeEdit'
+import { Bounce, ToastContainer } from 'react-toastify'
+import NoticeEdit from './components/Notice/NoticeEdit'
 
 function App() {
-const [userNo, setUserNo] = useRecoilState(userNoState);
-const [userDepartment, setUserDepartment] = useRecoilState(userDepartmentState);
-const [loading, setLoading] = useRecoilState(userLoadingState);
-const login = useRecoilValue(loginState);
+  const [userNo, setUserNo] = useRecoilState(userNoState);
+  const [userDepartment, setUserDepartment] = useRecoilState(userDepartmentState);
+  const [loading, setLoading] = useRecoilState(userLoadingState);
+  const login = useRecoilValue(loginState);
 
-let stay = false;
-const refreshLogin = useCallback(async ()=>{
-  let refreshToken = window.sessionStorage.getItem("refreshToken");
-  if(refreshToken === null) {
-      refreshToken = window.localStorage.getItem("refreshToken");
+  let stay = false;
+  const refreshLogin = useCallback(async ()=>{
+    let refreshToken = window.sessionStorage.getItem("refreshToken");
     if(refreshToken === null) {
-      setLoading(true); 
-      return;
-    }else{
-      stay = true;
+        refreshToken = window.localStorage.getItem("refreshToken");
+      if(refreshToken === null) {
+        setLoading(true); 
+        return;
+      }else{
+        stay = true;
+      }
     }
-  }
-  try{
-    axios.defaults.headers.common["Authorization"] = `Bearer ${refreshToken}`;
-    const resp = await axios.post("/member/refresh");
-    setUserNo(resp.data.userNo);
-    setUserDepartment(resp.data.userDepartment);
-    axios.defaults.headers.common["Authorization"] = `Bearer ${resp.data.accessToken}`;
-    if(stay){
-      window.sessionStorage.removeItem("refreshToken");
-      window.localStorage.setItem("refreshToken", resp.data.refreshToken);
+    try{
+      axios.defaults.headers.common["Authorization"] = `Bearer ${refreshToken}`;
+      const resp = await axios.post("/member/refresh");
+      setUserNo(resp.data.memberNo);
+      setUserDepartment(resp.data.memberDepartment);
+      console.log(resp.data);
+      if(stay){
+        window.sessionStorage.removeItem("refreshToken");
+        window.localStorage.setItem("refreshToken", resp.data.refreshToken);
+      }
+      else{
+          window.localStorage.removeItem("refreshToken");
+          window.sessionStorage.setItem("refreshToken", resp.data.refreshToken);
+      }
+      setLoading(true);
     }
-    else{
-        window.localStorage.removeItem("refreshToken");
-        window.sessionStorage.setItem("refreshToken", resp.data.refreshToken);
+    catch(e){
+      setLoading(true);
     }
-    setLoading(true);
-  }
-  catch(e){
-    setLoading(true);
-  }
-},[])
+  },[]);
+  
+  useEffect(() => {
+    refreshLogin();
+  }, []);
 
-useEffect(()=>{refreshLogin();},[])
-
-
+  // if (!loading) return <div>로딩 중...</div>;
 
   return (
     <>
@@ -84,13 +88,13 @@ useEffect(()=>{refreshLogin();},[])
 
           {/* Admin */}
           <Route path="/admin/member/list" element={<MemberList/>}></Route>
-          <Route path="/admin/member/:memberNo" element={<MemberManage/>}></Route>
+          <Route path="/admin/member/:number" element={<MemberManage/>}></Route>
 
           {/* Notice */}
           <Route path="/notice/list" element={<NoticeList/>}></Route>
           <Route path="/notice/write" element={<NoticeWrite/>}></Route>
           <Route path="/notice/detail/:noticeNo" element={<NoticeDetail/>}></Route>
-          <Route path="/notice/update/:noticeNo" element={<NoticeUpdate/>}></Route>
+          <Route path="/notice/edit/:noticeNo" element={<NoticeEdit/>}></Route>
           
           {/* Contact */}
           <Route path="/member/contact" element={<MemberContact/>}></Route>
@@ -101,6 +105,21 @@ useEffect(()=>{refreshLogin();},[])
         </Routes>
 
         <Footer/>
+
+        {/* 토스트 메세지 컨테이너 */}
+        <ToastContainer
+          position="bottom-right"
+          autoClose={5000}
+          hideProgressBar
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="colored"
+          transition={Bounce}
+        />
       </div>
       
       

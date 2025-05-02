@@ -98,7 +98,7 @@ export default function Menu() {
                         {/* 로그인, 로그아웃 Link */}
                         <li className="nav-item">
                             {/* 로그아웃 */}
-                            <Link to="#" className="nav-link active">
+                            <Link to="/member/login" className="nav-link active">
                                 <i className="fa-solid fa-right-to-bracket"></i>
                                 <CiLogout className="fs-4"/>
                             </Link>
