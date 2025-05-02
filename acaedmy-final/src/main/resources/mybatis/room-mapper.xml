@@ -20,46 +20,12 @@
 		)
 	</insert>
 	
+	
 	<!-- 채팅방 목록 조회 (현재 로그인한 사용자가 속한 방만) -->
-	<select id="listByMember" resultType="RoomListVO">
-	    select 
-	        room.room_no as roomNo,  
-	        room.room_title as roomTitle,
-	        (
-	            select room_chat_content
-	            from (
-	                select room_chat_content
-	                from room_chat
-	                where room_chat_origin = room.room_no  
-	                order by room_chat_time desc
-	            )
-	            where rownum = 1  <!-- ROWNUM을 먼저 사용 -->
-	        ) as lastMessage,
-	        (
-	            select to_char(room_chat_time, 'YYYY-MM-DD HH24:MI:SS')
-	            from (
-	                select room_chat_time
-	                from room_chat
-	                where room_chat_origin = room.room_no  
-	                order by room_chat_time desc
-	            )
-	            where rownum = 1  <!-- ROWNUM을 먼저 사용 -->
-	        ) as lastMessageTime,
-	        (
-	            select count(*)
-	            from room_chat
-	            where room_chat_origin = room.room_no  
-	            and room_chat_time > (
-	                select nvl(room_user.last_read_time, to_timestamp('1990-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS'))
-	                from room_user
-	                where room_user.room_no = room.room_no  
-	                and room_user.member_no = #{memberNo}
-	            )
-	        ) as unreadCount
-	    from room room
-	    join room_user on room.room_no = room_user.room_no
-	    where room_user.member_no = #{memberNo}
-	    order by lastMessageTime desc nulls last
+
+	<select id="listByMember" resultType="RoomDto">
+		select * from room where room_owner = #{memberNo}
+
 	</select>
 	
 	<!-- 특정 채팅방 조회 -->

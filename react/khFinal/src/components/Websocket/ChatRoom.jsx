@@ -24,6 +24,8 @@ export default function ChatRoom() {
     //채팅방 목록 불러오기
     const [rooms, setRooms] = useState([]);
 
+    //useEffect(()=>{console.log(selectMembers)},[selectMembers])
+
     //callback
     //모달 열기
     const openModal = useCallback(() => {
@@ -40,11 +42,17 @@ export default function ChatRoom() {
 
     //연락처 불러오기
     const loadContacts = useCallback(async () => {
-        const { data } = await axios.get("/member/contact");
-        console.log(data); // 데이터 확인
+
+        const token = axios.defaults.headers.common['Authorization']
+        const { data } = await axios.get("/member/contact", {
+            headers: {
+                Authorization: token,
+            }
+        });
+
         setGroupContacts(data);
         setFilterContacts(data);//검색하지 않았을 경우에도 목록을 불러와야하니까
-    }, []);
+    }, [groupContacts, filterContacts]);
 
     //연락처 검색
     const searchContact = useCallback(() => {
@@ -112,7 +120,6 @@ export default function ChatRoom() {
                 window.location.href = "/member/login"
                 return;
             }
-
             const { data } = await axios.get("/rooms", {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -120,6 +127,13 @@ export default function ChatRoom() {
             });
     
             setRooms(data);//채팅방 목록을 상태에 저장
+            if(data){
+
+                console.log(data);
+            }
+            else{
+                console.log("없음");
+            }
         }
         catch (error) {
             console.error("채팅방 목록 불러오기 실패", error);
@@ -128,35 +142,39 @@ export default function ChatRoom() {
     
     const createRoom = useCallback(async () => {
         try {
-            if (!roomTitle) {
-                alert("채팅방 제목을 입력해주세요.");
-                return;
-            }
-            if (selectMembers.length === 0) {
-                alert("참여할 멤버를 선택해주세요");
-                return;
-            }
+            // if (!roomTitle) {
+            //     alert("채팅방 제목을 입력해주세요.");
+            //     return;
+            // }
+            // if (selectMembers.length === 0) {
+            //     alert("참여할 멤버를 선택해주세요");
+            //     return;
+            // }
 
             // 토큰 가져오기
-            let token = localStorage.getItem("refreshToken");
-            if (token === null) {
-                token = sessionStorage.getItem("refreshToken");
-            }
+            // let token = localStorage.getItem("refreshToken");
+            // if (token === null) {
+            //     token = sessionStorage.getItem("refreshToken");
+            // }
 
-            if (!token) {
-                alert("로그인이 필요합니다.");
-                // 로그인 페이지로 리다이렉트
-                window.location.href = "/member/login";
-                return;
-            }
-
+            // if (!token) {
+            //     alert("로그인이 필요합니다.");
+            //     // 로그인 페이지로 리다이렉트
+            //     window.location.href = "/member/login";
+            //     return;
+            // }
+            const token = axios.defaults.headers.common['Authorization'];
+            console.log(token);
+            console.log("memberNos");
+            console.log(selectMembers);
             //채팅방 생성 요청
             const response = await axios.post("/rooms", {
                 roomTitle,
                 memberNos: selectMembers
             }, {
                 headers: {
-                    Authorization: `Bearer ${token}`
+                    // Authorization: `Bearer ${token}`
+                    Authorization: token
                 }
             });
 
@@ -171,10 +189,11 @@ export default function ChatRoom() {
             setSelectMembers([]); // 선택 초기화
         } catch (error) {
             console.error("채팅방 생성 실패", error);
-            alert("채팅방 생성에 실패했습니다.");
+           // alert("채팅방 생성에 실패했습니다.");
         }
     }, [roomTitle, selectMembers, closeModal, loadRooms]);
 
+    // useEffect(()=>{console.log(selectMembers)},[selectMembers])
 
     //키보드 enter 누르면 검색되게
     const handleKeyPress = (e) => {
@@ -186,7 +205,7 @@ export default function ChatRoom() {
     //effect
     useEffect(() => {
         loadContacts();
-    }, [loadContacts]);
+    }, []);
 
     useEffect(() => {
         loadRooms();
