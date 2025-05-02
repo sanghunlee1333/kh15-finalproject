@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 import { Link } from "react-router";
 import './MemberList.css'; 
 import { debounce, throttle } from 'lodash';
-
+import userImg from '/public/images/profile_basic.png';
 
 export default function MemberList(){
    // const [files, setFiles] = useState("");
@@ -263,6 +263,7 @@ export default function MemberList(){
                     file,
                     type: "ID",
                     code: imageIndex,
+                    url: URL.createObjectURL(file),
                 }))
             ]);
             //imageIndex++;
@@ -282,6 +283,7 @@ export default function MemberList(){
                     file,
                     type: "bank",
                     code: imageIndex,
+                    url: URL.createObjectURL(file),
                 }))
             ]);
             setImageIndex(imageIndex + 1);
@@ -300,6 +302,7 @@ export default function MemberList(){
                     file,
                     type: "contract",
                     code: imageIndex,
+                    url: URL.createObjectURL(file),
                 }))
             ]);
             setImageIndex(imageIndex + 1);
@@ -318,6 +321,7 @@ export default function MemberList(){
                     file,
                     type: "resume",
                     code: imageIndex,
+                    url: URL.createObjectURL(file),
                 }))
             ]);
             setImageIndex(imageIndex + 1);
@@ -336,6 +340,7 @@ export default function MemberList(){
                     file,
                     type: "docs",
                     code: imageIndex,
+                    url: URL.createObjectURL(file),
                 }))
             ]);
             setImageIndex(imageIndex + 1);
@@ -550,12 +555,49 @@ export default function MemberList(){
                                 </div>
                                 <div className="row">
                                     <div className="col">
-                                        <div className="attachment-wrapper rounded d-flex justify-content-center align-items-center position-relative" style={{minHeight:150}}
-                                            onDragOver={dragOver} onDrop={dropOnBank}
-                                        >
-                                            <div className="d-flex flex-column text-center  position-absolute z-0">
-                                            <span className="text-muted ">첨부할 파일을 드래그하거나 눌러서 선택하세요 </span>
-                                            <span className="text-muted" style={{fontSize:"0.5em"}}>*최대 5장까지 업로드 가능합니다</span>
+                                        <div className="attachment-wrapper rounded preview-list d-flex justify-content-center align-items-center position-relative" style={{minHeight:150}}
+                                            onDragOver={dragOver} onDrop={dropOnBank}>
+
+                                             <div className="ms-1 d-flex gap-2 z-1 "> 
+                                             {attachList.map((item, index) =>
+                                                    item.type === "bank" && (
+                                                        <div key={index}>
+                                                            <div className="image-box-container">
+                                                            <div className="image-wrapper">
+                                                            <img src={item.url} className="image-content" />
+                                                            <div className="image-overlay" />
+                                                            </div>
+                                                            <FaCircleXmark
+                                                            className="image-remove-icon text-danger"
+                                                            />
+                                                        </div>
+                                                        </div>
+                                                    )
+                                                )}
+
+                                           
+                                           
+                                            {/* <div className="image-box-container">
+                                                <div className="image-wrapper">
+                                                <img src={userImg} className="image-content" />
+                                                <div className="image-overlay" />
+                                                </div>
+                                                <FaCircleXmark
+                                                className="image-remove-icon text-danger"
+                                                />
+                                            </div> */}
+                                            
+                                          
+                                            </div>
+                                            
+                                            
+                                            {/* <div className="d-flex flex-column text-center  position-absolute z-0">
+                                            <span className="text-muted no-select">첨부할 파일을 드래그하거나 눌러서 선택하세요 </span>
+                                            <span className="text-muted no-select" style={{fontSize:"0.5em"}}>*최대 5장까지 업로드 가능합니다</span>
+                                            </div> */}
+                                             <div className="position-absolute top-50 start-50 translate-middle text-center z-0">
+                                                <span className="text-muted no-select">첨부할 파일을 드래그하거나 눌러서 선택하세요</span>
+                                                <span className="text-muted no-select d-block" style={{ fontSize: "0.5em" }}>*최대 5장까지 업로드 가능합니다</span>
                                             </div>
 
                                             {/* 이미지 리스트 */}
