@@ -119,13 +119,7 @@ public class NoticeRestController {
 		//4. 글 삭제 (notice_image, notice_editor_image는 ON DELETE CASCADE로 날아감)
 		noticeDao.delete(noticeNo); //있으면 200
 	}
-	
-	//목록
-	@GetMapping("/")
-	public List<NoticeDto> list(){
-		return noticeDao.selectList();
-	}
-	
+		
 	//상세
 	@GetMapping("/{noticeNo}")
 	public NoticeDto find(@PathVariable long noticeNo) {
@@ -134,7 +128,7 @@ public class NoticeRestController {
 		return noticeDto;
 	}
 	
-	//(사용)검색 조회
+	//목록 + 검색 조회
 	@PostMapping("/search")
 	public Map<String, Object> searchList(@RequestBody SearchVO searchVO){
 		int count = noticeDao.count(searchVO);
@@ -144,6 +138,60 @@ public class NoticeRestController {
 		obj.put("list", list);
 		obj.put("count", count);
 		return obj;
+	}
+	
+	//수정
+	@PostMapping(value= "/edit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public void edit(@ModelAttribute NoticeDto noticeDto,
+					 @RequestParam(value = "attach", required = false) MultipartFile[] attach,
+					 @RequestParam(value = "editorImage", required = false) List<Integer> editorImage,
+					 @RequestParam(value = "deleteAttach", required = false) List<Integer> deleteAttach,
+					 @RequestParam(value = "deleteEditorImage", required = false) List<Integer> deleteEditorImage
+					 ) throws IllegalStateException, IOException {
+		
+		//게시글 존재 여부 확인
+		NoticeDto targetDto = noticeDao.selectOne(noticeDto.getNoticeNo());
+		if(targetDto == null) throw new TargetNotFoundException();
+		
+		//글 수정
+		noticeDao.update(noticeDto);
+		
+		//기존 일반 첨부파일 삭제
+		if(deleteAttach != null) {
+			for(int attachmentNo : deleteAttach) {
+				noticeDao.deleteNoticeImageConnection(noticeDto.getNoticeNo(), attachmentNo);
+				attachmentService.delete(attachmentNo);
+			}
+		}
+		
+		//기존 서머노트 이미지 삭제
+		if(deleteEditorImage != null) {
+			for(int attachmentNo : deleteEditorImage) {
+				System.out.println("삭제할 editor 이미지 attachmentNo = " + attachmentNo);
+				noticeDao.deleteEditorImageConnection(noticeDto.getNoticeNo(), attachmentNo);
+				attachmentService.delete(attachmentNo);
+			}
+		}
+		
+		//새 일반 첨부파일 연결
+		if(attach != null) {
+			for(MultipartFile file : attach) {
+				if(!file.isEmpty()) {
+					AttachmentDto saved = attachmentService.save(file);
+					noticeDao.connect(noticeDto, saved);
+				}
+			}
+		}
+		
+		//서머노트 이미지 전체 재연결 (중복 방지)
+		noticeDao.deleteEditorImageConnections(noticeDto.getNoticeNo());
+		if(editorImage != null) {
+			Set<Integer> uniqueNo = new HashSet<>(editorImage);
+			for(int attachmentNo : uniqueNo) {
+				noticeDao.connectEditor(noticeDto.getNoticeNo(), attachmentNo);
+			}
+		}
+		
 	}
 	
 }
