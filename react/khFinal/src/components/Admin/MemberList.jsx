@@ -12,8 +12,8 @@ import { debounce, throttle } from 'lodash';
 export default function MemberList(){
    // const [files, setFiles] = useState("");
 
-    let index = 0;
-
+    let [imageIndex,setImageIndex] = useState((0));
+    const [attachList, setAttachList] = useState([]);
 
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(2);
@@ -205,6 +205,7 @@ export default function MemberList(){
 
     const closeModal = useCallback(()=>{
         const target = Modal.getInstance(modal.current);
+        setAttachList([]);
         target.hide();
     },[modal])
 
@@ -249,7 +250,7 @@ export default function MemberList(){
     
     const dragOver = useCallback(e=>{  e.preventDefault();console.log("dragOver")},[])
     
-    const [attachList, setAttachList] = useState([]);
+    
 
     const dropOnID = (e) => {
         e.preventDefault();
@@ -257,13 +258,15 @@ export default function MemberList(){
      
         if (files && files.length > 0) {
             setAttachList((prev) => [
-                ...prev, 
+                ...prev,
                 ...Array.from(files).map((file) => ({
                     file,
                     type: "ID",
-                   
+                    code: imageIndex,
                 }))
             ]);
+            //imageIndex++;
+            setImageIndex(imageIndex + 1);
         } else {
             console.log("파일이 없습니다.");
         }
@@ -278,9 +281,10 @@ export default function MemberList(){
                 ...Array.from(files).map((file) => ({
                     file,
                     type: "bank",
-                   
+                    code: imageIndex,
                 }))
             ]);
+            setImageIndex(imageIndex + 1);
         } else {
             console.log("파일이 없습니다.");
         }
@@ -295,9 +299,10 @@ export default function MemberList(){
                 ...Array.from(files).map((file) => ({
                     file,
                     type: "contract",
-                   
+                    code: imageIndex,
                 }))
             ]);
+            setImageIndex(imageIndex + 1);
         } else {
             console.log("파일이 없습니다.");
         }
@@ -312,9 +317,10 @@ export default function MemberList(){
                 ...Array.from(files).map((file) => ({
                     file,
                     type: "resume",
-                    
+                    code: imageIndex,
                 }))
             ]);
+            setImageIndex(imageIndex + 1);
         } else {
             console.log("파일이 없습니다.");
         }
@@ -329,9 +335,10 @@ export default function MemberList(){
                 ...Array.from(files).map((file) => ({
                     file,
                     type: "docs",
-                    
+                    code: imageIndex,
                 }))
             ]);
+            setImageIndex(imageIndex + 1);
         } else {
             console.log("파일이 없습니다.");
         }
@@ -344,31 +351,47 @@ export default function MemberList(){
     // },[attachList])
     //useEffect(()=>{console.log(index)},[index]);
 
-    
-   
+    useEffect(()=>{console.log(attachList)},[attachList]);
+    //useEffect(()=>{console.log(imageIndex + " = index")},[imageIndex])
+
     const saveAllAttachment = useCallback(async ()=>{
         const formData = new FormData();
+        if (!Array.isArray(attachList) || attachList.length === 0) return; 
         attachList.forEach((attach)=>{
             formData.append('file', attach.file); 
             formData.append('memberDocumentType', attach.type);
         })
+        console.log(formData);
 
         if(formData !== null){
+            
             const resp = await axios.post("/admin/member/document/" + selectedMember.memberNo, formData);
         }
         else{
             console.log("400400400400400400");
         }
         console.log("endendnendend");
-        //window.location.reload();
-        console.log(attachList[1]);
-       
+        window.location.reload();
+       // console.log(attachList[1]);
+        setImageIndex(0);
     },[attachList])
     
 
-    const deleteImage = useCallback(()=>{
+    const deleteImage = useCallback((target)=>{
+        
+        setAttachList(prev=>prev.filter(item=>item !== target));
+        console.log("targetCODE = " + target.code );
+
+
+
+
         attachList;
     },[attachList])
+
+    const preview = useCallback(()=>{
+
+    },[])
+
 
     // view
     return(<>
@@ -484,7 +507,7 @@ export default function MemberList(){
                                             {item.type === "ID" && (  
                                                 <span className="text-muted" style={{ fontSize: '0.8em' }}>
                                                     {item.file.name}
-                                                    <FaCircleXmark onClick={deleteImage} className="ms-1 text-danger" />
+                                                    <FaCircleXmark onClick={(e)=>deleteImage(item)} className="ms-1 text-danger" />
                                                 </span>
                                             )}
                                         </div>
@@ -517,7 +540,7 @@ export default function MemberList(){
                                             {item.type === "bank" && (  
                                                 <span className="text-muted" style={{ fontSize: '0.8em' }}>
                                                     {item.file.name}
-                                                    <FaCircleXmark onClick={deleteImage} className="ms-1 text-danger" />
+                                                    <FaCircleXmark onClick={(e)=>deleteImage(item)} className="ms-1 text-danger" />
                                                 </span>
                                             )}
                                         </div>
@@ -527,13 +550,22 @@ export default function MemberList(){
                                 </div>
                                 <div className="row">
                                     <div className="col">
-                                        <div className="attachment-wrapper rounded d-flex justify-content-center align-items-center" style={{minHeight:150}}
+                                        <div className="attachment-wrapper rounded d-flex justify-content-center align-items-center position-relative" style={{minHeight:150}}
                                             onDragOver={dragOver} onDrop={dropOnBank}
                                         >
-                                            <div className="d-flex flex-column text-center">
+                                            <div className="d-flex flex-column text-center  position-absolute z-0">
                                             <span className="text-muted ">첨부할 파일을 드래그하거나 눌러서 선택하세요 </span>
                                             <span className="text-muted" style={{fontSize:"0.5em"}}>*최대 5장까지 업로드 가능합니다</span>
                                             </div>
+
+                                            {/* 이미지 리스트 */}
+                                            {/* <div className="d-flex">
+                                                {/* {attachList.map(item, index)=>(
+                                                    <div key={index}>
+                                                        
+                                                    </div>
+                                                )} */}
+                                            {/* </div>    */}
                                         </div>
                                     </div>
                                 </div>
@@ -551,7 +583,7 @@ export default function MemberList(){
                                             {item.type === "contract" && (  
                                                 <span className="text-muted" style={{ fontSize: '0.8em' }}>
                                                     {item.file.name}
-                                                    <FaCircleXmark onClick={deleteImage} className="ms-1 text-danger" />
+                                                    <FaCircleXmark onClick={(e)=>deleteImage(item)} className="ms-1 text-danger" />
                                                 </span>
                                             )}
                                         </div>
@@ -585,7 +617,7 @@ export default function MemberList(){
                                                     {item.type === "resume" && (  
                                                         <span className="text-muted" style={{ fontSize: '0.8em' }}>
                                                             {item.file.name}
-                                                            <FaCircleXmark onClick={deleteImage} className="ms-1 text-danger" />
+                                                            <FaCircleXmark onClick={(e)=>deleteImage(item)} className="ms-1 text-danger" />
                                                         </span>
                                                     )}
                                                 </div>
@@ -619,7 +651,7 @@ export default function MemberList(){
                                                 {item.type === "docs" && (  
                                                     <span className="text-muted" style={{ fontSize: '0.8em' }}>
                                                         {item.file.name}
-                                                        <FaCircleXmark onClick={deleteImage} className="ms-1 text-danger" />
+                                                        <FaCircleXmark onClick={(e)=>deleteImage(item)} className="ms-1 text-danger" />
                                                     </span>
                                                 )}
                                             </div>
