@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.acaedmy_final.dao.websocket.RoomDao;
 import com.kh.acaedmy_final.dto.websocket.RoomCreateRequestDto;
 import com.kh.acaedmy_final.dto.websocket.RoomDto;
 import com.kh.acaedmy_final.service.TokenService;
@@ -26,6 +27,9 @@ public class RoomRestController {
 	
 	@Autowired
 	private RoomService roomService;
+	@Autowired
+	private RoomDao roomDao;
+	
 	
 	@PostMapping
 	public boolean createRoom(@RequestBody RoomCreateRequestDto request,

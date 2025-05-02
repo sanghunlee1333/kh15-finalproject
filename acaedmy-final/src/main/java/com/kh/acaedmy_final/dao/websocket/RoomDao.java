@@ -87,11 +87,11 @@ public class RoomDao {
 	//사용자가 속한 채팅방 목록 조회
 	public List<RoomDto> selectListByMember(long memberNo) {
 		List<RoomDto> rooms = sqlSession.selectList("room.listByMember", memberNo);
-		for(RoomDto room : rooms) {
-			//해당 채팅방에 속한 사용자 목록을 조회
-			List<UserVO> users = sqlSession.selectList("room.getUsers", room.getRoomNo());
-			room.setUsers(users);
-		}
+//		for(RoomDto room : rooms) {
+//			//해당 채팅방에 속한 사용자 목록을 조회
+//			List<UserVO> users = sqlSession.selectList("room.getUsers", room.getRoomNo());
+//			room.setUsers(users);
+//		}
 		return rooms;
 	}
 	

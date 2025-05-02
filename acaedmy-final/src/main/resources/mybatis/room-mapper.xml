@@ -26,7 +26,6 @@
 	<select id="listByMember" resultType="RoomDto">
 		select * from room where room_owner = #{memberNo}
 
-	
 	</select>
 	
 	<!-- 특정 채팅방 조회 -->
