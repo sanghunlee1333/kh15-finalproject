@@ -107,11 +107,11 @@
 	</delete>
 	
 	<!-- 채팅방 멤버 추가 -->
-	<insert id="addMembers">
-	    <foreach collection="memberNos" item="memberNo" separator="," >
-	        insert into room_user(room_no, member_no) 
-	        values(#{roomNo}, #{memberNo})
-	    </foreach>
+	<insert id="addMembers" parameterType="map">
+	  <foreach collection="memberNos" item="memberNo" separator=";">
+	    insert into room_user(room_no, member_no) 
+	    values (#{roomNo}, #{memberNo})
+	  </foreach>
 	</insert>
 	
 </mapper>
