@@ -87,7 +87,7 @@ function App() {
 
           {/* Admin */}
           <Route path="/admin/member/list" element={<MemberList/>}></Route>
-          <Route path="/admin/member/:memberNo" element={<MemberManage/>}></Route>
+          <Route path="/admin/member/:number" element={<MemberManage/>}></Route>
 
           {/* Notice */}
           <Route path="/notice/list" element={<NoticeList/>}></Route>
