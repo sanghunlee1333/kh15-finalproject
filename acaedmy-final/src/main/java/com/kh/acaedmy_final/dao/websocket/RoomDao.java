@@ -1,5 +1,6 @@
 package com.kh.acaedmy_final.dao.websocket;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,23 +22,23 @@ public class RoomDao {
 	
 	//방 생성
 	public void insert(RoomDto roomDto) {
-		long roomNo = getSequence();//시퀀스를 통해서 방 번호를 조회
-		roomDto.setRoomNo(roomNo);//조회한 방 번호를 DTO에 설정
+//		long roomNo = getSequence();//시퀀스를 통해서 방 번호를 조회
+//		roomDto.setRoomNo(roomNo);//조회한 방 번호를 DTO에 설정
 		sqlSession.insert("room.insert", roomDto);
 		
 		//방에 참여할 멤버들 처리
-		for(Long memberNo : roomDto.getMemberNos()) {
-			sqlSession.insert("room.enter", Map.of(
-					"roomNo", roomNo,
-					"memberNo", memberNo
-				));
-		}
+//		for(Long memberNo : roomDto.getMemberNos()) {
+//			sqlSession.insert("room.enter", Map.of(
+//					"roomNo", roomNo,
+//					"memberNo", memberNo
+//				));
+//		}
 	}
 	
 	//멤버 추가
 	public void insertMembers(long roomNo, List<Long> memberNos) {
 		for(Long memberNo : memberNos) {
-			sqlSession.insert("room.addMembers", 
+			sqlSession.insert("room.enter", 
 					Map.of("roomNo", roomNo, "memberNo", memberNo));
 		}
 	}
@@ -59,7 +60,12 @@ public class RoomDao {
 	
 	//방 입장
 	public void enterRoom(long roomNo, long memberNo) {
-		sqlSession.insert("room.enter", new Object[] {roomNo, memberNo});
+		Map<String, Object> list = new HashMap<>();
+		list.put("roomNo", roomNo);
+		list.put("memberNo", memberNo);
+		System.err.println("roomno " + roomNo);
+		System.err.println("memberNo " + memberNo  );
+		sqlSession.insert("room.enter", list);
 	}
 	
 	//사용자가 해당 채팅방에 입장했는지 확인

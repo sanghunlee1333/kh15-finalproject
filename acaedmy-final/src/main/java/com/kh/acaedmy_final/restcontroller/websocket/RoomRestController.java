@@ -27,29 +27,32 @@ public class RoomRestController {
 	private RoomDao roomDao;
 	
 	@PostMapping
-	public void createRoom(@RequestBody RoomCreateRequestDto request,
+	public boolean createRoom(@RequestBody RoomCreateRequestDto request,
 										@RequestHeader("Authorization") String bearerToken) {
-		//사용자 인증
-		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+//		//사용자 인증
+//		System.out.println(bearerToken);
+//		request - roomTitle, memberNos ,     토큰 (방장)
 		
+		System.err.println(request);
+		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
 		//방 생성
+		long roomNo = roomDao.getSequence();
 		RoomDto roomDto = RoomDto.builder()
+					.roomNo(roomNo)
 					.roomTitle(request.getRoomTitle())
 					.roomOwner(claimVO.getMemberNo())
+					.memberNos(request.getMemberNos())
 				.build();
 		
-		//DB에 채팅방 정보 저장 및 roomNo 세팅
+		// 방먼저
 		roomDao.insert(roomDto);
 		
-		// 방장 및 참여자들 모두 추가
-		roomDao.enterRoom(roomDto.getRoomNo(), claimVO.getMemberNo());//방장도 참여자니까
+		// 방장 참여
+		roomDao.enterRoom(roomNo, claimVO.getMemberNo());
+		// 참여자 추가
+		roomDao.insertMembers(roomNo, request.getMemberNos());
 		
-		//초대 멤버 등록
-		for(Long memberNo : request.getMemberNos()) {
-			if(!memberNo.equals(claimVO.getMemberNo())) {//중복 방지
-				roomDao.enterRoom(roomDto.getRoomNo(), memberNo);
-			}
-		}
+		return true;
 	}
 	
 	@GetMapping
