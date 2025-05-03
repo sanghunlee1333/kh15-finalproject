@@ -5,8 +5,9 @@ import axios from "axios";
 import userImg from '/public/images/profile_basic.png';
 import { FaChevronLeft, FaChevronRight, FaImages } from "react-icons/fa6";
 import { Modal } from "bootstrap";
-import { FaInfoCircle } from "react-icons/fa";
-import './MemberList.css'; 
+import { FaChevronCircleLeft, FaChevronCircleRight, FaInfoCircle } from "react-icons/fa";
+import clsx from 'clsx';
+import styles from './MemberManage.module.css';
 
 export default function MemberManage(){
     const { number } = useParams(); 
@@ -199,8 +200,41 @@ export default function MemberManage(){
         target.hide();
     },[member, editModal])
 
+    const openAttachModal = useRef();
+    const [type, setType] = useState("");
+
+
+    const openAttachList = useCallback(async (attach)=>{
+        setType(attach); 
+        const target = Modal.getOrCreateInstance(openAttachModal.current);
+        target.show();
+    },[type]);
     
-      
+    const closeAttachList = useCallback(async ()=>{
+        const target = Modal.getInstance(openAttachModal.current);
+        target.hide();
+    },[])
+    
+    const sayYes = useCallback(()=>{console.log("yes")},[])
+
+    const [previewList, setPreviewList] = useState([]);
+
+    const loadAttachList = useCallback(async ()=>{
+        const resp = await axios.get(`/admin/member/attachment/${number}/${type}`)
+        if(resp) {console.log("getget"); console.log(resp);}
+        else{console.log("fail")}
+        setPreviewList(resp.data);
+        console.log("loadattchList");
+        console.log(resp.data);
+        await axios.get(`/admin/attachment/${resp.data[1]}`);
+    },[type])
+
+    useEffect(()=>{loadAttachList()},[openAttachList])
+    useEffect(()=>{console.log(previewList); console.log("length : " + previewList.length)},[previewList])
+
+
+
+   
     
     return(<>
         <Jumbotron subject={`${member.memberName} 님의 상세페이지`}></Jumbotron>
@@ -284,7 +318,7 @@ export default function MemberManage(){
             {/* <input type="file" className="form-control" accept=".png,.jpg,.jpeg,.txt,.pdf,.doc,.docx,.hwp,.ppt,.pptx,.xls,.xlsx,.zip,.7z"
                      multiple/> */}
                      
-                <button className="btn btn-success  ms-auto"><span>사진(들)을 보기</span></button>
+                <button className="btn btn-success  ms-auto" onClick={()=>openAttachList("ID")}><span>사진(들)을 보기</span></button>
             </div>
         </div>
         <hr className="mt-4"/>
@@ -293,7 +327,7 @@ export default function MemberManage(){
                 <h4>통장사본</h4>
             </div>
             <div className="d-flex">
-                <button className="btn btn-success  ms-auto"><span>사진(들)을 보기</span></button>
+                <button className="btn btn-success  ms-auto" onClick={()=>openAttachList("bank")}><span>사진(들)을 보기</span></button>
             </div>
         </div>
         <hr className="mt-4"/>
@@ -302,7 +336,7 @@ export default function MemberManage(){
                 <h4>근로계약서</h4>
             </div>
             <div className="d-flex">
-                <button className="btn btn-success  ms-auto"><span>사진(들)을 보기</span></button>
+                <button className="btn btn-success  ms-auto" onClick={()=>openAttachList("contract")}><span>사진(들)을 보기</span></button>
             </div>
         </div>
         <hr className="mt-4"/>
@@ -311,7 +345,7 @@ export default function MemberManage(){
                 <h4>이력서</h4>
             </div>
             <div className="d-flex">
-                <button className="btn btn-success  ms-auto"><span>사진(들)을 보기</span></button>
+                <button className="btn btn-success  ms-auto" onClick={()=>openAttachList("resume")}><span>사진(들)을 보기</span></button>
             </div>
         </div>
         <hr className="mt-4"/>
@@ -320,7 +354,7 @@ export default function MemberManage(){
                 <h4>기타 서류</h4>
             </div>
             <div className="d-flex">
-                <button className="btn btn-success  ms-auto"><span>사진(들)을 보기</span></button>
+                <button className="btn btn-success  ms-auto" onClick={()=>openAttachList("docs")}><span>사진(들)을 보기</span></button>
             </div>
         </div>
 
@@ -336,7 +370,7 @@ export default function MemberManage(){
                         <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" >
                         </button>
                         </div>
-                        <div className="modal-body text-cente" >
+                        <div className="modal-body text-center" >
                           <h2>비밀번호 변경</h2>
                           <span>비밀번호를 새로 발급 하시겠습니까?발급하기를 누르면 기존의 비밀번호는 없어집니다</span>
                           <div style={{minHeight:120}}></div>
@@ -421,6 +455,38 @@ export default function MemberManage(){
                     </div>
                 </div>
 
-                
+                <div className="modal fade" tabIndex="-1" role="dialog" ref={openAttachModal} data-bs-backdrop="static">
+                    <div className="modal-dialog modal-lg" role="document">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                        <h2>{member.memberName} 의{type}</h2>
+                        <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" >
+                        </button>
+                        </div>
+                        <div className="modal-body">
+                          
+                            <div className="row">
+                                <div className="col text-center">
+
+                                    <img className="w-100" src="http://placehold.co/500"></img>
+                                </div>
+                            </div>
+                            <div className="row">
+                                <div className="col d-flex justify-content-between mt-4">
+                                    <FaChevronCircleLeft onClick={sayYes} className={clsx(styles['bbbb'], 'text-success fs-2')}/>
+
+                                    <FaChevronCircleRight onClick={sayYes} className={clsx(styles['bbbb'], 'text-success fs-2')}/>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                        <div className="d-flex justify-content-between">
+                            <button className="btn btn-light" onClick={closeAttachList}>닫기</button>
+                        </div>
+                        
+                        </div>
+                    </div>
+                    </div>
+                </div> 
     </>)
 }
