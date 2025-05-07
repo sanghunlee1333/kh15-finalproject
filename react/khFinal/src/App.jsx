@@ -22,6 +22,7 @@ import MemberManage from './components/Admin/MemberManage'
 import NoticeUpdate from './components/Notice/NoticeEdit'
 import { Bounce, ToastContainer } from 'react-toastify'
 import NoticeEdit from './components/Notice/NoticeEdit'
+import DateMange from './components/Admin/DateManage'
 
 function App() {
   const [userNo, setUserNo] = useRecoilState(userNoState);
@@ -89,6 +90,7 @@ function App() {
           {/* Admin */}
           <Route path="/admin/member/list" element={<MemberList/>}></Route>
           <Route path="/admin/member/:number" element={<MemberManage/>}></Route>
+          <Route path="/admin/date" element={<DateMange/>}></Route>
 
           {/* Notice */}
           <Route path="/notice/list" element={<NoticeList/>}></Route>
