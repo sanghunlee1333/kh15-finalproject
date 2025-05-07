@@ -2,3 +2,11 @@
     transform: scale(1.05);
     cursor: pointer;
   }
+  .custom-modal-size {
+    width: 100%;
+    height: 100%;
+    max-width: 600px; /* 최대 600px까지는 허용 */
+    height: auto;
+    /* max-height: 90vh; 화면 높이의 90%까지만 */
+    max-height: 800px;
+  }

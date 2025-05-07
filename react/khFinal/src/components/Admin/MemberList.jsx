@@ -277,22 +277,36 @@ export default function MemberList(){
     
     useEffect(()=>{console.log(attachList.file)},[attachList])
 
-    const dropOnID = (e) => {
+    const dropOnID = async (e) => {
         e.preventDefault();
-        const files = e.dataTransfer.files;  // e.target.files가 아닌 e.dataTransfer.files
-     
+        const files = e.dataTransfer.files;
         if (files && files.length > 0) {
-            setAttachList((prev) => [
-                ...prev,
-                ...Array.from(files).map((file) => ({
+            const newAttachItems = [];
+    
+            for (const file of files) {
+                let url = "";
+    
+                if (file.type === "application/pdf") {
+                    url = await pdfImageUrl(file); 
+                } else if (file.type.startsWith("image/")) {
+                    url = URL.createObjectURL(file);
+                } 
+                else{
+                    url = null;
+                }
+    
+                newAttachItems.push({
                     file,
                     type: "ID",
                     code: imageIndex,
-                    url: URL.createObjectURL(file),
-                }))
-            ]);
-            //imageIndex++;
-            setImageIndex(imageIndex + 1);
+                    url: url,
+                    name: file.name,
+                });
+    
+                setImageIndex((prev) => prev + 1);  
+            }
+    
+            setAttachList((prev) => [...prev, ...newAttachItems]);
         } else {
             console.log("파일이 없습니다.");
         }
@@ -334,63 +348,107 @@ export default function MemberList(){
     };
 
 
-    const dropOnContract = (e) => {
+    const dropOnContract = async (e) => {
         e.preventDefault();
-        const files = e.dataTransfer.files;  // e.target.files가 아닌 e.dataTransfer.files
-     
+        const files = e.dataTransfer.files;
         if (files && files.length > 0) {
-            setAttachList((prev) => [
-                ...prev, 
-                ...Array.from(files).map((file) => ({
+            const newAttachItems = [];
+    
+            for (const file of files) {
+                let url = "";
+    
+                if (file.type === "application/pdf") {
+                    url = await pdfImageUrl(file); 
+                } else if (file.type.startsWith("image/")) {
+                    url = URL.createObjectURL(file);
+                } 
+                else{
+                    url = null;
+                }
+    
+                newAttachItems.push({
                     file,
                     type: "contract",
                     code: imageIndex,
-                    url: URL.createObjectURL(file),
-                }))
-            ]);
-            setImageIndex(imageIndex + 1);
+                    url: url,
+                    name: file.name,
+                });
+    
+                setImageIndex((prev) => prev + 1);  
+            }
+    
+            setAttachList((prev) => [...prev, ...newAttachItems]);
         } else {
             console.log("파일이 없습니다.");
         }
     };
-    const dropOnResume = (e) => {
+    const dropOnResume = async (e) => {
         e.preventDefault();
-        const files = e.dataTransfer.files;  // e.target.files가 아닌 e.dataTransfer.files
-     
+        const files = e.dataTransfer.files;
         if (files && files.length > 0) {
-            setAttachList((prev) => [
-                ...prev, 
-                ...Array.from(files).map((file) => ({
+            const newAttachItems = [];
+    
+            for (const file of files) {
+                let url = "";
+    
+                if (file.type === "application/pdf") {
+                    url = await pdfImageUrl(file); 
+                } else if (file.type.startsWith("image/")) {
+                    url = URL.createObjectURL(file);
+                } 
+                else{
+                    url = null;
+                }
+    
+                newAttachItems.push({
                     file,
                     type: "resume",
                     code: imageIndex,
-                    url: URL.createObjectURL(file),
-                }))
-            ]);
-            setImageIndex(imageIndex + 1);
+                    url: url,
+                    name: file.name,
+                });
+    
+                setImageIndex((prev) => prev + 1);  
+            }
+    
+            setAttachList((prev) => [...prev, ...newAttachItems]);
         } else {
             console.log("파일이 없습니다.");
         }
     };
-    const dropOnDocs = (e) => {
+    const dropOnDocs = async (e) => {
         e.preventDefault();
-        const files = e.dataTransfer.files;  // e.target.files가 아닌 e.dataTransfer.files
-     
+        const files = e.dataTransfer.files;
         if (files && files.length > 0) {
-            setAttachList((prev) => [
-                ...prev, 
-                ...Array.from(files).map((file) => ({
+            const newAttachItems = [];
+    
+            for (const file of files) {
+                let url = "";
+    
+                if (file.type === "application/pdf") {
+                    url = await pdfImageUrl(file); 
+                } else if (file.type.startsWith("image/")) {
+                    url = URL.createObjectURL(file);
+                } 
+                else{
+                    url = null;
+                }
+    
+                newAttachItems.push({
                     file,
                     type: "docs",
                     code: imageIndex,
-                    url: URL.createObjectURL(file),
-                }))
-            ]);
-            setImageIndex(imageIndex + 1);
+                    url: url,
+                    name: file.name,
+                });
+    
+                setImageIndex((prev) => prev + 1);  
+            }
+    
+            setAttachList((prev) => [...prev, ...newAttachItems]);
         } else {
             console.log("파일이 없습니다.");
         }
-        
     };
 
     // useEffect(()=>{
