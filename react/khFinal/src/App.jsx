@@ -101,7 +101,7 @@ function App() {
 
           {/* Chat */}
           <Route path="/chat/room" element={<ChatRoom/>}></Route>
-          <Route path="/chat/group" element={<GroupChat/>}></Route>
+          <Route path="/chat/group/:roomNo" element={<GroupChat/>}></Route>
         </Routes>
 
         <Footer/>
