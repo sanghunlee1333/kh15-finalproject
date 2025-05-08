@@ -14,7 +14,7 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer{
 	//[1] 사용자가 접속하거나 메세지를 보낼 수 있는 "채널"을 개설
 	@Override
 	public void configureMessageBroker(MessageBrokerRegistry registry) {
-		registry.enableSimpleBroker("/public", "/private");
+		registry.enableSimpleBroker("/public", "/private", "/topic");
 		registry.setApplicationDestinationPrefixes("/app");
 	}
 	

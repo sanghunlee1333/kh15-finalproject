@@ -46,17 +46,11 @@ public class RoomChatDao {
 		}
 	}
 		
-	// 방 번호와 최근 채팅 메시지 개수를 기준으로 채팅 메시지를 조회하는 메소드
-	public List<RoomChatDto> listRecent(long roomNo, int count, int offset) {
-		Map<String, Object> params = new HashMap<>();
-		params.put("roomNo", roomNo);
-		params.put("count", count);
-		params.put("offset", offset);
-		try {
-			// 방 번호와 개수 기준으로 최근 채팅을 가져옴
-			return sqlSession.selectList("roomChat.listRecent", params);
-		} catch (Exception e) {
-			throw new RuntimeException("최근 채팅 메시지 조회 실패", e);
-		}
+	// RoomChatDao.java
+	public List<RoomChatDto> listRecent(long roomNo, int count) {
+	    Map<String, Object> params = new HashMap<>();
+	    params.put("roomChatOrigin", roomNo);
+	    params.put("count", count);
+	    return sqlSession.selectList("roomChat.listRecent", params);
 	}
 }
