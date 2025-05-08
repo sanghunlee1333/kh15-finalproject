@@ -39,7 +39,7 @@ export default function Menu() {
 
                         {/* 일정관리 Link */}
                         <li className="nav-item">
-                            <Link to="/notice/list" className="nav-link">
+                            <Link to="/plan/team" className="nav-link">
                                 <i className="fa-solid fa-list-ul"></i>
                                 일정
                             </Link>
