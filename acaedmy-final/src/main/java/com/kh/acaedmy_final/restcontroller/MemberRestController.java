@@ -8,6 +8,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -129,6 +130,14 @@ public class MemberRestController {
 	    //부서별로 그룹화된 데이터 변환
 	    return groupByDepartment;
 	}
+	
+	//전체 회원 목록 가져오기(+ 이름 or 연락처 검색 조회도 가능)
+	@GetMapping("/")
+	public List<MemberDto> list(@RequestParam(required = false) String search){
+		if(search == null) return memberDao.selectList(); //경로 변수 없으면 전체 목록 조회
+		else return memberDao.search(search); //이름 or 연락처 조회(검색2) 
+	}
+	
 }
 
 

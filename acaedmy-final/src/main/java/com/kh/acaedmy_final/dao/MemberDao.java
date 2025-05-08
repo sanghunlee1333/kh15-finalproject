@@ -65,6 +65,11 @@ public class MemberDao {
 	public List<MemberDto> seachContacts(String search) {
 		return sqlSession.selectList("member.search", search); 
 	}
+	
+	//검색2
+	public List<MemberDto> search(String search) {
+		return sqlSession.selectList("member.search2", search); 
+	}
 
 	public boolean editAll(long memberNo, MemberDto memberDto) {
 		Map<String, Object> params = new HashMap<>();

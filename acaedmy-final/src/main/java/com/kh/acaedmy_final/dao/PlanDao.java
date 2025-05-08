@@ -1,0 +1,60 @@
+package com.kh.acaedmy_final.dao;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.ibatis.session.SqlSession;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
+
+import com.kh.acaedmy_final.dto.PlanDto;
+
+@Repository
+public class PlanDao {
+
+	@Autowired
+	private SqlSession sqlSession;
+	
+	//시퀀스 생성
+	public long sequence() {
+	    return sqlSession.selectOne("plan.sequence");
+	}
+	
+	//등록(Todo)
+	
+	
+	//등록(일정)
+	public void insert(PlanDto planDto) {
+		sqlSession.insert("plan.make", planDto);
+	}
+	
+	//삭제
+	public boolean delete(long planNo) {
+		return sqlSession.delete("plan.delete", planNo) > 0;
+	}
+	
+	//전체 조회
+	public List<PlanDto> selectList(long planSenderNo){
+		return sqlSession.selectList("plan.list", planSenderNo);
+	}
+	
+	//상세 조회
+	public PlanDto selectOne(long planNo) {
+		return sqlSession.selectOne("plan.detail", planNo);
+	}
+	
+	//목록 조회(일정 번호별로 수신자 번호들 조회)
+	public List<Long> selectReceiverList(long planNo) {
+		return sqlSession.selectList("plan.listReceiver", planNo);
+	}
+	
+	//수정(일정 상태)
+	public boolean updateStatus(long planNo, String planStatus) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("planNo", planNo);
+		params.put("planStatus", planStatus);
+		return sqlSession.update("plan.updateStatus", params) > 0;
+	}
+	
+}
