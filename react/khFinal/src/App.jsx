@@ -22,6 +22,7 @@ import MemberManage from './components/Admin/MemberManage'
 import NoticeUpdate from './components/Notice/NoticeEdit'
 import { Bounce, ToastContainer } from 'react-toastify'
 import NoticeEdit from './components/Notice/NoticeEdit'
+import TeamPlan from './components/Plan/TeamPlan'
 
 function App() {
   const [userNo, setUserNo] = useRecoilState(userNoState);
@@ -96,6 +97,9 @@ function App() {
           <Route path="/notice/detail/:noticeNo" element={<NoticeDetail/>}></Route>
           <Route path="/notice/edit/:noticeNo" element={<NoticeEdit/>}></Route>
           
+          {/* Plan */}
+          <Route path="/plan/team" element={<TeamPlan/>}></Route>
+
           {/* Contact */}
           <Route path="/member/contact" element={<MemberContact/>}></Route>
 
