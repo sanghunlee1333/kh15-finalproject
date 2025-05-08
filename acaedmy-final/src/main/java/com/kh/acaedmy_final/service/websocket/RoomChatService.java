@@ -44,7 +44,7 @@ public class RoomChatService {
 		if(!isEnter) {
 			throw new TargetNotFoundException("해당 채팅방("+roomNo+ ")에 참여하지 않은 사용자입니다");
 		}
-		
+		 
 		// 채팅 번호 생성 및 전송자 등록
 		roomChatDto.setRoomChatNo(roomChatDao.sequence());
 		roomChatDto.setRoomChatSender(senderNo);
