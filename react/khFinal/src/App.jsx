@@ -22,6 +22,8 @@ import MemberManage from './components/Admin/MemberManage'
 import NoticeUpdate from './components/Notice/NoticeEdit'
 import { Bounce, ToastContainer } from 'react-toastify'
 import NoticeEdit from './components/Notice/NoticeEdit'
+import TeamPlan from './components/Plan/TeamPlan'
+import DateMange from './components/Admin/DateManage'
 
 function App() {
   const [userNo, setUserNo] = useRecoilState(userNoState);
@@ -46,7 +48,7 @@ function App() {
       const resp = await axios.post("/member/refresh");
       setUserNo(resp.data.memberNo);
       setUserDepartment(resp.data.memberDepartment);
-      console.log(resp.data);
+      // console.log(resp.data);
       if(stay){
         window.sessionStorage.removeItem("refreshToken");
         window.localStorage.setItem("refreshToken", resp.data.refreshToken);
@@ -66,7 +68,7 @@ function App() {
     refreshLogin();
   }, []);
 
-  // if (!loading) return <div>로딩 중...</div>;
+  if (!loading) return <div>로딩 중...</div>;
 
   return (
     <>
@@ -89,6 +91,7 @@ function App() {
           {/* Admin */}
           <Route path="/admin/member/list" element={<MemberList/>}></Route>
           <Route path="/admin/member/:number" element={<MemberManage/>}></Route>
+          <Route path="/admin/date" element={<DateMange/>}></Route>
 
           {/* Notice */}
           <Route path="/notice/list" element={<NoticeList/>}></Route>
@@ -96,12 +99,15 @@ function App() {
           <Route path="/notice/detail/:noticeNo" element={<NoticeDetail/>}></Route>
           <Route path="/notice/edit/:noticeNo" element={<NoticeEdit/>}></Route>
           
+          {/* Plan */}
+          <Route path="/plan/team" element={<TeamPlan/>}></Route>
+
           {/* Contact */}
           <Route path="/member/contact" element={<MemberContact/>}></Route>
 
           {/* Chat */}
           <Route path="/chat/room" element={<ChatRoom/>}></Route>
-          <Route path="/chat/group" element={<GroupChat/>}></Route>
+          <Route path="/chat/group/:roomNo" element={<GroupChat/>}></Route>
         </Routes>
 
         <Footer/>

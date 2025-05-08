@@ -19,26 +19,38 @@ public class RoomChatDao {
 	@Autowired
 	private SqlSession sqlSession;
 	
+	// 채팅 메시지 번호 시퀀스를 조회하는 메소드
 	public long sequence() {
-		return sqlSession.selectOne("roomChat.sequence");
+		try {
+			return sqlSession.selectOne("roomChat.sequence");
+		} catch (Exception e) {
+			throw new RuntimeException("채팅 메시지 번호 시퀀스 조회 실패", e);
+		}
 	}
-	
-	//채팅 메세지를 DB에 저장하는 메소드
+		
+	// 채팅 메시지를 DB에 저장하는 메소드
 	public void insert(RoomChatDto roomChatDto) {
-		sqlSession.insert("roomChat.insert", roomChatDto);
+		try {
+			sqlSession.insert("roomChat.insert", roomChatDto);
+		} catch (Exception e) {
+			throw new RuntimeException("채팅 메시지 저장 실패", e);
+		}
 	}
-	
-	//방의 모든 채팅 메세지를 조회하는 메소드
+		
+	// 방 번호 기준 모든 채팅 메시지를 조회하는 메소드
 	public List<RoomChatDto> listByRoom(long roomNo) {
-		return sqlSession.selectList("roomChat.listByRoom", roomNo);
+		try {
+			return sqlSession.selectList("roomChat.listByRoom", roomNo);
+		} catch (Exception e) {
+			throw new RuntimeException("방 번호에 해당하는 채팅 메시지 조회 실패", e);
+		}
 	}
-	
-	//방의 최근 채팅 메세지 일부를 조회하는 메소드
+		
+	// RoomChatDao.java
 	public List<RoomChatDto> listRecent(long roomNo, int count) {
-		Map<String, Object> params = new HashMap<>();
-		params.put("roomNo", roomNo);
-		params.put("count", count);
-		//방 번호와 개수 기준으로 최근 채팅을 가져옴
-		return sqlSession.selectList("roomChat.listRecent", params);
+	    Map<String, Object> params = new HashMap<>();
+	    params.put("roomChatOrigin", roomNo);
+	    params.put("count", count);
+	    return sqlSession.selectList("roomChat.listRecent", params);
 	}
 }

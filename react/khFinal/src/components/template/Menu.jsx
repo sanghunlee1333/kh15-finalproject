@@ -37,35 +37,12 @@ export default function Menu() {
                             </Link>
                         </li>
 
-                        {/* 연락처 Link */}
-                        <li className="nav-item">
-                            <Link to="/member/contact" className="nav-link">
-                                <i className="fa-solid fa-list-ul"></i>
-                                연락처
-                            </Link>
-                        </li>
-
-                        {/* 채팅 */}
-                        <li className="nav-item">
-                            <Link to="/chat/room" className="nav-link">
-                                <i className="fa-solid fa-list-ul"></i>
-                                채팅
-                            </Link>
-                        </li>
-
-
                         {/* 일정관리 Link */}
-                        <li className="nav-item dropdown">
-                            <a className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button"
-                                aria-haspopup="true" aria-expanded="false">
-                                <i className="fa-solid fa-database"></i>
+                        <li className="nav-item">
+                            <Link to="/plan/team" className="nav-link">
+                                <i className="fa-solid fa-list-ul"></i>
                                 일정
-                            </a>
-                            <div className="dropdown-menu">
-                                <Link to="" className="dropdown-item">1</Link>
-                                <Link to="" className="dropdown-item">2</Link>
-                                <Link to="" className="dropdown-item">3</Link>
-                            </div>
+                            </Link>
                         </li>
 
                         {/* 전자관리 Link */}

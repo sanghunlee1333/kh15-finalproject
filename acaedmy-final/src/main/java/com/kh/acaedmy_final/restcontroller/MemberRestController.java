@@ -105,8 +105,13 @@ public class MemberRestController {
 	
 	//연락처 부서별로 전체 회원 목록 가져오기
 	@GetMapping("/contact")
-	public Map<String, List<MemberDto>> getContacts(@RequestParam(value = "search", required = false) String search) {
-	    //  부서별로 그룹화
+	public Map<String, List<MemberDto>> getContacts(@RequestParam(value = "search", required = false) String search,
+																						@RequestHeader ("Authorization") String bearerToken) {
+		// 로그인된 사용자의 정보 가져오기
+		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+		Long loggedInMemberNo = claimVO.getMemberNo();
+		
+		//  부서별로 그룹화
 	    Map<String, List<MemberDto>> groupByDepartment = new LinkedHashMap<>();
 	    
 	    //검색어가 있으면 검색 결과 , 없으면 전체 목록 불러오기
@@ -120,6 +125,11 @@ public class MemberRestController {
 	    
 	    // 각 부서별로 회원 정보를 그룹화
 	    for (MemberDto member : members) {
+	    	//로그인된 사용자는 제외
+	    	if (member.getMemberNo() == loggedInMemberNo) {
+	    	    continue;
+	    	}
+	    	
 	    	String department = member.getMemberDepartment() != null ? member.getMemberDepartment() : "미지정";
 	    	
 	    	// 해당 부서가 없으면 새로 리스트를 생성하고 있으면 기존 리스트에 추가
@@ -138,6 +148,13 @@ public class MemberRestController {
 		else return memberDao.search(search); //이름 or 연락처 조회(검색2) 
 	}
 	
+	// 본인 정보 조회
+	@GetMapping("/contact/me")
+	public MemberDto getMyInfo(@RequestHeader("Authorization") String bearerToken) {
+	    ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+	    Long loggedInMemberNo = claimVO.getMemberNo();
+	    return memberDao.selectOne(loggedInMemberNo);
+	}
 }
 
 

@@ -1,0 +1,106 @@
+/* 캘린더 테두리 */
+
+
+/* 요일 헤더 색상 */
+.fc .fc-col-header-cell {
+    background-color: #f8f9fa;
+    color: #333;
+    font-weight: bold;
+}
+
+/* 날짜 숫자 */
+.fc-daygrid-day-number {
+    color: #000 !important;
+    font-weight: normal;
+    text-decoration: none !important;
+}
+
+/* 공휴일 숫자 색상 */
+.fc-daygrid-day.fc-holiday .fc-daygrid-day-number {
+    color: red !important;
+}
+
+/* today 버튼 */
+.fc-button.fc-today-button {
+    color: black !important;
+    background-color: transparent !important;
+    border: 1px solid gray !important;
+    border-radius: 20px !important;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+/* today 버튼 hover */
+.fc-button.fc-today-button:hover {
+    background-color: rgba(0, 0, 0, 0.247) !important; 
+    border-color: #888 !important;
+    color: #000 !important;
+}
+
+/* 이전달, 다음달 버튼 */
+.fc-button.fc-prev-button,
+.fc-button.fc-next-button {
+    color: black !important;
+    background-color: transparent !important;
+    border: transparent !important;
+    border-radius: 50% !important;
+    width: clamp(2rem, 2vw, 2.5rem);
+    height: clamp(2rem, 2vw, 2.5rem);
+    padding: 0;
+    margin: 0 0.5rem; /* 좌우 마진만 적용 */
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+/* 이전달, 다음달 버튼 hover */
+.fc-button.fc-prev-button:hover,
+.fc-button.fc-next-button:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    border-color: #888 !important;
+    color: #000 !important;
+}
+
+/* 오늘 날짜 배경 */
+.fc-daygrid-day.fc-day-today {
+    background-color: #c9fcc7 !important;
+}
+
+/* 날짜 셀 hover */
+.fc-daygrid-day:hover {
+    background-color: #fdfccf !important;
+    cursor: pointer;
+}
+
+/* 링크 스타일 제거 */
+.fc a {
+    color: inherit !important;
+    text-decoration: none !important;
+}
+
+/* 이벤트 */
+.fc .fc-event {
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+/* 반응형 텍스트 */
+.text-responsive {
+    font-size: clamp(0.8rem, 1vw, 1rem) !important;
+}
+
+/* 반응형 아이콘 */
+.icon-responsive {
+    font-size: 1rem !important;
+}
+
+/* 수신자 라벨 스타일 */
+.custom-badge {
+    --bs-gradient: linear-gradient(180deg, #fbc2eb, #a6c1ee);
+    background-image: var(--bs-gradient);
+    color: white;
+    border-radius: 999px;
+    padding: 4px 8px;
+}

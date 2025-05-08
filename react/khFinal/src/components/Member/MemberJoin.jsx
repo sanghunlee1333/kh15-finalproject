@@ -6,9 +6,12 @@ import { FaUserCircle } from "react-icons/fa";
 import axios from "axios";
 import './MemberJoin.css';  
 import Postcode from "../template/Postcode";
+import { useNavigate } from "react-router";
 export default function MemberJoin(){
-    
+    const navigate = useNavigate();
     // state
+
+    
 
     const [member, setMember] = useState({
         memberId : "" , memberPw : "", memberName: "", memberResidentNo: "", memberContact: "", memberEmail:"",
@@ -150,7 +153,7 @@ export default function MemberJoin(){
 
     },[member])
     const checkMemberName = useCallback(()=>{
-        const regex = /^[가-힣]+$/;
+        const regex = /^[가-힣]{0,20}$/;
         const isValid = regex.test(member.memberName);
         setMemberNameValid(isValid);
         if(member.memberName.length === 0){
@@ -158,7 +161,7 @@ export default function MemberJoin(){
         }
     },[member])
     const checkMemberId = useCallback(()=>{
-        const regex = /^[가-힣a-zA-Z0-9]+$/;
+        const regex = /^[a-zA-Z0-9]{0,30}$/;
         const isValid = regex.test(member.memberId);
         setMemberIdValid(isValid);
         if(member.memberId.length === 0){
@@ -190,7 +193,7 @@ export default function MemberJoin(){
         }
     },[member])
     const checkMemberDepartment = useCallback(()=>{
-        const regex = /^[가-힣]+$/;
+        const regex = /^[가-힣]{0,10}$/;
         const isValid =regex.test(member.memberDepartment ?? '');
         setMemberDepartmentValid(isValid);
         if(member.memberDepartment.length === 0){
@@ -263,7 +266,13 @@ export default function MemberJoin(){
           };
         const isValid = await axios.post("/member/", updatedMember);
        console.log(updatedMember);
-    },[memberResidentNumber])
+       if(isValid)  {
+    //    navigate('/home');
+        }
+        else{
+            
+        }
+    },[memberResidentNumber, member])
 
   
 
