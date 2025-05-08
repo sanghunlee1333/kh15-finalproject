@@ -5,9 +5,17 @@ import { FaCircleXmark, FaImage, FaMagnifyingGlass, FaTrash } from "react-icons/
 import {Modal} from "bootstrap";
 import dayjs from 'dayjs';
 import { Link } from "react-router";
-import './MemberList.css'; 
+//import './MemberList.css'; 
 import { debounce, throttle } from 'lodash';
+import userImg from '/public/images/profile_basic.png';
+import styles from './MemberList.module.css';
+import clsx from 'clsx';
 
+import * as pdfjsLib from 'pdfjs-dist';
+import { GlobalWorkerOptions } from 'pdfjs-dist/build/pdf';
+import workerSrc from 'pdfjs-dist/build/pdf.worker?url';
+
+GlobalWorkerOptions.workerSrc = workerSrc;
 
 export default function MemberList(){
    // const [files, setFiles] = useState("");
@@ -246,103 +254,201 @@ export default function MemberList(){
 
 
 
-    
+    const pdfImageUrl = async(file)=>{
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 1.5 });
+      
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        canvas.style.width = "80px";
+        canvas.style.height = "80px";
+      
+        await page.render({ canvasContext: context, viewport }).promise;
+      
+        return canvas.toDataURL(); 
+    }
     
     const dragOver = useCallback(e=>{  e.preventDefault();console.log("dragOver")},[])
     
-    
+    useEffect(()=>{console.log(attachList.file)},[attachList])
 
-    const dropOnID = (e) => {
+    const dropOnID = async (e) => {
         e.preventDefault();
-        const files = e.dataTransfer.files;  // e.target.files가 아닌 e.dataTransfer.files
-     
+        const files = e.dataTransfer.files;
         if (files && files.length > 0) {
-            setAttachList((prev) => [
-                ...prev,
-                ...Array.from(files).map((file) => ({
+            const newAttachItems = [];
+    
+            for (const file of files) {
+                let url = "";
+    
+                if (file.type === "application/pdf") {
+                    url = await pdfImageUrl(file); 
+                } else if (file.type.startsWith("image/")) {
+                    url = URL.createObjectURL(file);
+                } 
+                else{
+                    url = null;
+                }
+    
+                newAttachItems.push({
                     file,
                     type: "ID",
                     code: imageIndex,
-                }))
-            ]);
-            //imageIndex++;
-            setImageIndex(imageIndex + 1);
+                    url: url,
+                    name: file.name,
+                });
+    
+                setImageIndex((prev) => prev + 1);  
+            }
+    
+            setAttachList((prev) => [...prev, ...newAttachItems]);
         } else {
             console.log("파일이 없습니다.");
         }
     };
-    const dropOnBank = (e) => {
+ 
+    const dropOnBank = async (e) => {
         e.preventDefault();
-        const files = e.dataTransfer.files;  // e.target.files가 아닌 e.dataTransfer.files
-     
+        const files = e.dataTransfer.files;
         if (files && files.length > 0) {
-            setAttachList((prev) => [
-                ...prev, 
-                ...Array.from(files).map((file) => ({
+            const newAttachItems = [];
+    
+            for (const file of files) {
+                let url = "";
+    
+                if (file.type === "application/pdf") {
+                    url = await pdfImageUrl(file); 
+                } else if (file.type.startsWith("image/")) {
+                    url = URL.createObjectURL(file);
+                } 
+                else{
+                    url = null;
+                }
+    
+                newAttachItems.push({
                     file,
                     type: "bank",
                     code: imageIndex,
-                }))
-            ]);
-            setImageIndex(imageIndex + 1);
+                    url: url,
+                    name: file.name,
+                });
+    
+                setImageIndex((prev) => prev + 1);  
+            }
+    
+            setAttachList((prev) => [...prev, ...newAttachItems]);
         } else {
             console.log("파일이 없습니다.");
         }
     };
-    const dropOnContract = (e) => {
+
+
+    const dropOnContract = async (e) => {
         e.preventDefault();
-        const files = e.dataTransfer.files;  // e.target.files가 아닌 e.dataTransfer.files
-     
+        const files = e.dataTransfer.files;
         if (files && files.length > 0) {
-            setAttachList((prev) => [
-                ...prev, 
-                ...Array.from(files).map((file) => ({
+            const newAttachItems = [];
+    
+            for (const file of files) {
+                let url = "";
+    
+                if (file.type === "application/pdf") {
+                    url = await pdfImageUrl(file); 
+                } else if (file.type.startsWith("image/")) {
+                    url = URL.createObjectURL(file);
+                } 
+                else{
+                    url = null;
+                }
+    
+                newAttachItems.push({
                     file,
                     type: "contract",
                     code: imageIndex,
-                }))
-            ]);
-            setImageIndex(imageIndex + 1);
+                    url: url,
+                    name: file.name,
+                });
+    
+                setImageIndex((prev) => prev + 1);  
+            }
+    
+            setAttachList((prev) => [...prev, ...newAttachItems]);
         } else {
             console.log("파일이 없습니다.");
         }
     };
-    const dropOnResume = (e) => {
+    const dropOnResume = async (e) => {
         e.preventDefault();
-        const files = e.dataTransfer.files;  // e.target.files가 아닌 e.dataTransfer.files
-     
+        const files = e.dataTransfer.files;
         if (files && files.length > 0) {
-            setAttachList((prev) => [
-                ...prev, 
-                ...Array.from(files).map((file) => ({
+            const newAttachItems = [];
+    
+            for (const file of files) {
+                let url = "";
+    
+                if (file.type === "application/pdf") {
+                    url = await pdfImageUrl(file); 
+                } else if (file.type.startsWith("image/")) {
+                    url = URL.createObjectURL(file);
+                } 
+                else{
+                    url = null;
+                }
+    
+                newAttachItems.push({
                     file,
                     type: "resume",
                     code: imageIndex,
-                }))
-            ]);
-            setImageIndex(imageIndex + 1);
+                    url: url,
+                    name: file.name,
+                });
+    
+                setImageIndex((prev) => prev + 1);  
+            }
+    
+            setAttachList((prev) => [...prev, ...newAttachItems]);
         } else {
             console.log("파일이 없습니다.");
         }
     };
-    const dropOnDocs = (e) => {
+    const dropOnDocs = async (e) => {
         e.preventDefault();
-        const files = e.dataTransfer.files;  // e.target.files가 아닌 e.dataTransfer.files
-     
+        const files = e.dataTransfer.files;
         if (files && files.length > 0) {
-            setAttachList((prev) => [
-                ...prev, 
-                ...Array.from(files).map((file) => ({
+            const newAttachItems = [];
+    
+            for (const file of files) {
+                let url = "";
+    
+                if (file.type === "application/pdf") {
+                    url = await pdfImageUrl(file); 
+                } else if (file.type.startsWith("image/")) {
+                    url = URL.createObjectURL(file);
+                } 
+                else{
+                    url = null;
+                }
+    
+                newAttachItems.push({
                     file,
                     type: "docs",
                     code: imageIndex,
-                }))
-            ]);
-            setImageIndex(imageIndex + 1);
+                    url: url,
+                    name: file.name,
+                });
+    
+                setImageIndex((prev) => prev + 1);  
+            }
+    
+            setAttachList((prev) => [...prev, ...newAttachItems]);
         } else {
             console.log("파일이 없습니다.");
         }
-        
     };
 
     // useEffect(()=>{
@@ -486,7 +592,7 @@ export default function MemberList(){
 
 
                 <div className="modal fade" tabIndex="-1" role="dialog" ref={modal} data-bs-backdrop="static">
-                    <div className="modal-dialog modal-lg" role="document">
+                    <div className="styles modal-dialog modal-lg" role="document">
                     <div className="modal-content">
                         <div className="modal-header">
                         <h5 className="modal-title">{selectedMember.memberName}님의 첨부파일</h5>
@@ -517,18 +623,53 @@ export default function MemberList(){
                                 </div>
                                 <div className="row">
                                     <div className="col">
-                                        <div className="attachment-wrapper rounded d-flex justify-content-center align-items-center" style={{minHeight:150}}
-                                            onDragOver={dragOver} onDrop={dropOnID}
+                                                            
+                                        <div className={clsx(
+                                            styles['attachment-wrapper'],
+                                            styles['preview-list'],
+                                            'rounded d-flex justify-content-center align-items-center position-relative'
+                                        )}
+                                        style={{ minHeight: 150 }}
+                                        onDragOver={dragOver}
+                                        onDrop={dropOnID}
                                         >
-                                            <div className="d-flex flex-column text-center">
-                                            <span className="text-muted ">첨부할 파일을 드래그하거나 눌러서 선택하세요 </span>
-                                            <span className="text-muted" style={{fontSize:"0.5em"}}>*최대 5장까지 업로드 가능합니다</span>
-                                            </div>
+                                        <div className="ms-1 d-flex gap-2 z-1">
+                                            {attachList.map((item, index) =>
+                                            item.type === 'ID' && (
+                                                <div key={index}>
+                                                <div className={styles['image-box-container']}>
+                                                    <div className={styles['image-wrapper']}>
+                                                    {item.url ? (
+
+                                                        <img src={item.url} className={styles['image-content']} />
+                                                    ):(
+                                                        <div className={styles['file-placeholder']}>
+                                                            <span>{item.name}</span>
+                                                        </div>
+                                                    )}
+
+
+                                                    <div className={styles['image-overlay']} />
+                                                    </div>
+                                                    <FaCircleXmark
+                                                    className={clsx(styles['image-remove-icon'], 'text-danger')}
+                                                    onClick={(e)=>deleteImage(item)}
+                                                    />
+                                                </div>
+                                                </div>
+                                            )
+                                             )}
+                                        </div>
+                                            
+                                        <div className="position-absolute top-50 start-50 translate-middle text-center z-0">
+                                            <span className="text-muted no-select ">첨부할 파일을 드래그하거나 눌러서 선택하세요</span>
+                                            <span className="text-muted no-select d-block" style={{ fontSize: "0.5em" }}>*최대 5장까지 업로드 가능합니다</span>
+                                        </div>
+
+                               
                                         </div>
                                     </div>
                                 </div>
-                                <input type="file" className="form-control" accept=".png,.jpg,.jpeg,.txt,.pdf,.doc,.docx,.hwp,.ppt,.pptx,.xls,.xlsx,.zip,.7z" multiple/>
-                                
                             </div>
                             <hr/>
                             <div className="row mt-1">
@@ -540,7 +681,7 @@ export default function MemberList(){
                                             {item.type === "bank" && (  
                                                 <span className="text-muted" style={{ fontSize: '0.8em' }}>
                                                     {item.file.name}
-                                                    <FaCircleXmark onClick={(e)=>deleteImage(item)} className="ms-1 text-danger" />
+                                                    <FaCircleXmark onClick={(e)=>deleteImage(item)} className="ms-1 text-danger " />
                                                 </span>
                                             )}
                                         </div>
@@ -550,27 +691,56 @@ export default function MemberList(){
                                 </div>
                                 <div className="row">
                                     <div className="col">
-                                        <div className="attachment-wrapper rounded d-flex justify-content-center align-items-center position-relative" style={{minHeight:150}}
-                                            onDragOver={dragOver} onDrop={dropOnBank}
+                                                            
+                                        <div className={clsx(
+                                            styles['attachment-wrapper'],
+                                            styles['preview-list'],
+                                            'rounded d-flex justify-content-center align-items-center position-relative'
+                                        )}
+                                        style={{ minHeight: 150 }}
+                                        onDragOver={dragOver}
+                                        onDrop={dropOnBank}
                                         >
-                                            <div className="d-flex flex-column text-center  position-absolute z-0">
-                                            <span className="text-muted ">첨부할 파일을 드래그하거나 눌러서 선택하세요 </span>
-                                            <span className="text-muted" style={{fontSize:"0.5em"}}>*최대 5장까지 업로드 가능합니다</span>
-                                            </div>
+                                        <div className="ms-1 d-flex gap-2 z-1">
+                                            {attachList.map((item, index) =>
+                                            item.type === 'bank' && (
+                                                <div key={index}>
+                                                <div className={styles['image-box-container']}>
+                                                    <div className={styles['image-wrapper']}>
+                                                    {item.url ? (
 
-                                            {/* 이미지 리스트 */}
-                                            {/* <div className="d-flex">
-                                                {/* {attachList.map(item, index)=>(
-                                                    <div key={index}>
-                                                        
+                                                    <img src={item.url} className={styles['image-content']} />
+                                                    ):(
+                                                    <div className={styles['file-placeholder']}>
+                                                          <div className={styles['file-icon']}>📄</div>
+                                                          <div className={styles['file-name']}>{item.name}</div>
                                                     </div>
-                                                )} */}
-                                            {/* </div>    */}
+                                                    )}
+                                                    <div className={styles['image-overlay']} />
+                                                    </div>
+                                                    <FaCircleXmark
+                                                    className={clsx(styles['image-remove-icon'], 'text-danger')}
+                                                    onClick={(e)=>deleteImage(item)}
+                                                    />
+                                                </div>
+                                                </div>
+                                            )
+                                             )}
+                                        </div>
+                                            
+                                        <div className="position-absolute top-50 start-50 translate-middle text-center z-0">
+                                            <span className="text-muted no-select">첨부할 파일을 드래그하거나 눌러서 선택하세요</span>
+                                            <span className="text-muted no-select d-block" style={{ fontSize: "0.5em" }}>*최대 5장까지 업로드 가능합니다</span>
+                                        </div>
+
+                               
                                         </div>
                                     </div>
                                 </div>
-                                <input type="file" className="form-control" accept=".png,.jpg,.jpeg,.txt,.pdf,.doc,.docx,.hwp,.ppt,.pptx,.xls,.xlsx,.zip,.7z" multiple/>
+
                                 
+                                {/* <input type="file" className="form-control" accept=".png,.jpg,.jpeg,.txt,.pdf,.doc,.docx,.hwp,.ppt,.pptx,.xls,.xlsx,.zip,.7z" multiple/>
+                                 */}
                             </div>
                             <hr/>
                             <div className="row mt-1">
@@ -593,18 +763,44 @@ export default function MemberList(){
                                 </div>
                                 <div className="row">
                                     <div className="col">
-                                        <div className="attachment-wrapper rounded d-flex justify-content-center align-items-center" style={{minHeight:150}}
-                                            onDragOver={dragOver} onDrop={dropOnContract}
+                                                            
+                                        <div className={clsx(
+                                            styles['attachment-wrapper'],
+                                            styles['preview-list'],
+                                            'rounded d-flex justify-content-center align-items-center position-relative'
+                                        )}
+                                        style={{ minHeight: 150 }}
+                                        onDragOver={dragOver}
+                                        onDrop={dropOnContract}
                                         >
-                                            <div className="d-flex flex-column text-center">
-                                            <span className="text-muted ">첨부할 파일을 드래그하거나 눌러서 선택하세요 </span>
-                                            <span className="text-muted" style={{fontSize:"0.5em"}}>*최대 5장까지 업로드 가능합니다</span>
-                                            </div>
+                                        <div className="ms-1 d-flex gap-2 z-1">
+                                            {attachList.map((item, index) =>
+                                            item.type === 'contract' && (
+                                                <div key={index}>
+                                                <div className={styles['image-box-container']}>
+                                                    <div className={styles['image-wrapper']}>
+                                                    <img src={item.url} className={styles['image-content']} />
+                                                    <div className={styles['image-overlay']} />
+                                                    </div>
+                                                    <FaCircleXmark
+                                                    className={clsx(styles['image-remove-icon'], 'text-danger')}
+                                                    onClick={(e)=>deleteImage(item)}
+                                                    />
+                                                </div>
+                                                </div>
+                                            )
+                                             )}
+                                        </div>
+                                            
+                                        <div className="position-absolute top-50 start-50 translate-middle text-center z-0">
+                                            <span className="text-muted no-select">첨부할 파일을 드래그하거나 눌러서 선택하세요</span>
+                                            <span className="text-muted no-select d-block" style={{ fontSize: "0.5em" }}>*최대 5장까지 업로드 가능합니다</span>
+                                        </div>
+
+                               
                                         </div>
                                     </div>
                                 </div>
-                                <input type="file" className="form-control" accept=".png,.jpg,.jpeg,.txt,.pdf,.doc,.docx,.hwp,.ppt,.pptx,.xls,.xlsx,.zip,.7z" multiple/>
-                                
                             </div>
                             <hr/>
                             <div className="row mt-1">
@@ -627,18 +823,44 @@ export default function MemberList(){
                                 </div>
                                 <div className="row">
                                     <div className="col">
-                                        <div className="attachment-wrapper rounded d-flex justify-content-center align-items-center" style={{minHeight:150}}
-                                            onDragOver={dragOver} onDrop={dropOnResume}
+                                                            
+                                        <div className={clsx(
+                                            styles['attachment-wrapper'],
+                                            styles['preview-list'],
+                                            'rounded d-flex justify-content-center align-items-center position-relative'
+                                        )}
+                                        style={{ minHeight: 150 }}
+                                        onDragOver={dragOver}
+                                        onDrop={dropOnResume}
                                         >
-                                            <div className="d-flex flex-column text-center">
-                                            <span className="text-muted ">첨부할 파일을 드래그하거나 눌러서 선택하세요 </span>
-                                            <span className="text-muted" style={{fontSize:"0.5em"}}>*최대 5장까지 업로드 가능합니다</span>
-                                            </div>
+                                        <div className="ms-1 d-flex gap-2 z-1">
+                                            {attachList.map((item, index) =>
+                                            item.type === 'resume' && (
+                                                <div key={index}>
+                                                <div className={styles['image-box-container']}>
+                                                    <div className={styles['image-wrapper']}>
+                                                    <img src={item.url} className={styles['image-content']} />
+                                                    <div className={styles['image-overlay']} />
+                                                    </div>
+                                                    <FaCircleXmark
+                                                    className={clsx(styles['image-remove-icon'], 'text-danger')}
+                                                    onClick={(e)=>deleteImage(item)}
+                                                    />
+                                                </div>
+                                                </div>
+                                            )
+                                             )}
+                                        </div>
+                                            
+                                        <div className="position-absolute top-50 start-50 translate-middle text-center z-0">
+                                            <span className="text-muted no-select">첨부할 파일을 드래그하거나 눌러서 선택하세요</span>
+                                            <span className="text-muted no-select d-block" style={{ fontSize: "0.5em" }}>*최대 5장까지 업로드 가능합니다</span>
+                                        </div>
+
+                               
                                         </div>
                                     </div>
                                 </div>
-                                <input type="file" className="form-control" accept=".png,.jpg,.jpeg,.txt,.pdf,.doc,.docx,.hwp,.ppt,.pptx,.xls,.xlsx,.zip,.7z" multiple/>
-                                
                             </div>
                             <hr/>
                             <div className="row mt-1">
@@ -661,18 +883,44 @@ export default function MemberList(){
                                 </div>
                                 <div className="row">
                                     <div className="col">
-                                        <div className="attachment-wrapper rounded d-flex justify-content-center align-items-center" style={{minHeight:150}}
-                                            onDragOver={dragOver} onDrop={dropOnDocs}
+                                                            
+                                        <div className={clsx(
+                                            styles['attachment-wrapper'],
+                                            styles['preview-list'],
+                                            'rounded d-flex justify-content-center align-items-center position-relative'
+                                        )}
+                                        style={{ minHeight: 150 }}
+                                        onDragOver={dragOver}
+                                        onDrop={dropOnDocs}
                                         >
-                                            <div className="d-flex flex-column text-center">
-                                            <span className="text-muted ">첨부할 파일을 드래그하거나 눌러서 선택하세요 </span>
-                                            <span className="text-muted" style={{fontSize:"0.5em"}}>*최대 5장까지 업로드 가능합니다</span>
-                                            </div>
+                                        <div className="ms-1 d-flex gap-2 z-1">
+                                            {attachList.map((item, index) =>
+                                            item.type === 'docs' && (
+                                                <div key={index}>
+                                                <div className={styles['image-box-container']}>
+                                                    <div className={styles['image-wrapper']}>
+                                                    <img src={item.url} className={styles['image-content']} />
+                                                    <div className={styles['image-overlay']} />
+                                                    </div>
+                                                    <FaCircleXmark
+                                                    className={clsx(styles['image-remove-icon'], 'text-danger')}
+                                                    onClick={(e)=>deleteImage(item)}
+                                                    />
+                                                </div>
+                                                </div>
+                                            )
+                                             )}
+                                        </div>
+                                            
+                                        <div className="position-absolute top-50 start-50 translate-middle text-center z-0">
+                                            <span className="text-muted no-select">첨부할 파일을 드래그하거나 눌러서 선택하세요</span>
+                                            <span className="text-muted no-select d-block" style={{ fontSize: "0.5em" }}>*최대 5장까지 업로드 가능합니다</span>
+                                        </div>
+
+                               
                                         </div>
                                     </div>
                                 </div>
-                                <input type="file" className="form-control" accept=".png,.jpg,.jpeg,.txt,.pdf,.doc,.docx,.hwp,.ppt,.pptx,.xls,.xlsx,.zip,.7z" multiple/>
-                                
                             </div>
                             <hr/>
                            

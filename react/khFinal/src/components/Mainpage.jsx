@@ -3,7 +3,15 @@ import { FaCalendarAlt } from "react-icons/fa";
 export default function Mainpage() {
 
     return (<>
-       
+        <div className="row mt-2">
+            <div className="col d-flex">
+                <div className="ms-auto">
+
+                <button className="btn btn-success">출근</button>
+                <button className="btn btn-danger">퇴근</button>
+                </div>
+            </div>
+        </div>
             <h2 className="mb-4 mt-2">
                 <FaCalendarAlt className="text-danger me-2"/>
                 <span className="align-middle">일정</span>
