@@ -30,6 +30,7 @@
 	<properties>
 		<java.version>21</java.version>
 	</properties>
+	
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -71,45 +72,45 @@
 			<scope>test</scope>
 		</dependency>
 		
-		 <!-- JSP를 사용하기 위한 의존성 -->
-      <dependency>
-          <groupId>jakarta.servlet</groupId>
-          <artifactId>jakarta.servlet-api</artifactId>
-          <scope>provided</scope>
-      </dependency>
-      <dependency>
-          <groupId>jakarta.servlet.jsp.jstl</groupId>
-          <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
-      </dependency>
-      <dependency>
-          <groupId>org.apache.tomcat.embed</groupId>
-          <artifactId>tomcat-embed-jasper</artifactId>
-      </dependency>
-      <dependency>
-          <groupId>org.glassfish.web</groupId>
-          <artifactId>jakarta.servlet.jsp.jstl</artifactId>
-      </dependency>
+		<!-- JSP를 사용하기 위한 의존성 -->
+	    <dependency>
+	        <groupId>jakarta.servlet</groupId>
+	        <artifactId>jakarta.servlet-api</artifactId>
+	        <scope>provided</scope>
+	    </dependency>
+	    <dependency>
+	        <groupId>jakarta.servlet.jsp.jstl</groupId>
+	        <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
+	    </dependency>
+	    <dependency>
+	        <groupId>org.apache.tomcat.embed</groupId>
+	        <artifactId>tomcat-embed-jasper</artifactId>
+	    </dependency>
+	    <dependency>
+	        <groupId>org.glassfish.web</groupId>
+	        <artifactId>jakarta.servlet.jsp.jstl</artifactId>
+	    </dependency>
       
-      <!-- DBCP 라이브러리 -->
-      <dependency>
-          <groupId>org.apache.commons</groupId>
-          <artifactId>commons-dbcp2</artifactId>
-      </dependency>
+	    <!-- DBCP 라이브러리 -->
+	    <dependency>
+	        <groupId>org.apache.commons</groupId>
+	        <artifactId>commons-dbcp2</artifactId>
+	    </dependency>
       
-      <!-- 파일 입출력 보조도구 -->
-      <dependency>
-          <groupId>commons-io</groupId>
-          <artifactId>commons-io</artifactId>
-          <version>2.18.0</version>
-      </dependency>
+      	<!-- 파일 입출력 보조도구 -->
+      	<dependency>
+          	<groupId>commons-io</groupId>
+          	<artifactId>commons-io</artifactId>
+          	<version>2.18.0</version>
+      	</dependency>
       
-      <!-- HTML 해석 도구 -->
-      <dependency>
-          <groupId>org.jsoup</groupId>
-          <artifactId>jsoup</artifactId>
-          <version>1.18.3</version>
-      </dependency>
-      <!-- mybatis 의존성-->
+      	<!-- HTML 해석 도구 -->
+      	<dependency>
+          	<groupId>org.jsoup</groupId>
+          	<artifactId>jsoup</artifactId>
+          	<version>1.18.3</version>
+     	</dependency>
+      	<!-- mybatis 의존성-->
 		<dependency>
 			<groupId>org.mybatis.spring.boot</groupId>
 			<artifactId>mybatis-spring-boot-starter</artifactId>
@@ -122,7 +123,7 @@
 			<scope>test</scope>
 		</dependency>
       
-      <!-- 암호화 관련 모듈-->
+        <!-- 암호화 관련 모듈-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
@@ -133,37 +134,46 @@
 			<scope>test</scope>
 		</dependency>
       
-      <!-- SHA 알고리즘 사용을 위한 라이브러리-->
+      	<!-- SHA 알고리즘 사용을 위한 라이브러리-->
 		<dependency>
-   		 <groupId>commons-codec</groupId>
-    	<artifactId>commons-codec</artifactId>
-	</dependency>
-      <!-- 이름이 같은 항목에 대한 자동복사 도구-->
-	<dependency>
-    <groupId>org.modelmapper</groupId>
-    <artifactId>modelmapper</artifactId>
-    <version>3.2.2</version>
-</dependency>
-	<dependency>
-    <groupId>io.jsonwebtoken</groupId>
-    <artifactId>jjwt-api</artifactId>
-    <version>0.12.6</version>
-</dependency>
-<dependency>
-    <groupId>io.jsonwebtoken</groupId>
-    <artifactId>jjwt-impl</artifactId>
-    <version>0.12.6</version>
-    <scope>runtime</scope>
-</dependency>
-<dependency>
-    <groupId>io.jsonwebtoken</groupId>
-    <artifactId>jjwt-jackson</artifactId>
-    <version>0.12.6</version>
-    <scope>runtime</scope>
-</dependency>
-<dependency>
+   		 	<groupId>commons-codec</groupId>
+    		<artifactId>commons-codec</artifactId>
+		</dependency>
+		
+      	<!-- 이름이 같은 항목에 대한 자동복사 도구-->
+		<dependency>
+		    <groupId>org.modelmapper</groupId>
+		    <artifactId>modelmapper</artifactId>
+		    <version>3.2.2</version>
+		</dependency>
+			<dependency>
+		    <groupId>io.jsonwebtoken</groupId>
+		    <artifactId>jjwt-api</artifactId>
+		    <version>0.12.6</version>
+		</dependency>
+		<dependency>
+		    <groupId>io.jsonwebtoken</groupId>
+		    <artifactId>jjwt-impl</artifactId>
+		    <version>0.12.6</version>
+		    <scope>runtime</scope>
+		</dependency>
+		<dependency>
+		    <groupId>io.jsonwebtoken</groupId>
+		    <artifactId>jjwt-jackson</artifactId>
+		    <version>0.12.6</version>
+		    <scope>runtime</scope>
+		</dependency>
+		
+		<!-- 웹소켓 -->
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-websocket</artifactId>
+		</dependency>
+
+		<!-- JSON 매핑을 위한 Jackson -->
+		<dependency>
+		    <groupId>com.fasterxml.jackson.core</groupId>
+		    <artifactId>jackson-databind</artifactId>
 		</dependency>
 
 		<dependency>
@@ -172,7 +182,6 @@
 			<optional>true</optional>
 		</dependency>
 	</dependencies>
-	
 
 	<build>
 		<plugins>

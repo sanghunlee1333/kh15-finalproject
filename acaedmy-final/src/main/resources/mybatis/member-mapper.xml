@@ -33,6 +33,16 @@
 		order by member_department ASC, member_name ASC
 	</select>
 	
+	<!-- 검색2 -->
+	<select id="search2" resultType="MemberDto">
+	select * from member
+		where (
+			member_name like '%' || #{search} || '%' 
+			or member_department like '%' || #{search} || '%'
+		)
+		order by member_department asc, member_name asc
+	</select>
+	
 	<insert id="join" >
 		insert into member(
 		member_no, member_id, member_pw, member_department, member_name, 
