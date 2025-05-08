@@ -22,11 +22,8 @@ import MemberManage from './components/Admin/MemberManage'
 import NoticeUpdate from './components/Notice/NoticeEdit'
 import { Bounce, ToastContainer } from 'react-toastify'
 import NoticeEdit from './components/Notice/NoticeEdit'
-<<<<<<< HEAD
 import TeamPlan from './components/Plan/TeamPlan'
-=======
 import DateMange from './components/Admin/DateManage'
->>>>>>> main
 
 function App() {
   const [userNo, setUserNo] = useRecoilState(userNoState);
