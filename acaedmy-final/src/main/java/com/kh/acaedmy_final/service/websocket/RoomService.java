@@ -2,7 +2,9 @@ package com.kh.acaedmy_final.service.websocket;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +19,9 @@ public class RoomService {
 
 	@Autowired
 	private RoomDao roomDao;
+	
+	@Autowired
+	private SqlSession sqlSession;
 	
 	//채팅방 생성
 	//@param member 방장 번호(토큰에서 추출)
@@ -58,5 +63,13 @@ public class RoomService {
 	//@return 사용자가 참여 중인 채팅방 목록 (간단 정보)
 	public List<RoomListVO> getRoomListByMember(long memberNo) {
 		return roomDao.selectRoomListByMember(memberNo);
+	}
+	
+	//메세지 읽음 처리
+	public void updateReadTime(long roomNo, long memberNo) {
+		sqlSession.update("room.updateReadTime", Map.of(
+				"roomNo", roomNo,
+				"memberNo", memberNo
+		));
 	}
 }
