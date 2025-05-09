@@ -72,7 +72,6 @@ public class RoomChatService {
 
 	    List<RoomChatDto> messageDtos = roomChatDao.listRecent(roomNo, count);
 	    List<ChatResponseVO> messages = new ArrayList<>();
-
 	    for (RoomChatDto dto : messageDtos) {
 	        String senderName = "알 수 없음";
 	        if (dto.getRoomChatSender() != null) {
@@ -96,7 +95,6 @@ public class RoomChatService {
 	    response.setMessages(messages);
 	    return response;
 	}
-
 	
 	//WebSocket을 통해 채팅방에 구독된 사용자에게 실시간 메세지 전송
 	private void sendRealTimeMessage(Long roomNo, RoomChatDto roomChatDto) {

@@ -85,4 +85,18 @@ public class MemberDao {
 		return sqlSession.update("member.resetPw", memberDto) > 0;
 	}
 
+	public List<MemberDto> selectInvitableContacts(long roomNo, long myNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("roomNo", roomNo);
+		params.put("myNo", myNo);
+		return sqlSession.selectList("member.selectInvitableContacts", params);
+	}
+
+	public List<MemberDto> searchInvitableContacts(long roomNo, Long myNo, String search) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("roomNo", roomNo);
+		params.put("myNo", myNo);
+		params.put("search", search);
+		return sqlSession.selectList("member.searchInvitableContacts", params);
+	}
 }
