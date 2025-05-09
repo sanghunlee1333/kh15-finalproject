@@ -99,7 +99,7 @@ public class RoomChatService {
 	//WebSocket을 통해 채팅방에 구독된 사용자에게 실시간 메세지 전송
 	private void sendRealTimeMessage(Long roomNo, RoomChatDto roomChatDto) {
 		String destination = "/public/chat/" + roomNo;
-		
+		 
 		String senderName = "알 수 없음";
 		if(roomChatDto.getRoomChatSender() != null) {
 			MemberDto sender = memberDao.selectOne(roomChatDto.getRoomChatSender());
