@@ -107,7 +107,7 @@ public class RoomChatService {
 				senderName = sender.getMemberName();
 			}
 		}
-		  
+		
 		ChatResponseVO chat = ChatResponseVO.builder()
 					.roomNo(roomChatDto.getRoomChatOrigin())
 					.senderNo(roomChatDto.getRoomChatSender())
