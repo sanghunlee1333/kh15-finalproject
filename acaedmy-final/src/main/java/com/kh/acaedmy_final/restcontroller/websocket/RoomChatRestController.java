@@ -42,4 +42,5 @@ public class RoomChatRestController {
 		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
 		return roomChatService.getRecentChats(roomNo, count, claimVO);
 	}
+	
 }

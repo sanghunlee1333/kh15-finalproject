@@ -13,6 +13,7 @@ import com.kh.acaedmy_final.dto.websocket.RoomCreateRequestDto;
 import com.kh.acaedmy_final.dto.websocket.RoomDto;
 import com.kh.acaedmy_final.error.TargetNotFoundException;
 import com.kh.acaedmy_final.vo.websocket.RoomListVO;
+import com.kh.acaedmy_final.vo.websocket.UserVO;
 
 @Service
 public class RoomService {
@@ -71,5 +72,25 @@ public class RoomService {
 				"roomNo", roomNo,
 				"memberNo", memberNo
 		));
+	}
+	
+	//채팅방에 속한 사용자 목록 조회
+	public List<UserVO> getRoomUsers(long roomNo, long memberNo) {
+		boolean isParticipant = roomDao.checkRoom(roomNo, memberNo);
+		if(!isParticipant) {
+			throw new TargetNotFoundException("해당 채팅방에 참여하지 않은 사용자입니다");
+		}
+		//실제 사용자 목록 조회
+		return roomDao.getRoomUsers(roomNo);
+	}
+	
+	//채팅방 멤버 초대
+	public void inviteMembers(long roomNo, List<Long> memberNos, long inviterNo) {
+		//해당 유저가 이 방에 속해있는지 먼저 확인
+		if(!roomDao.checkRoom(roomNo, inviterNo)) {
+			throw new TargetNotFoundException("초대 권한이 없습니다");
+		}
+		//중복 없이 멤버 추가
+		roomDao.addMembers(roomNo, memberNos);
 	}
 }

@@ -155,24 +155,34 @@ public class MemberRestController {
 	    Long loggedInMemberNo = claimVO.getMemberNo();
 	    return memberDao.selectOne(loggedInMemberNo);
 	}
+	
+	@GetMapping("/contact/invitable/{roomNo}")
+	public Map<String, List<MemberDto>> getInvitableContacts(
+	        @PathVariable long roomNo,
+	        @RequestParam(value = "search", required = false) String search,
+	        @RequestHeader("Authorization") String bearerToken) {
+
+	    ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+	    Long myNo = claimVO.getMemberNo();
+
+	    // 검색 조건에 따라 조회 방식 변경
+	    List<MemberDto> contacts;
+	    if (search != null && !search.isEmpty()) {
+	        contacts = memberDao.searchInvitableContacts(roomNo, myNo, search); 
+	    } else {
+	        contacts = memberDao.selectInvitableContacts(roomNo, myNo);
+	    }
+
+	    // 부서별로 그룹화
+	    Map<String, List<MemberDto>> groupByDepartment = new LinkedHashMap<>();
+	    for (MemberDto member : contacts) {
+	        String dept = member.getMemberDepartment() != null ? member.getMemberDepartment() : "미지정";
+	        groupByDepartment.putIfAbsent(dept, new ArrayList<>());
+	        groupByDepartment.get(dept).add(member);
+	    }
+
+	    return groupByDepartment;
+	}
+
+	
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

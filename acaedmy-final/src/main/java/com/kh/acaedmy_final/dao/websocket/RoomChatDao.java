@@ -53,4 +53,11 @@ public class RoomChatDao {
 	    params.put("count", count);
 	    return sqlSession.selectList("roomChat.listRecent", params);
 	}
+	
+	public List<RoomChatDto> selectRecentMessages(long roomNo, long memberNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("roomNo", roomNo);
+		params.put("memberNo", memberNo);
+		return sqlSession.selectList("roomChat.selectRecentMessages", params);
+	}
 }
