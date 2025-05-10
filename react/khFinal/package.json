@@ -11,6 +11,10 @@
   },
   "dependencies": {
     "@dnd-kit/sortable": "^10.0.0",
+    "@fullcalendar/core": "^6.1.17",
+    "@fullcalendar/daygrid": "^6.1.17",
+    "@fullcalendar/interaction": "^6.1.17",
+    "@fullcalendar/react": "^6.1.17",
     "@radix-ui/react-dialog": "^1.1.11",
     "@stomp/stompjs": "^7.1.1",
     "axios": "^1.8.4",
