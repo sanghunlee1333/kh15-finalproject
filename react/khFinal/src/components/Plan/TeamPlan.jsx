@@ -5,6 +5,7 @@ import koLocale from '@fullcalendar/core/locales/ko';
 
 import axios from 'axios';
 import { Modal } from 'bootstrap';
+import { toast } from "react-toastify";
 import DatePicker from "react-datepicker";
 import moment from 'moment';
 import dayjs from 'dayjs';
@@ -22,9 +23,18 @@ import './TeamPlan.css';
 
 import { FaCheck, FaLightbulb, FaList, FaListUl, FaRegCalendarCheck, FaRegCalendarPlus } from 'react-icons/fa';
 import { IoPersonSharp } from 'react-icons/io5';
+import './PlanColor.css';
+import TodoList from './TodoList';
+
+const colorOptions = ['#dc3545', '#fd7e14', '#ffc107', '#28a745', '#20c997', '#0d6efd', '#6f42c1', '#d63384', '#6c757d'];
 
 export default function CalendarComponent() {
+
     //state
+    const [isPersonal, setIsPersonal] = useState(false); // 일정 유형
+    const [tab, setTab] = useState('calendar');
+
+    const [allEvents, setAllEvents] = useState([]);
     const [holidayEvents, setHolidayEvents] = useState([]);
     const [planEvents, setPlanEvents] = useState([]);
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1); //다음 달
@@ -34,6 +44,8 @@ export default function CalendarComponent() {
     const [titleChoice, setTitleChoice] = useState(false); //제목 입력 여부
     const [receiverChoice, setReceiverChoice] = useState(false); //참석자 선택 여부
     const [dateChoice, setDateChoice] = useState(false); //시작일, 종료일 선택 여부
+    const [showColorPicker, setShowColorPicker] = useState(false);
+    const [planColor, setPlanColor] = useState('#0d6efd');
 
     const [endTimeManuallyChanged, setEndTimeManuallyChanged] = useState(false); //종료일 수동 조정 여부
 
@@ -87,16 +99,23 @@ export default function CalendarComponent() {
         loadContacts(); //연락처(부서별 멤버) 목록
     }, []); //컴포넌트가 처음 렌더링된 직후 한 번만 실행
 
+    const validEvents = allEvents.filter(event => !!event.start);
+
     const fetchAllEvents = useCallback(async (year, month) => {
         const holidays = await fetchHolidays(year, month);
         let token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
-        const { data: plans } = await axios.get("/plan/list", 
+        const { data: teamPlans } = await axios.get("/plan/team", //팀 일정 가져오기
             {
                 headers: { Authorization: `Bearer ${token}` } 
             }
         );
+        const { data: personalPlans } = await axios.get("/plan/personal", 
+            { 
+                headers: { Authorization: `Bearer ${token}` } 
+            }
+        );
 
-        const holidayEvents = holidays.flatMap(holiday => {
+        const holidayEvents = holidays.flatMap(holiday => { //공휴일 
             const dateStr = `${holiday.locdate}`; // 'YYYYMMDD'
             const dateObj = new Date(
                 `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`
@@ -114,19 +133,41 @@ export default function CalendarComponent() {
             };
         });
 
-        const planEvents = plans.map(plan => ({
+        const teamPlanEvents = teamPlans.map(plan => ({ //팀 일정
+            id: `team-${plan.planNo}`,
             title: plan.planTitle,
             start: plan.planStartTime,
             end: plan.planEndTime,
+            backgroundColor: plan.planColor,
+            borderColor: plan.planColor,
             extendedProps: { //FullCalendar의 커스텀 속성 저장 공간 -> 내용, 참여자 정보도 저장할 수 있음
+                planType: "팀",
                 content: plan.planContent,
                 planNo: plan.planNo,
-                receivers: plan.receivers
+                receivers: plan.receivers,
+                planColor: plan.planColor
+            }
+        }));
+
+        const personalPlanEvents = personalPlans.map(plan => ({ //개인-Todo
+            id: `personal-${plan.planNo}`,
+            title: plan.planTitle,
+            start: plan.planStartTime,
+            end: plan.planEndTime,
+            backgroundColor: plan.planColor,
+            borderColor: plan.planColor,
+            extendedProps: {
+                planType: '개인',
+                content: plan.planContent,
+                planNo: plan.planNo,
+                planColor: plan.planColor
             }
         }));
 
         setHolidayEvents(holidayEvents);
-        setPlanEvents(planEvents);
+        setPlanEvents([...teamPlanEvents, ...personalPlanEvents]);
+        const combinedEvents = [...holidayEvents, ...teamPlanEvents, ...personalPlanEvents];
+        setAllEvents(combinedEvents);
     }, []);
 
     useEffect(() => {
@@ -167,7 +208,7 @@ export default function CalendarComponent() {
             const end = new Date(start);
             end.setDate(end.getDate() + 1); // 다음 날 00:00:00
             end.setHours(0, 0, 0, 0);
-            setEndTime(end);
+            // setEndTime(end);
         }
     }, [allDay, startTime, endTimeManuallyChanged]);
 
@@ -213,26 +254,31 @@ export default function CalendarComponent() {
     const submitPlan = useCallback(async ()=>{
         if (validAllFields()) return;
 
-        // if (!title || !startTime || !endTime) return;
-        // if (endTime < startTime) return;
-        // if (!selectedMembers.length) return;
+        let adjustedEndTime = endTime;
+        if (allDay && endTime) {
+            adjustedEndTime = new Date(endTime);
+            adjustedEndTime.setDate(adjustedEndTime.getDate() + 1); // +1일
+            adjustedEndTime.setHours(0, 0, 0, 0); // 00:00:00
+        }
 
         const body = { //서버에 보낼 body 객체
-            planType :"팀",
+            planType: isPersonal ? "개인" : "팀",
             planTitle : title,
             planContent : content,
             planStartTime : startTime,
-            planEndTime : endTime,
+            planEndTime: adjustedEndTime,
+            planColor: planColor,
             receivers: selectedMembers //체크된 참여자 목록 (번호 배열)
         };
 
         let token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
 
-        await axios.post("/plan/receiver", body, {
+        await axios.post("/plan/team", body, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         });
+        toast.success("일정이 등록되었습니다.");
 
         //(수정 필요)캘린더에 즉시 반영
 
@@ -267,20 +313,17 @@ export default function CalendarComponent() {
     }, []);
 
     //종일 일정 -> 날짜만 설정 가능 (시작일/종료일)
-    const startTimeChange = useCallback(date=>{
+    const startTimeChange = useCallback(date => {
         const start = new Date(date);
-        if(allDay) {
-            start.setHours(0, 0, 0, 0);
-        }
+        if (allDay) start.setHours(0, 0, 0, 0);
         setStartTime(start);
+        setEndTimeManuallyChanged(false); // 리셋
     }, [allDay]);
-    const endTimeChange = useCallback(date=>{
-        const end = new Date(date); //Full Calendar의 end는 하루 뒤 00:00으로 설정해야 실제 종료일까지
-        if(allDay) {
-            end.setHours(0, 0, 0, 0); // 정확히 하루의 마지막 순간
-        }
+    const endTimeChange = useCallback(date => {
+        const end = new Date(date);
+        if (allDay) end.setHours(0, 0, 0, 0);
         setEndTime(end);
-        setEndTimeManuallyChanged(true); //사용자 입력으로 간주
+        setEndTimeManuallyChanged(true);
     }, [allDay]);
 
     //날짜 클릭 -> 해당 날짜의 일정들 보기
@@ -353,12 +396,20 @@ export default function CalendarComponent() {
         const now = new Date(); //현재 날짜
 
         const start = new Date(baseDate); //이 시점에서는 날짜만 같고 시각은 기본값(00:00) 상태
-        start.setHours(now.getHours(), now.getMinutes(), 0, 0); //설정한 날짜에 현재 시간, 분까지 설정
-        
         const end = new Date(baseDate); //이 시점에서는 날짜만 같고 시각은 기본값(00:00) 상태
-        end.setHours(now.getHours() + 1, now.getMinutes(), 0, 0); //설정한 날짜에 현재 시간, 분까지 설정
-
+        
         setAllDay(false); //종일 체크 해제
+
+        if (allDay) { //종일일 경우 -> 00:00 ~ 00:00 기준
+            start.setHours(0, 0, 0, 0);
+            end.setDate(end.getDate() + 1);
+            end.setHours(0, 0, 0, 0);
+        } 
+        else { //일반 일정 -> 현재 시간 기준
+            start.setHours(now.getHours(), now.getMinutes(), 0, 0);
+            end.setHours(now.getHours() + 1, now.getMinutes(), 0, 0);
+        }
+
         setStartTime(start); //시작일 업데이트
         setEndTime(end); //종료일 업데이트
         setClickedDate(baseDate); //클릭한 날짜 상태 저장
@@ -368,6 +419,7 @@ export default function CalendarComponent() {
         setContent("");
         setSearchContacts(""); //검색어 초기화
         setSelectedMembers([]); //수신자 리스트 초기화
+        setPlanColor('#0d6efd'); //일정 색상 초기화
 
         setTitleChoice(false); //제목 경고 초기화
         setReceiverChoice(false); //수신자 경고 초기화
@@ -445,7 +497,29 @@ export default function CalendarComponent() {
         <Jumbotron subject="일정" />
 
         <hr/>
+
+        <div className="row">
+            <div className="col">
+                <div className="d-flex justify-content-start mb-3">
+                    <button className={`btn ${tab === 'calendar' ? 'btn-primary' : 'btn-outline-primary'} text-responsive me-2`} onClick={() => setTab('calendar')}>
+                        캘린더
+                    </button>
+                    <button className={`btn ${tab === 'todo' ? 'btn-primary' : 'btn-outline-primary'} text-responsive`} onClick={() => setTab('todo')}>
+                        Todo 리스트
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        
         <div className="calendar-wrapper">
+        {/* 개인-Todo */}
+        {tab === 'todo' && (
+            <TodoList allEvents={allEvents} fetchAllEvents={fetchAllEvents} />
+        )}            
+
+        {/* 캘린더 */}
+        {tab === 'calendar' && (
             <FullCalendar
                 ref={calendar} //이 FullCalendar 컴포넌트에 접근할 수 있는 참조를 연결. .current.getApi()로 달력의 메서드에 접근할 수 있음
                 plugins={[dayGridPlugin, interactionPlugin]} //FullCalendar에서 사용할 플러그인 목록. dayGridPlugin: 월간(month) 보기 기능을 제공, interactionPlugin: 날짜 클릭 등의 사용자 인터랙션을 처리
@@ -496,6 +570,7 @@ export default function CalendarComponent() {
                     await fetchAllEvents(newYear, newMonth);
                 }}
             />
+        )}
         </div>
 
         {/* 일정 등록 모달 */}
@@ -534,6 +609,23 @@ export default function CalendarComponent() {
                                 <div className="d-flex text-responsive">
                                     <FaRegCalendarCheck className="mt-1 me-2"/>
                                     <span className="fw-bold">일정</span> 
+                                    <div className="color-picker-container d-flex align-items-center ms-1">
+                                        <div className="color-picker-button" style={{ backgroundColor: planColor }} onClick={() => setShowColorPicker(!showColorPicker)}></div>
+                                        {showColorPicker && (
+                                            <div className="color-picker-popup">
+                                            {colorOptions.map(color => (
+                                                <div key={color} className={`color-picker-option ${planColor === color ? 'selected' : ''}`} 
+                                                    style={{ backgroundColor: color }}
+                                                    onClick={() => { 
+                                                        setPlanColor(color);
+                                                        setShowColorPicker(false);
+                                                    }}
+                                                >
+                                                </div>
+                                            ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="d-flex align-items-center gap-2 mt-1">
                                     <DatePicker 
@@ -547,6 +639,8 @@ export default function CalendarComponent() {
                                         onCalendarClose={() => setDateChoice(true)}
                                         dateFormat={allDay ? "yyyy-MM-dd" : "yyyy-MM-dd HH:mm"} 
                                         placeholderText="시작일"
+                                        popperPlacement="bottom-start"
+                                        
                                     />
                                     <span> - </span>
                                     <DatePicker
@@ -554,12 +648,13 @@ export default function CalendarComponent() {
                                             ${dateChoice ? (isInvalidEndTime ? 'is-invalid' : 'is-valid') : ''}`}
                                         selected={endTime} 
                                         minDate={startTime || new Date()} //시작일 이후만 선택 가능
-                                        showTimeSelect={!allDay} //종일이면 시간 선택 안 보임
+                                        showTimeSelect={!allDay}
                                         timeIntervals={30}
                                         onChange={endTimeChange}
                                         onCalendarClose={() => setDateChoice(true)}
                                         dateFormat={allDay ? "yyyy-MM-dd" : "yyyy-MM-dd HH:mm"} 
                                         placeholderText="종료일"
+                                        popperPlacement="top-start"
                                     />
                                 </div>
                                 
@@ -727,10 +822,14 @@ export default function CalendarComponent() {
                             return (
                                 <div key={`${event.title}-${event.startStr}`} onClick={() => moveListToDetail(event)}
                                     className="border rounded p-3 mb-2 hover-shadow text-responsive" style={{ cursor: 'pointer' }}>
-                                    <h6 className="text-responsive">
-                                        <small className={status.className}>{status.text}</small> {event.title}
-                                    </h6>
-                                    <div className="d-flex flex-wrap gap-2">
+                                    <div className="d-flex align-items-center text-responsive">
+                                        <div className="d-flex align-items-center gap-1">
+                                            <small className={`${status.className} fw-bold`}>{status.text}</small>
+                                            <span className="fw-bold">{event.title}</span>
+                                        </div>
+                                        <div className="color-box ms-1" style={{ backgroundColor: event.extendedProps?.planColor }}></div>
+                                    </div>
+                                    <div className="d-flex flex-wrap gap-2 mt-2">
                                     {Object.values(groupContacts).flat()
                                     .filter(member => event.extendedProps?.receivers?.includes(member.memberNo))
                                     .map(member => (
@@ -770,6 +869,9 @@ export default function CalendarComponent() {
                                 <div className="d-flex text-responsive">
                                     <FaRegCalendarCheck className="mt-1 me-2"/>
                                     <span className="fw-bold">일정</span> 
+                                    <div className="color-picker-container d-flex align-items-center ms-1">
+                                        <div className="color-box" style={{ backgroundColor: selectedEvent?.extendedProps?.planColor }}></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -24,9 +24,11 @@ import { Bounce, ToastContainer } from 'react-toastify'
 import NoticeEdit from './components/Notice/NoticeEdit'
 import TeamPlan from './components/Plan/TeamPlan'
 import DateMange from './components/Admin/DateManage'
+import TodoList from './components/Plan/TodoList'
 import Member from './components/utils/member';
 import Admin from './components/utils/admin';
 import EditProfile from './components/Mypage/EditProfile'
+
 function App() {
   const [userNo, setUserNo] = useRecoilState(userNoState);
   const [userDepartment, setUserDepartment] = useRecoilState(userDepartmentState);
@@ -112,6 +114,7 @@ function App() {
           
           {/* Plan */}
           <Route path="/plan/team" element={<TeamPlan/>}></Route>
+          <Route path="/plan/todo" element={<TodoList/>}></Route>
 
           {/* Contact */}
           <Route path="/member/contact" element={<MemberContact/>}></Route>
