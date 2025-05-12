@@ -21,7 +21,7 @@ import org.xml.sax.SAXException;
 import com.kh.acaedmy_final.dao.AdminDateDao;
 import com.kh.acaedmy_final.dto.AdminDateDto;
 import com.kh.acaedmy_final.utill.HolidayGenerator;
-import com.kh.acaedmy_final.vo.HolidayResponseVO;
+import com.kh.acaedmy_final.vo.WorkingdaysResponseVO;
 
 @Service
 public class WorkingDaysService {
@@ -29,10 +29,10 @@ public class WorkingDaysService {
 	private HolidayGenerator holidayGenerator;
 	@Autowired
 	private AdminDateDao adminDateDao;
-	List<HolidayResponseVO> holidayList = new LinkedList<>();
+	List<WorkingdaysResponseVO> holidayList = new LinkedList<>();
 	
 	// 모든 공휴일
-	public List<HolidayResponseVO> getHolidaysDate() throws IOException, ParserConfigurationException, SAXException {
+	public List<WorkingdaysResponseVO> getHolidaysDate() throws IOException, ParserConfigurationException, SAXException {
 		 LocalDate now = LocalDate.now();
 		 int year = now.getYear();
 		 String yearSt = String.valueOf(year);
@@ -89,9 +89,9 @@ public class WorkingDaysService {
 		LocalDate now = LocalDate.now();
 		int year = now.getYear();
 		String yearSt = String.valueOf(year);
-		List<HolidayResponseVO> list = holidayGenerator.getRestDays(yearSt);
+		List<WorkingdaysResponseVO> list = holidayGenerator.getRestDays(yearSt);
 		List<AdminDateDto> save = new LinkedList<>();
-		for(HolidayResponseVO vo : list) {
+		for(WorkingdaysResponseVO vo : list) {
 			AdminDateDto dto = AdminDateDto.builder()
 			.holidayNo(adminDateDao.sequence())
 			.holidayName(vo.getDateName())

@@ -24,7 +24,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import com.kh.acaedmy_final.configuration.WorkingDaysProperties;
-import com.kh.acaedmy_final.vo.HolidayResponseVO;
+import com.kh.acaedmy_final.vo.WorkingdaysResponseVO;
 @Component
 public class HolidayGenerator {
 	@Autowired
@@ -33,7 +33,7 @@ public class HolidayGenerator {
 	RestTemplate restTemplate = new RestTemplate();
 	
 	
-	public List<HolidayResponseVO> getRestDays(String year) throws IOException, ParserConfigurationException, SAXException {
+	public List<WorkingdaysResponseVO> getRestDays(String year) throws IOException, ParserConfigurationException, SAXException {
 	    
 
 //		  StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo"); /*URL*/
@@ -74,7 +74,7 @@ public class HolidayGenerator {
 	        //List<HolidayResponseWrapper> items = response.getResponse().getBody().getItems().getItem();
 	        NodeList itemList = doc.getElementsByTagName("item");
 	      //  System.err.println("restDay ");
-	        List<HolidayResponseVO> wrap = new LinkedList<>();
+	        List<WorkingdaysResponseVO> wrap = new LinkedList<>();
 	        for (int i = 0; i < itemList.getLength(); i++) {
 	            Node item = itemList.item(i);
 	            if (item.getNodeType() == Node.ELEMENT_NODE) {
@@ -85,7 +85,7 @@ public class HolidayGenerator {
 	               String isHoliday = getTagValue("isHoliday", element);
 //	                ret.setDateName(dateName);
 //	                ret.setLocdate(locdate);
-	               HolidayResponseVO vo = new HolidayResponseVO();
+	               WorkingdaysResponseVO vo = new WorkingdaysResponseVO();
 	               vo.setDateName(dateName);
 	               vo.setLocDate(locdate);
 	                wrap.add(vo);
