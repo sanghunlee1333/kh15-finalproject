@@ -75,7 +75,7 @@ public class AttachmentService {
 		
 		//[3] 실제 파일 불러오기 -> 라이브러리 사용(Apache commons IO)
 		byte[] data = FileUtils.readFileToByteArray(target);
-		
+		//System.err.println("attac h22222 =" + attachmentNo);
 		return data;
 	}
 }

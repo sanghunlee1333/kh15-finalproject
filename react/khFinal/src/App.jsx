@@ -25,6 +25,9 @@ import NoticeEdit from './components/Notice/NoticeEdit'
 import TeamPlan from './components/Plan/TeamPlan'
 import DateMange from './components/Admin/DateManage'
 import TodoList from './components/Plan/TodoList'
+import Member from './components/utils/member';
+import Admin from './components/utils/admin';
+import EditProfile from './components/Mypage/EditProfile'
 
 function App() {
   const [userNo, setUserNo] = useRecoilState(userNoState);
@@ -69,6 +72,12 @@ function App() {
     refreshLogin();
   }, []);
 
+  useEffect(()=>{
+    console.log("loadingSTATE");
+    console.log(loading);
+
+  },[loading])
+
   if (!loading) return <div>로딩 중...</div>;
 
   return (
@@ -83,16 +92,19 @@ function App() {
 
         {/* Routes에 주소와 연결될 컴포넌트를 작성하여 상황에 맞는 화면 출력 */}
         <Routes>
-          <Route path="/" element={<Mainpage/>}></Route>
+          <Route path="/" element={<Member><Mainpage/></Member>}></Route>
 
           {/* Member */}
           <Route path="/member/login" element={<MemberLogin/>}></Route>
           <Route path="/member/join" element={<MemberJoin/>}></Route>
 
+          {/* MyPage */}
+          <Route path="/mypage/edit" element={<EditProfile/>}></Route>
+
           {/* Admin */}
-          <Route path="/admin/member/list" element={<MemberList/>}></Route>
-          <Route path="/admin/member/:number" element={<MemberManage/>}></Route>
-          <Route path="/admin/date" element={<DateMange/>}></Route>
+          <Route path="/admin/member/list" element={<Admin><MemberList/></Admin>}></Route>
+          <Route path="/admin/member/:number" element={<Admin><MemberManage/></Admin>}></Route>
+          <Route path="/admin/date" element={<Admin><DateMange/></Admin>}></Route>
 
           {/* Notice */}
           <Route path="/notice/list" element={<NoticeList/>}></Route>

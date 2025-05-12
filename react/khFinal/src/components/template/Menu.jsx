@@ -1,12 +1,44 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { CiLogin } from "react-icons/ci";
 import { CiLogout } from "react-icons/ci";
 import { FaUserCircle } from "react-icons/fa";
 import { FaLightbulb } from "react-icons/fa6";
+import { useCallback, useRef } from "react";
+import { Modal } from "bootstrap";
+import axios from "axios";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { loginState, userDepartmentState, userNoState } from "../utils/stroage";
 
 export default function Menu() {
+    const navigate = useNavigate();
+      const [userNo, setUserNo] = useRecoilState(userNoState);
+    const [userDepartment,setUserDepartment] = useRecoilState(userDepartmentState);
+    const login = useRecoilValue(loginState);
 
 
+    const logoutModal = useRef();
+    const gotoLogout = useCallback( ()=>{
+        console.log("say")
+        const target = Modal.getOrCreateInstance(logoutModal.current);
+        target.show();
+    },[])
+
+    const sayYes = useCallback(async()=>{
+          await axios.delete("/member/logout");
+      window.localStorage.removeItem('refreshToken');
+      window.sessionStorage.removeItem('refreshToken');
+      setUserNo("");
+      setUserDepartment("");
+       const target = Modal.getInstance(logoutModal.current);
+        target.hide();
+      navigate('member/login'); 
+
+
+    },[])
+    const sayNo = useCallback(()=>{
+        const target = Modal.getInstance(logoutModal.current);
+        target.hide();
+    },[])
 
 
     return (<>
@@ -75,10 +107,11 @@ export default function Menu() {
                         {/* 로그인, 로그아웃 Link */}
                         <li className="nav-item">
                             {/* 로그아웃 */}
-                            <Link to="/member/login" className="nav-link active">
+                             <Link onClick={gotoLogout} className="nav-link active">
                                 <i className="fa-solid fa-right-to-bracket"></i>
                                 <CiLogout className="fs-4"/>
-                            </Link>
+                            </Link> 
+                            
                         </li>
 
                         {/* 마이페이지 Link, 회원가입 Link */}
@@ -92,6 +125,31 @@ export default function Menu() {
                 </div>
             </div>
         </nav>
+        <div className="modal fade" tabIndex="-1" role="dialog" ref={logoutModal} data-bs-backdrop="static">
+              <div className="modal-dialog modal-sm" role="document">
+                  <div className="modal-content">
+                      <div className="modal-header">
+                      <h2>로그아웃</h2>
+                      <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"  >
+                      </button>
+                      </div>
+                      <div className="modal-body">
+                        <span>정말 로그아웃 하시겠습니까?</span>
 
+                       
+                     </div>
+                      <div className="modal-footer">
+                      <div className="d-flex justify-content-between">
+
+                        <button className="btn btn-success" onClick={sayYes}>예</button>
+                          <button className="btn btn-secondary" onClick={sayNo}> 아니요</button>
+                                          
+                         
+                      </div>
+                      
+                      </div>
+                  </div>
+              </div> 
+              </div>
     </>)
 }
