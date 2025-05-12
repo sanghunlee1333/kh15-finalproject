@@ -8,6 +8,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -140,6 +141,13 @@ public class MemberRestController {
 	    return groupByDepartment;
 	}
 	
+	//전체 회원 목록 가져오기(+ 이름 or 연락처 검색 조회도 가능)
+	@GetMapping("/")
+	public List<MemberDto> list(@RequestParam(required = false) String search){
+		if(search == null) return memberDao.selectList(); //경로 변수 없으면 전체 목록 조회
+		else return memberDao.search(search); //이름 or 연락처 조회(검색2) 
+	}
+	
 	// 본인 정보 조회
 	@GetMapping("/contact/me")
 	public MemberDto getMyInfo(@RequestHeader("Authorization") String bearerToken) {
@@ -147,24 +155,34 @@ public class MemberRestController {
 	    Long loggedInMemberNo = claimVO.getMemberNo();
 	    return memberDao.selectOne(loggedInMemberNo);
 	}
+	
+	@GetMapping("/contact/invitable/{roomNo}")
+	public Map<String, List<MemberDto>> getInvitableContacts(
+	        @PathVariable long roomNo,
+	        @RequestParam(value = "search", required = false) String search,
+	        @RequestHeader("Authorization") String bearerToken) {
+
+	    ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+	    Long myNo = claimVO.getMemberNo();
+
+	    // 검색 조건에 따라 조회 방식 변경
+	    List<MemberDto> contacts;
+	    if (search != null && !search.isEmpty()) {
+	        contacts = memberDao.searchInvitableContacts(roomNo, myNo, search); 
+	    } else {
+	        contacts = memberDao.selectInvitableContacts(roomNo, myNo);
+	    }
+
+	    // 부서별로 그룹화
+	    Map<String, List<MemberDto>> groupByDepartment = new LinkedHashMap<>();
+	    for (MemberDto member : contacts) {
+	        String dept = member.getMemberDepartment() != null ? member.getMemberDepartment() : "미지정";
+	        groupByDepartment.putIfAbsent(dept, new ArrayList<>());
+	        groupByDepartment.get(dept).add(member);
+	    }
+
+	    return groupByDepartment;
+	}
+
+	
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

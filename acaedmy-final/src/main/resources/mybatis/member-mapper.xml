@@ -23,6 +23,34 @@
 		select * from member where member_id = #{memberId}
 	</select>
 	
+	<select id="searchInvitableContacts" resultType="MemberDto">
+		select *
+	    from member
+	    where member_no != #{myNo}
+	      and member_no not in (
+	          select member_no
+	          from room_user
+	          where room_no = #{roomNo}
+	      )
+	      and (
+	          instr(member_name, #{search}) > 0
+	          or instr(member_department, #{search}) > 0
+	      )
+	    order by member_department, member_name
+	</select>
+	
+	<!-- 검색 없이 초대 가능한 전체 연락처 조회 -->
+	<select id="selectInvitableContacts" resultType="MemberDto">
+	    select *
+	    from member
+	    where member_no != #{myNo}
+	      and member_no not in (
+	          select member_no
+	          from room_user
+	          where room_no = #{roomNo}
+	      )
+	    order by member_department, member_name
+	</select>
 	
 	
 	<!-- 검색 -->
@@ -31,6 +59,16 @@
 		where (member_name like concat('%', #{search}, '%') or
 					member_department like concat('%', #{search}, '%'))
 		order by member_department ASC, member_name ASC
+	</select>
+	
+	<!-- 검색2 -->
+	<select id="search2" resultType="MemberDto">
+	select * from member
+		where (
+			member_name like '%' || #{search} || '%' 
+			or member_department like '%' || #{search} || '%'
+		)
+		order by member_department asc, member_name asc
 	</select>
 	
 	<insert id="join" >

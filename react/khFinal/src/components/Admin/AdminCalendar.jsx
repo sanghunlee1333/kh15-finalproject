@@ -15,15 +15,16 @@ export default function AdminCalendar({ param, onNotify, currentDate,sendDate })
     if (currentDate) {
         setCurrent({ year: currentDate.year, month: currentDate.month });
     }
-    console.log("currentDate")
-    console.log(currentDate);
+    // console.log("currentDate")
+    // console.log(currentDate);
     
     }, [currentDate]);
 
     useEffect(()=>{
-        console.log("current");
+    //    console.log("current");
         sendDate(current);
-        console.log( current)},[current])
+       // console.log( current)
+      },[current])
 
     const [clickedDate, setClickedDate] = useState(""); 
     const [submitDate, setSubmitDate] = useState({

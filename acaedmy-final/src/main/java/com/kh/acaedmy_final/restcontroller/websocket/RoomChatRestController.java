@@ -1,7 +1,5 @@
 package com.kh.acaedmy_final.restcontroller.websocket;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +14,7 @@ import com.kh.acaedmy_final.dto.websocket.RoomChatDto;
 import com.kh.acaedmy_final.service.TokenService;
 import com.kh.acaedmy_final.service.websocket.RoomChatService;
 import com.kh.acaedmy_final.vo.ClaimVO;
+import com.kh.acaedmy_final.vo.websocket.ChatRoomResponseVO;
 
 @RestController
 @RequestMapping("api/chat")
@@ -27,27 +26,21 @@ public class RoomChatRestController {
 	@Autowired
 	private TokenService tokenService;
 	
-	//채팅 전송 (등록)
+	// 채팅 전송 (등록)
 	@PostMapping("/")
 	public void send(@RequestBody RoomChatDto roomChatDto, 
-							@RequestHeader("Authorization") String bearerToken) {
-		//로그인한 사용자 확인
+					 @RequestHeader("Authorization") String bearerToken) {
 		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
-		
-		//사용자 확인 및 채팅방 입장 여부 확인
 		roomChatService.sendMessage(roomChatDto, claimVO);
 	}
 	
-	//해당 방의 최근 채팅 조회
+	// 해당 방의 최근 채팅 조회
 	@GetMapping("/recent/{roomNo}")
-	public List<RoomChatDto> recent(@PathVariable long roomNo,
-									@RequestParam(defaultValue = "20") int count,//처음 메세지 불러올 개수
-									@RequestParam(defaultValue = "0") int offset,//시작 위치
-									@RequestHeader("Authorization") String bearerToken) {
-		
+	public ChatRoomResponseVO recent(@PathVariable long roomNo,
+									 @RequestParam(defaultValue = "20") int count,
+									 @RequestHeader("Authorization") String bearerToken) {
 		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
-		
-		//채팅방 입장 여부 확인
-		return roomChatService.getRecentChats(roomNo, count, offset, claimVO);
+		return roomChatService.getRecentChats(roomNo, count, claimVO);
 	}
+	
 }

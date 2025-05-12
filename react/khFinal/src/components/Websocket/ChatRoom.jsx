@@ -6,6 +6,14 @@ import { IoChatbubbles } from "react-icons/io5";
 import { RiChatNewLine, RiContactsBook3Fill } from "react-icons/ri";
 import { IoMdPhonePortrait } from "react-icons/io";
 import { Link } from "react-router-dom";
+import dayjs from "dayjs";
+import "dayjs/locale/ko"; // 한글 로케일 불러오기
+import localizedFormat from "dayjs/plugin/localizedFormat";
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
+
+dayjs.extend(localizedFormat);
+dayjs.locale("ko");         // 한글로 설정
 
 export default function ChatRoom() {
 
@@ -23,8 +31,6 @@ export default function ChatRoom() {
     const [selectMembers, setSelectMembers] = useState([]);
     //채팅방 목록 불러오기
     const [rooms, setRooms] = useState([]);
-
-    //useEffect(()=>{console.log(selectMembers)},[selectMembers])
 
     //callback
     //모달 열기
@@ -113,25 +119,25 @@ export default function ChatRoom() {
 
     const loadRooms = useCallback(async () => {
         try {
-            let token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
 
+            const token = axios.defaults.headers.common['Authorization'];
             //토큰이 없다면 로그인 페이지로 리다이렉트
-            if(!token) {
+            if (!token) {
                 window.location.href = "/member/login"
                 return;
             }
             const { data } = await axios.get("/rooms", {
                 headers: {
-                    Authorization: `Bearer ${token}`
+                    Authorization: token
                 }
             });
-    
+
             setRooms(data);//채팅방 목록을 상태에 저장
-            if(data){
+            if (data) {
 
                 console.log(data);
             }
-            else{
+            else {
                 console.log("없음");
             }
         }
@@ -139,30 +145,18 @@ export default function ChatRoom() {
             console.error("채팅방 목록 불러오기 실패", error);
         }
     }, []);
-    
+
     const createRoom = useCallback(async () => {
         try {
-            // if (!roomTitle) {
-            //     alert("채팅방 제목을 입력해주세요.");
-            //     return;
-            // }
-            // if (selectMembers.length === 0) {
-            //     alert("참여할 멤버를 선택해주세요");
-            //     return;
-            // }
+            if (!roomTitle) {
+                alert("채팅방 제목을 입력해주세요.");
+                return;
+            }
+            if (selectMembers.length === 0) {
+                alert("참여할 멤버를 선택해주세요");
+                return;
+            }
 
-            // 토큰 가져오기
-            // let token = localStorage.getItem("refreshToken");
-            // if (token === null) {
-            //     token = sessionStorage.getItem("refreshToken");
-            // }
-
-            // if (!token) {
-            //     alert("로그인이 필요합니다.");
-            //     // 로그인 페이지로 리다이렉트
-            //     window.location.href = "/member/login";
-            //     return;
-            // }
             const token = axios.defaults.headers.common['Authorization'];
             console.log(token);
             console.log("memberNos");
@@ -173,7 +167,6 @@ export default function ChatRoom() {
                 memberNos: selectMembers
             }, {
                 headers: {
-                    // Authorization: `Bearer ${token}`
                     Authorization: token
                 }
             });
@@ -189,11 +182,8 @@ export default function ChatRoom() {
             setSelectMembers([]); // 선택 초기화
         } catch (error) {
             console.error("채팅방 생성 실패", error);
-           // alert("채팅방 생성에 실패했습니다.");
         }
     }, [roomTitle, selectMembers, closeModal, loadRooms]);
-
-    // useEffect(()=>{console.log(selectMembers)},[selectMembers])
 
     //키보드 enter 누르면 검색되게
     const handleKeyPress = (e) => {
@@ -203,6 +193,25 @@ export default function ChatRoom() {
     };
 
     //effect
+    useEffect(()=>{
+        const socket = new SockJS("http://localhost:8080/ws");
+        const client = new Client({
+            webSocketFactory: () => socket,
+            onConnect: ()=> {
+                client.subscribe("/topic/room-list", () => {
+                    loadRooms();//서버가 보낸 메세지를 받으면 목록 갱신
+                });
+            },
+            debug: () => {}, //콘솔 출력 생략
+        });
+        client.activate();
+
+        return ()=> {
+            client.deactivate();
+        };
+    }, [loadRooms]);
+
+
     useEffect(() => {
         loadContacts();
     }, []);
@@ -210,6 +219,24 @@ export default function ChatRoom() {
     useEffect(() => {
         loadRooms();
     }, [loadRooms]);
+
+    const formatRoomTime = (time) => {
+        const now = dayjs();
+        const msgTime = dayjs(time);
+
+        if(msgTime.isSame(now, 'day')) {
+            return msgTime.format("A h:mm");
+        }
+        else if(msgTime.isSame(now.subtract(1, 'day'), 'day')) {
+            return "어제";
+        }
+        else if(msgTime.year() === now.year()) {
+            return msgTime.format("M월 D일")
+        }
+        else {
+            return msgTime.format("YYYY.MM.DD");
+        }
+    };
 
     //view
     return (<>
@@ -235,23 +262,27 @@ export default function ChatRoom() {
         <div className="list-group">
 
             {/* 채팅방 */}
-            {rooms.map(rooms => (
-                <div key={rooms.roomNo} className="p-2 rounded">
-                    <Link to={`/chat/${rooms.roomNo}`} className="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            {rooms.map(room => (
+                <div key={room.roomNo} className="p-2 rounded">
+                    <Link to={`/chat/group/${room.roomNo}`} className="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                         <div className="d-flex align-items-center">
-                            <img src="프로필이미지" className="rounded-circle me-3" width="40" height="40" />
+                            <img src="/images/profile_basic.png" className="rounded-circle me-3" width="40" height="40" />
                             <div>
                                 {/* 채팅방 제목 */}
-                                <div className="fw-bold mb-1">{rooms.roomTitle}</div>
+                                <div className="fw-bold mb-1">{room.roomTitle}</div>
                                 {/* 최근 받은 메세지 내용 */}
-                                <div className="text-muted small">최근 받은 메세지 내용</div>
+                                <div className="text-muted small">{room.lastMessage}</div>
                             </div>
                         </div>
                         <div className="text-end">
                             {/* 최근 메세지 받은 시간 */}
-                            <div className="small text-muted text-nowrap mb-1">3:40 PM</div>
+                            <div className="small text-muted text-nowrap mb-1">
+                                {room.lastMessageTime && formatRoomTime(room.lastMessageTime)}
+                            </div>
                             {/* 읽지 않은 메세지 개수 */}
-                            <span className="badge bg-danger rounded-pill small">2</span>
+                            {room.unreadCount > 0 && (
+                                <span className="badge bg-danger rounded-pill small">{room.unreadCount}</span>
+                            )}
                         </div>
                     </Link>
                 </div>

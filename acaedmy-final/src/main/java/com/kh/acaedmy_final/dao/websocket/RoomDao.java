@@ -1,5 +1,6 @@
 package com.kh.acaedmy_final.dao.websocket;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import com.kh.acaedmy_final.dto.websocket.RoomDto;
 import com.kh.acaedmy_final.vo.websocket.RoomListVO;
+import com.kh.acaedmy_final.vo.websocket.UserVO;
 
 @Repository
 public class RoomDao {
@@ -24,30 +26,17 @@ public class RoomDao {
 
     //채팅방 생성
     public void insert(RoomDto roomDto) {
-//        long roomNo = getSequence();//시퀀스를 통해서 방 번호를 조회
-//        roomDto.setRoomNo(roomNo);//조회한 방 번호를 DTO에 설정
         sqlSession.insert("room.insert", roomDto);
-
-
-        //방에 참여할 멤버들 처리
-//        for(Long memberNo : roomDto.getMemberNos()) {
-//            sqlSession.insert("room.enter", Map.of(
-//                    "roomNo", roomNo,
-//                    "memberNo", memberNo
-//                ));
-//        }
-
     }
 
     //채팅방 멤버 추가
     public void insertMembers(long roomNo, List<Long> memberNos) {
-
         for(Long memberNo : memberNos) {
             sqlSession.insert("room.enter", 
                     Map.of("roomNo", roomNo, "memberNo", memberNo));
         }
-
     }
+    
 	//전체 채팅방 목록 조회
     public List<RoomDto> selectList() {
         return sqlSession.selectList("room.list");
@@ -85,11 +74,6 @@ public class RoomDao {
     //사용자가 속한 채팅방 목록 조회
     public List<RoomDto> selectListByMember(long memberNo) {
         List<RoomDto> rooms = sqlSession.selectList("room.listByMember", memberNo);
-//        for(RoomDto room : rooms) {
-//            //해당 채팅방에 속한 사용자 목록을 조회
-//            List<UserVO> users = sqlSession.selectList("room.getUsers", room.getRoomNo());
-//            room.setUsers(users);
-//        }
         return rooms;
     }
 
@@ -98,4 +82,27 @@ public class RoomDao {
         return sqlSession.selectList("room.listByMember", memberNo);
     }
 	
+    //채팅방에 속한 사용자 목록 조회
+    public List<UserVO> getRoomUsers(long roomNo) {
+    	return sqlSession.selectList("room.getUsers", roomNo);
+    }
+    
+    //채팅방 멤버 초대
+    public void addMembers(long roomNo, List<Long> memberNos) {
+    	for(Long memberNo : memberNos) {
+    		if(!checkRoom(roomNo, memberNo)) {
+    			sqlSession.insert("room.enter", Map.of(
+    						"roomNo", roomNo,
+    						"memberNo", memberNo
+    			));
+    		}
+    	}
+    }
+
+	public LocalDateTime getJoinTime(long roomNo, Long memberNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("roomNo", roomNo);
+		params.put("memberNo", memberNo);
+		return sqlSession.selectOne("room.getJoinTime", params);
+	}
 }

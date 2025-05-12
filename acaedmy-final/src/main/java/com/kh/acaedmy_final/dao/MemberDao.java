@@ -65,6 +65,11 @@ public class MemberDao {
 	public List<MemberDto> seachContacts(String search) {
 		return sqlSession.selectList("member.search", search); 
 	}
+	
+	//검색2
+	public List<MemberDto> search(String search) {
+		return sqlSession.selectList("member.search2", search); 
+	}
 
 	public boolean editAll(long memberNo, MemberDto memberDto) {
 		Map<String, Object> params = new HashMap<>();
@@ -80,4 +85,18 @@ public class MemberDao {
 		return sqlSession.update("member.resetPw", memberDto) > 0;
 	}
 
+	public List<MemberDto> selectInvitableContacts(long roomNo, long myNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("roomNo", roomNo);
+		params.put("myNo", myNo);
+		return sqlSession.selectList("member.selectInvitableContacts", params);
+	}
+
+	public List<MemberDto> searchInvitableContacts(long roomNo, Long myNo, String search) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("roomNo", roomNo);
+		params.put("myNo", myNo);
+		params.put("search", search);
+		return sqlSession.selectList("member.searchInvitableContacts", params);
+	}
 }

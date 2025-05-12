@@ -38,13 +38,13 @@ export default function DateMange(){
   } finally {
   
     setDateLoading(false);
-    console.log("finaly");
+   // console.log("finaly");
   }
 }, [checkDate]);
 
 useEffect(() => {
   if (checkDate?.year && checkDate?.month) {
-    console.log("checkDate가 업데이트됨:", checkDate);  
+   // console.log("checkDate가 업데이트됨:", checkDate);  
     //setLoading(true);
    // setLoading(false);
     loadList();  
@@ -59,7 +59,7 @@ useEffect(() => {
     month: now.getMonth() + 1,
   });
 }, []);
-useEffect(()=>{console.log("effect" );console.log(dateLoading)},[dateLoading])
+//useEffect(()=>{console.log("effect" );console.log(dateLoading)},[dateLoading])
 
 
   
