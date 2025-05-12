@@ -22,7 +22,7 @@ public class PasswordService {
 	private MemberDao memberDao;
 	
 	
-	public String sendPw(long memberNo) {
+	public boolean sendPw(long memberNo) {
 		MemberDto target = memberDao.selectOne(memberNo);
 		String memberEmail = target.getMemberEmail();
 		
@@ -37,9 +37,9 @@ public class PasswordService {
 		
 		target.setMemberPw(randomPw);
 //		boolean isValid = memberDao.editPart(target);
-		memberDao.resetPw(target);
+		//memberDao.resetPw(target);
 		//System.err.println(randomPw + " " + target.getMemberPw());
 		
-		return randomPw;
+		return memberDao.resetPw(target);
 	}
 }

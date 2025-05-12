@@ -24,7 +24,7 @@ public class AttachmentDao {
 		return sqlSession.selectOne("attachment.find", attachmentNo);
 	}
 	
-	public void delete(int attachmentNo) {
-		sqlSession.delete("attachment.delete", attachmentNo);
+	public boolean delete(int attachmentNo) {
+		return sqlSession.delete("attachment.delete", attachmentNo) > 0;
 	}
 }

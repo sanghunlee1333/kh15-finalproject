@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="admin-date">
+	
+	<select id="sequence" resultType="Long">
+		select holiday_seq.nextval from dual
+	</select>
+	
+	<insert id="add">
+		insert into holiday(holiday_no, holiday_name, holiday_date, holiday_admin)
+		values(#{holidayNo}, #{holidayName}, #{holidayDate}, #{holidayAdmin})
+	</insert>
+	
+	<delete id="delete">
+		delete holiday where holiday_no = #{holidayNo}
+	</delete>
+
+	<select id="find" resultType="AdminDateDto">
+		select * from holiday where holiday_no = #{holidayNo}
+	</select>
+	
+	<select id="listByMonth" resultType="AdminDateDto">
+		select * from holiday where holiday_date between #{beginDay} and #{endDay}
+	</select>
+	
+	
+	
+	
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
