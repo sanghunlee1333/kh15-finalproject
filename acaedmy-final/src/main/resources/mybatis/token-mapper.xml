@@ -15,8 +15,9 @@
 	<delete id="delete">
 		delete token where token_no = #{tokenNo}
 	</delete>
+	
 	<delete id="deleteByTarget">
-		delete token where token_target = #{tokenTarget} and token_value = #{tokenValue}
+		delete token where token_target = #{tokenTarget} 
 	</delete>
 	
 	<select id="find" resultType="TokenDto">

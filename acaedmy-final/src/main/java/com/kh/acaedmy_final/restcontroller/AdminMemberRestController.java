@@ -2,10 +2,14 @@ package com.kh.acaedmy_final.restcontroller;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.kh.acaedmy_final.dao.AttachmentDao;
 import com.kh.acaedmy_final.dao.MemberDao;
 import com.kh.acaedmy_final.dao.MemberDocumentDao;
 import com.kh.acaedmy_final.dto.AttachmentDto;
@@ -29,17 +34,18 @@ import com.kh.acaedmy_final.service.AttachmentService;
 import com.kh.acaedmy_final.service.PasswordService;
 import com.kh.acaedmy_final.vo.AdminMemberListVO;
 import com.kh.acaedmy_final.vo.MemberDetailResponseVO;
-
 @CrossOrigin
 @RestController
 @RequestMapping("/api/admin")
-public class AdminRestController {
+public class AdminMemberRestController {
 	@Autowired
 	private MemberDao memberDao;
 	@Autowired
 	private PasswordService passwordService;
 	@Autowired
 	private AttachmentService attachmentService;
+	@Autowired
+	private AttachmentDao attachmentDao;
 	@Autowired
 	private MemberDocumentDao memberDocumentDao;
 	
@@ -56,13 +62,19 @@ public class AdminRestController {
 		return ret;
 	}
 	
-	@PatchMapping("/member/")
-	public boolean update( @RequestBody MemberDto memberDto ) {
-		System.err.println("ENTER CONTROLLER");
+//	@PutMapping("/member/update")
+	//public boolean update( @RequestBody MemberDto memberDto ) {
+	
+	@PatchMapping("/member/update/{memberNo}")
+			public boolean update(@PathVariable long memberNo, @RequestBody MemberDto memberDto) {
+		//System.err.println("ENTER CONTROLLER");
 		MemberDto dto = memberDao.selectOne(memberDto.getMemberNo());
 		if(dto == null) throw new TargetNotFoundException();
 		return memberDao.editPart(memberDto);
+		//return true;
 	}
+	
+	
 	
 	
 	@PostMapping("/member")
@@ -84,12 +96,12 @@ public class AdminRestController {
 	}
 	
 	@PostMapping("/member/resetPw/{memberNo}")
-	public String sendEmail (@PathVariable long memberNo) {
+	public boolean sendEmail (@PathVariable long memberNo) {
 //		String re = newPw.random();
 //		sender.createMimeMessage();
-		String newPP = passwordService.sendPw(memberNo);
+	//	String newPP = passwordService.sendPw(memberNo);
 		//System.err.println("ENTER CONTROLLER");
-		return newPP;
+		return  passwordService.sendPw(memberNo);
 	}
 	
 	@PostMapping("/member/document/{memberNo}")
@@ -115,6 +127,40 @@ public class AdminRestController {
 		return ret;
 	}
 	
+	@GetMapping("/member/attachment/{memberNo}/{memberDocumentType}")
+	public Map<String,Object> selectAttachList(@PathVariable long memberNo, @PathVariable String memberDocumentType){
+		 List<Integer> attachmentList = memberDocumentDao.selectByMemberNoAndType(memberNo, memberDocumentType);
+		 List<String> nameList = new LinkedList<String>();
+		 Map<String, Object> ret = new HashMap<String, Object>();
+		 
+		 for(int no:attachmentList) {
+			 nameList.add(memberDocumentDao.selectName(no));
+		 }
+
+		 
+		 ret.put("attachList", attachmentList);
+		 ret.put("nameList", nameList);
+		 return ret;
+
+	}
+	
+	@GetMapping("/member/attachment/{attachmentNo}")
+	public ResponseEntity<byte[]> loadAttachment(@PathVariable int attachmentNo) throws IOException {
+		//System.err.println("attach =" + attachmentNo);
+		   AttachmentDto attachmentDto = attachmentDao.selectOne(attachmentNo);
+		    if (attachmentDto == null) throw new TargetNotFoundException("파일 정보 없음");
+
+		    byte[] data = attachmentService.load(attachmentNo); 
+
+		    HttpHeaders headers = new HttpHeaders();
+		    headers.set("Content-Type", attachmentDto.getAttachmentType()); // 타입 헤더에 넣기
+
+		  return new ResponseEntity<>(data, headers, HttpStatus.OK); // 바이트 배열이랑, 헤더 보내면 브라우저에서 인식 가능
+	}
+	@DeleteMapping("/member/attachment/{attachmentNo}")
+	public boolean deleteAttach(@PathVariable int attachmentNo) {
+		return attachmentDao.delete(attachmentNo);
+	}
 	
 }
 
