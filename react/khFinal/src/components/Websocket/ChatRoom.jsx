@@ -220,6 +220,24 @@ export default function ChatRoom() {
         loadRooms();
     }, [loadRooms]);
 
+    const formatRoomTime = (time) => {
+        const now = dayjs();
+        const msgTime = dayjs(time);
+
+        if(msgTime.isSame(now, 'day')) {
+            return msgTime.format("A h:mm");
+        }
+        else if(msgTime.isSame(now.subtract(1, 'day'), 'day')) {
+            return "어제";
+        }
+        else if(msgTime.year() === now.year()) {
+            return msgTime.format("M월 D일")
+        }
+        else {
+            return msgTime.format("YYYY.MM.DD");
+        }
+    };
+
     //view
     return (<>
         <div className="row mt-2">
@@ -259,7 +277,7 @@ export default function ChatRoom() {
                         <div className="text-end">
                             {/* 최근 메세지 받은 시간 */}
                             <div className="small text-muted text-nowrap mb-1">
-                                {room.lastMessageTime && dayjs(room.lastMessageTime).format("A h:mm")}
+                                {room.lastMessageTime && formatRoomTime(room.lastMessageTime)}
                             </div>
                             {/* 읽지 않은 메세지 개수 */}
                             {room.unreadCount > 0 && (

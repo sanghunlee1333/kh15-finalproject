@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,8 +48,8 @@ public class MemberRestController {
 	@PostMapping("/")
 	public boolean join(@RequestBody MemberDto memberDto) {
 		
-		System.out.println("ggwgwgwgw");
-		System.out.println(memberDto);
+//		System.out.println("ggwgwgwgw");
+//		System.out.println(memberDto);
 		
 		// 유효성 검사
 		boolean isValid = memberDao.insert(memberDto);
@@ -80,14 +81,20 @@ public class MemberRestController {
 		.build();
 	}
 	
-	@GetMapping("/logout")
+	@DeleteMapping("/logout")
 	public boolean logout(@RequestHeader ("Authorization") String bearerToken) {
 		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+//		System.err.println(bearerToken);
+//		System.out.println("claimVO");
+//		System.err.println(claimVO);
+//		System.out.println("nono");
+//		System.err.println(claimVO.getMemberNo());
 		return tokenDao.deleteByTarget(claimVO.getMemberNo());
 	}
 	
 	@PostMapping("/refresh")
 	public LoginResponseVO refresh(@RequestHeader ("Authorization") String refreshToken) {
+		//System.err.println(refreshToken);
 		ClaimVO claimVO = tokenService.parseBearerToken(refreshToken);
 		boolean isValid = tokenService.checkBearerToken(claimVO, refreshToken);
 		if(!isValid) {
@@ -155,24 +162,34 @@ public class MemberRestController {
 	    Long loggedInMemberNo = claimVO.getMemberNo();
 	    return memberDao.selectOne(loggedInMemberNo);
 	}
+	
+	@GetMapping("/contact/invitable/{roomNo}")
+	public Map<String, List<MemberDto>> getInvitableContacts(
+	        @PathVariable long roomNo,
+	        @RequestParam(value = "search", required = false) String search,
+	        @RequestHeader("Authorization") String bearerToken) {
+
+	    ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+	    Long myNo = claimVO.getMemberNo();
+
+	    // 검색 조건에 따라 조회 방식 변경
+	    List<MemberDto> contacts;
+	    if (search != null && !search.isEmpty()) {
+	        contacts = memberDao.searchInvitableContacts(roomNo, myNo, search); 
+	    } else {
+	        contacts = memberDao.selectInvitableContacts(roomNo, myNo);
+	    }
+
+	    // 부서별로 그룹화
+	    Map<String, List<MemberDto>> groupByDepartment = new LinkedHashMap<>();
+	    for (MemberDto member : contacts) {
+	        String dept = member.getMemberDepartment() != null ? member.getMemberDepartment() : "미지정";
+	        groupByDepartment.putIfAbsent(dept, new ArrayList<>());
+	        groupByDepartment.get(dept).add(member);
+	    }
+
+	    return groupByDepartment;
+	}
+
+	
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

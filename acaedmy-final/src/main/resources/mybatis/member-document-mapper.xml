@@ -13,6 +13,10 @@
 		select attachment_no from member_document where member_no = #{memberNo} and 
 		member_document_type = #{memberDocumentType} order by member_no asc
 	</select>
+	<select id="findName" resultType="String">
+		select attachment_name from attachment where attachment_no = #{attachmentNo}
+	</select>
+	
 	<insert id="connectDocs">
 		insert into member_document (member_no, attachment_no, member_document_type) 
 		values(#{memberNo}, #{attachmentNo}, #{memberDocumentType})
