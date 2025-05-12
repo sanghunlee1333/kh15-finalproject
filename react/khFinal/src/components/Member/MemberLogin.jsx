@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { loginState, userDepartmentState, userNoState } from "../utils/stroage";
+import { useNavigate } from "react-router";
 export default function MemberLogin(){
+    const navigate = useNavigate();
     //recoil
     const [userNo, setUserNo] = useRecoilState(userNoState);
     const [userDepartment,setUserDepartment] = useRecoilState(userDepartmentState);
@@ -50,32 +52,32 @@ export default function MemberLogin(){
             window.localStorage.removeItem('refreshToken');
             window.sessionStorage.setItem('refreshToken', resp.data.refreshToken);
         }
+        navigate("/");
     },[members]);
 
-    useEffect(()=>{
-        console.log("click = " + userNo);
-    },[userNo])
+   
 
     const checked = useCallback((e)=>{
         setClick(e.target.checked);
     },[click])
 
-    const gotoLogout = useCallback(async ()=>{
-      await axios.get("/member/logout");
-      window.localStorage.removeItem('refreshToken');
-      window.sessionStorage.removeItem('refreshToken');
-      setUserNo("");
-      setUserDepartment("");
+    // const gotoLogout = useCallback(async ()=>{
+    //   await axios.delete("/member/logout");
+    //   window.localStorage.removeItem('refreshToken');
+    //   window.sessionStorage.removeItem('refreshToken');
+    //   setUserNo("");
+    //   setUserDepartment("");
       
-    },[])
+    // },[])
 
-    const refreshLog = useCallback(async ()=>{
-      const rest = await axios.get("/member/refresh");
-      console.log("new refreshtoken");
-      console.log(rest.data.refreshToken);
-    },[])
+    // const refreshLog = useCallback(async ()=>{
+    //   const rest = await axios.get("/member/refresh");
+    //   console.log("new refreshtoken");
+    //   console.log(rest.data.refreshToken);
+    // },[])
 
    
+
     // style={{ minHeight: 'calc(70vh)' }}
     // view
     return (<>
@@ -135,28 +137,29 @@ export default function MemberLogin(){
         </button>
       </div>
     </div>
+    <span>userNo = {userNo}</span>
+    <span>userDepartment = {userDepartment}</span>
 
-      {/* 로그아웃 버튼 */}
+      {/* 로그아웃 버튼
     <div className="row mt-3">
       <div className="col">
         <button className="btn btn-secandary" onClick={gotoLogout}>
           로그아웃
         </button>
-        <span>userNo = {userNo}</span>
-        <span>userDepartment = {userDepartment}</span>
       </div>
     </div>
 
-      {/* 리프레쉬 */}
+      {/* 리프레쉬 
       <div className="row mt-3">
       <div className="col">
-        <button className="btn btn-secandary" onClick={refreshLog}>
+         <button className="btn btn-secandary" onClick={refreshLog}>
           리프레시
         </button>
         <span>userNo = {userNo}</span>
-        <span>userDepartment = {userDepartment}</span>
+        <span>userDepartment = {userDepartment}</span> 
       </div>
-    </div>
+    </div> */}
+
   </div>
 </div>
         {/* </div> */}
