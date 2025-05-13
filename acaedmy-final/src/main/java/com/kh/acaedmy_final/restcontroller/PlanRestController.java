@@ -1,6 +1,8 @@
 package com.kh.acaedmy_final.restcontroller;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,23 +39,37 @@ public class PlanRestController {
 	@Autowired
 	private TokenService tokenService;
 	
-	//등록(일정)
+	//등록(개인-Todo)
+	@Transactional
+	@PostMapping("/personal")
+	public void insertPersonalPlan(@RequestBody PlanDto planDto, @RequestHeader("Authorization") String bearerToken) {
+		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+		long planNo = planDao.sequence();
+		planDto.setPlanNo(planNo);
+		planDto.setPlanSenderNo(claimVO.getMemberNo());
+		planDto.setPlanType("개인");
+		
+		
+		planDao.insert(planDto);
+	}
+	
+	//등록(팀-일정)
 	@Transactional //일정 등록 + 수신자 등록 중 하나라도 실패 시 전체 롤백 처리 목적
-	@PostMapping("/receiver")
+	@PostMapping("/team")
 	public void insertWithReceiver(@RequestBody PlanRequestVO vo, @RequestHeader("Authorization") String bearerToken) { //(참고)void를 쓰면 성공 시 HTTP 상태 200 OK만 반환. 	클라이언트(React 등)는 응답 본문 없이 성공 여부만 알 수 있음
 		//1. 로그인 사용자 추출
 		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken); //bearerToken = HTTP 요청 헤더의 "Authorization" 값. Bearer 뒷 부분이 JWT토큰. 이 메서드는 JWT 토큰을 파싱해서 사용자 정보를 뽑아줌
 		long memberNo = claimVO.getMemberNo(); //현재 로그인한 사용자의 고유번호(memberNo)를 가져오는 부분
-		
 		long planNo = planDao.sequence();
 		
 		//2. PlanDto 생성 및 저장
 		PlanDto planDto = PlanDto.builder()
 					.planNo(planNo)
 					.planSenderNo(memberNo)
-					.planType(vo.getPlanType())
+					.planType(vo.getPlanType()) //"팀"
 					.planTitle(vo.getPlanTitle())
 					.planContent(vo.getPlanContent())
+					.planColor(vo.getPlanColor())
 					.planStartTime(vo.getPlanStartTime())
 					.planEndTime(vo.getPlanEndTime())
 				.build();
@@ -75,27 +91,28 @@ public class PlanRestController {
 		
 	}
 	
-	//등록(To do) *DB 및 DTO, 매핑 등 수정 필요
-	@PostMapping("/")
-	public void insert(@RequestBody PlanDto planDto) {
-
+	//전체 조회(개인 + 팀)
+	@GetMapping("all")
+	public List<PlanDto> getAllPlans(@RequestHeader("Authorization") String bearerToken) {
+		long memberNo = tokenService.parseBearerToken(bearerToken).getMemberNo();
+        List<PlanDto> allPlans = planDao.selectAllList(memberNo); 
+		return allPlans;
 	}
 	
-	//삭제(일정)
-	@DeleteMapping("/{planNo}")
-	public void delete(@PathVariable long planNo) {
-		PlanDto planDto = planDao.selectOne(planNo);
-		if(planDto == null) throw new TargetNotFoundException();
-		planDao.delete(planNo);
+	//전체 조회(개인-Todo)
+	@GetMapping("/personal")
+	public List<PlanDto> getPersonalPlans(@RequestHeader("Authorization") String bearerToken) {
+		long memberNo = tokenService.parseBearerToken(bearerToken).getMemberNo();
+        List<PlanDto> myplans = planDao.selectPersonalList(memberNo);
+		return myplans;
 	}
 	
-	//전체 조회(일정)
-	@GetMapping("/list")
-	public List<PlanWithReceiversVO> getMyPlans(@RequestHeader("Authorization") String bearerToken) {
+	//전체 조회(팀-일정)
+	@GetMapping("/team")
+	public List<PlanWithReceiversVO> getTeamPlans(@RequestHeader("Authorization") String bearerToken) {
 		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
 		long memberNo = claimVO.getMemberNo();
-		
-		List<PlanDto> planList = planDao.selectList(memberNo);
+		List<PlanDto> planList = planDao.selectTeamList(memberNo);
 		if(planList == null) throw new TargetNotFoundException();
 		
 		//PlanDto -> PlanWithReceiversVO 변환
@@ -104,6 +121,7 @@ public class PlanRestController {
 	        vo.setPlanNo(plan.getPlanNo());
 	        vo.setPlanTitle(plan.getPlanTitle());
 	        vo.setPlanContent(plan.getPlanContent());
+	        vo.setPlanColor(plan.getPlanColor());
 	        vo.setPlanStartTime(plan.getPlanStartTime());
 	        vo.setPlanEndTime(plan.getPlanEndTime());
 	        vo.setReceivers(planReceiveDao.selectReceiverList(plan.getPlanNo())); // 참여자 번호들
@@ -113,12 +131,20 @@ public class PlanRestController {
 		return result;
 	}
 	
-	//상세 조회(일정)
+	//상세 조회
 	@GetMapping("/{planNo}")
 	public PlanDto find(@PathVariable long planNo) {
 		PlanDto planDto = planDao.selectOne(planNo);
 		if(planDto == null) throw new TargetNotFoundException();
 		return planDto;
+	}
+	
+	//삭제
+	@DeleteMapping("/{planNo}")
+	public void delete(@PathVariable long planNo) {
+		PlanDto planDto = planDao.selectOne(planNo);
+		if(planDto == null) throw new TargetNotFoundException();
+		planDao.delete(planNo);
 	}
 	
 	//수정(일정 달성 여부)
