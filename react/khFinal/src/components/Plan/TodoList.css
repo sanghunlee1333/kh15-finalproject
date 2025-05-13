@@ -1,0 +1,9 @@
+/* .fc .fc-list-day-cushion {
+  display: none !important;
+} */
+
+/* 날짜 숫자 */
+.list-day-number {
+    font-size: clamp(1rem, 2.5vw, 1.5rem); /* 최소 1rem, 최대 1.5rem, 화면 크기 따라 조절 */
+    font-weight: bold;
+}
