@@ -14,12 +14,12 @@
 		insert into plan(
 			plan_no, plan_sender_no, plan_type, 
 			plan_title, plan_content, plan_color,
-			plan_start_time, plan_end_time
+			plan_start_time, plan_end_time, plan_is_all_day
 		)
 		values (
 			#{planNo}, #{planSenderNo}, #{planType},
 			#{planTitle}, #{planContent}, #{planColor}, 
-			#{planStartTime}, #{planEndTime}
+			#{planStartTime}, #{planEndTime}, #{planIsAllDay}
 		)
 	</insert>
 	
@@ -33,7 +33,7 @@
 		select distinct p.* from plan p
 		left join plan_receive r on p.plan_no = r.plan_receive_no
 		where p.plan_sender_no = #{memberNo} or r.plan_receive_receiver_no = #{memberNo}
-		order by p.plan_start_time asc
+		order by p.plan_start_time desc
 	</select>
 	
 	<!-- 전체 조회(개인-Todo) -->
@@ -48,7 +48,7 @@
 		select distinct p.* from plan p
 		left join plan_receive r on p.plan_no = r.plan_receive_no
 		where p.plan_type = '팀' and (p.plan_sender_no = #{memberNo} or r.plan_receive_receiver_no = #{memberNo})
-		order by p.plan_start_time desc
+		order by p.plan_start_time asc
 	</select>
 	
 	<!-- 상세 조회 -->

@@ -13,5 +13,6 @@ public class PlanWithReceiversVO { //일정과 그 일정에 참여하는 수신
     private String planColor;
     private Timestamp planStartTime;
     private Timestamp planEndTime;
+    private String planIsAllDay;
     private List<Long> receivers; // 참여자 목록 포함
 }
