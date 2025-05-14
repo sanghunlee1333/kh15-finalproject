@@ -92,7 +92,7 @@ public class MemberDao {
 		return sqlSession.selectList("member.selectInvitableContacts", params);
 	}
 
-	public List<MemberDto> searchInvitableContacts(long roomNo, Long myNo, String search) {
+	public List<MemberDto> searchInvitableContacts(long roomNo, long myNo, String search) {
 		Map<String, Object> params = new HashMap<>();
 		params.put("roomNo", roomNo);
 		params.put("myNo", myNo);
