@@ -40,7 +40,7 @@
 		update member_profile set attachment_no = #{attachmentNo} where member_no = #{memberNo}
 	 </update>
 	 <select id="selectProfile" resultType="Int">
-	 	select * from member_profile where member_no = #{memberNo}
+	 	select attachment_no from member_profile where member_no = #{memberNo}
 	 </select>
 	
 	

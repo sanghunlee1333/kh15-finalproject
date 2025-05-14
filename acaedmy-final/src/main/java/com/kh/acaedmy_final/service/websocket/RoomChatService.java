@@ -53,25 +53,43 @@ public class RoomChatService {
 		//DB에 저장
 		roomChatDao.insert(roomChatDto);
 		
-		//방 목록 갱신을 위한 WebSocket 메세지
-		messagingTemplate.convertAndSend("/topic/room-list", "REFRESH");
+		//안읽은 메세지 수 증가
+		roomDao.increaseUnreadCount(roomNo, senderNo);
+		
+		List<Long> participantNos = roomDao.findParticipantNos(roomNo);
+		for(Long participantNo : participantNos) {
+			messagingTemplate.convertAndSend("/topic/room-list/" + participantNo, "REFRESH");
+		}
 		
 		//채팅방에 구독된 사용자들에게 실시간 메세지 전송
 		sendRealTimeMessage(roomNo, roomChatDto);
 	}
 	
 	//최근 채팅 메세지 조회(이름 포함)
-	public ChatRoomResponseVO getRecentChats(long roomNo, int count, ClaimVO claimVO) {
+	public ChatRoomResponseVO getChatsByRoom(long roomNo, ClaimVO claimVO) {
 	    Long memberNo = claimVO.getMemberNo();
 	    if (!roomDao.checkRoom(roomNo, memberNo)) {
-	        throw new TargetNotFoundException("해당 채팅방(" + roomNo + ")에 참여하지 않은 사용자입니다");
+	        throw new TargetNotFoundException("채팅방에 참여하지 않은 사용자입니다");
 	    }
 
 	    RoomDto roomDto = roomDao.selectOne(roomNo);
 	    String roomTitle = roomDto.getRoomTitle();
+	    if (roomTitle == null || roomTitle.trim().isEmpty()) {
+	        List<Long> participants = roomDao.findParticipantNos(roomNo);
+	        for (Long participant : participants) {
+	            if (!participant.equals(memberNo)) {
+	                MemberDto other = memberDao.selectOne(participant);
+	                if (other != null) {
+	                    roomTitle = other.getMemberName();
+	                    break;
+	                }
+	            }
+	        }
+	    }
 
-	    List<RoomChatDto> messageDtos = roomChatDao.listRecent(roomNo, count);
+	    List<RoomChatDto> messageDtos = roomChatDao.listByRoom(roomNo);
 	    List<ChatResponseVO> messages = new ArrayList<>();
+
 	    for (RoomChatDto dto : messageDtos) {
 	        String senderName = "알 수 없음";
 	        if (dto.getRoomChatSender() != null) {
@@ -87,13 +105,14 @@ public class RoomChatService {
 	            .senderName(senderName)
 	            .content(dto.getRoomChatContent())
 	            .time(dto.getRoomChatTime())
+	            .type(dto.getRoomChatType())
 	            .build());
 	    }
 
-	    ChatRoomResponseVO response = new ChatRoomResponseVO();
-	    response.setRoomTitle(roomTitle);
-	    response.setMessages(messages);
-	    return response;
+	    return ChatRoomResponseVO.builder()
+	            .roomTitle(roomTitle)
+	            .messages(messages)
+	            .build();
 	}
 	
 	//WebSocket을 통해 채팅방에 구독된 사용자에게 실시간 메세지 전송
@@ -114,9 +133,23 @@ public class RoomChatService {
 					.senderName(senderName)
 					.content(roomChatDto.getRoomChatContent())
 					.time(roomChatDto.getRoomChatTime())
+					.type(roomChatDto.getRoomChatType())
 				.build();
 		
 		messagingTemplate.convertAndSend(destination, chat);
 	}
 	
+	//시스템 메세지 저장 + WebSocket 전송
+	public void sendSystemMessage(RoomChatDto message) {
+		//시간과 번호 자동 설정
+		message.setRoomChatNo(roomChatDao.sequence());
+		message.setRoomChatTime(LocalDateTime.now());
+		message.setRoomChatType("SYSTEM");
+		
+		//DB 저장
+		roomChatDao.insertSystemMessage(message);
+		
+		//WenSocket 전송
+		sendRealTimeMessage(message.getRoomChatOrigin(), message);
+	}
 }

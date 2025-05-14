@@ -67,6 +67,10 @@ public class PlanRestController {
 				isAllDay(planDto.getPlanStartTime(), planDto.getPlanEndTime()) ? "Y" : "N"
 		);
 		
+		planDto.setPlanIsAllDay(
+				isAllDay(planDto.getPlanStartTime(), planDto.getPlanEndTime()) ? "Y" : "N"
+		);
+		
 		
 		planDao.insert(planDto);
 	}

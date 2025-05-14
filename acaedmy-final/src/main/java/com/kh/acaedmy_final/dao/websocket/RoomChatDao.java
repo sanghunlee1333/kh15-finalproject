@@ -36,8 +36,18 @@ public class RoomChatDao {
 			throw new RuntimeException("채팅 메시지 저장 실패", e);
 		}
 	}
+	
+	//시스템 메세지 저장
+	public void insertSystemMessage(RoomChatDto message) {
+		try {
+			sqlSession.insert("roomChat.insertSystemMessage", message);
+		}
+		catch (Exception e) {
+			throw new RuntimeException("시스템 메세지 저장 실패", e);
+		}
+	}
 		
-	// 방 번호 기준 모든 채팅 메시지를 조회하는 메소드
+	// 전체 채팅 조회
 	public List<RoomChatDto> listByRoom(long roomNo) {
 		try {
 			return sqlSession.selectList("roomChat.listByRoom", roomNo);
@@ -45,15 +55,8 @@ public class RoomChatDao {
 			throw new RuntimeException("방 번호에 해당하는 채팅 메시지 조회 실패", e);
 		}
 	}
-		
-	// RoomChatDao.java
-	public List<RoomChatDto> listRecent(long roomNo, int count) {
-	    Map<String, Object> params = new HashMap<>();
-	    params.put("roomChatOrigin", roomNo);
-	    params.put("count", count);
-	    return sqlSession.selectList("roomChat.listRecent", params);
-	}
 	
+	//입장 시간 이후의 메세지만 조회
 	public List<RoomChatDto> selectRecentMessages(long roomNo, long memberNo) {
 		Map<String, Object> params = new HashMap<>();
 		params.put("roomNo", roomNo);

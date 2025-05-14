@@ -2,9 +2,10 @@ package com.kh.acaedmy_final.vo.websocket;
 
 import java.util.List;
 
+import lombok.Builder;
 import lombok.Data;
 
-@Data
+@Data @Builder
 public class ChatRoomResponseVO {
 	private String roomTitle;
     private List<ChatResponseVO> messages;
@@ -25,5 +26,6 @@ public class ChatRoomResponseVO {
     public void setMessages(List<ChatResponseVO> messages) {
         this.messages = messages;
     }
+
 }
 

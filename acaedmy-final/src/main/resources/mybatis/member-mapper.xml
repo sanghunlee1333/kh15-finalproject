@@ -24,32 +24,42 @@
 	</select>
 	
 	<select id="searchInvitableContacts" resultType="MemberDto">
-		select *
-	    from member
-	    where member_no != #{myNo}
-	      and member_no not in (
-	          select member_no
-	          from room_user
-	          where room_no = #{roomNo}
+		select 
+			m.member_no, m.member_id, m.member_pw, m.member_department, m.member_name,
+			m.member_resident_no, m.member_contact, m.member_email, m.member_post,
+			m.member_address1, m.member_address2, m.member_rank, m.member_bank,
+			m.member_no, m.member_join, m.member_state
+	    from member m
+	    where m.member_no != #{myNo}
+	      and not exists (
+	          select 1
+	          from room_user ru
+	          where ru.room_no = #{roomNo}
+	          and ru.member_no = m.member_no
 	      )
 	      and (
-	          instr(member_name, #{search}) > 0
-	          or instr(member_department, #{search}) > 0
+	          instr(m.member_name, #{search}) > 0
+	          or instr(m.member_department, #{search}) > 0
 	      )
-	    order by member_department, member_name
+	    order by m.member_department, m.member_name
 	</select>
 	
 	<!-- 검색 없이 초대 가능한 전체 연락처 조회 -->
 	<select id="selectInvitableContacts" resultType="MemberDto">
-	    select *
-	    from member
-	    where member_no != #{myNo}
-	      and member_no not in (
-	          select member_no
-	          from room_user
-	          where room_no = #{roomNo}
+	    select 
+	    	m.member_no, m.member_id, m.member_pw, m.member_department, m.member_name,
+	    	m.member_resident_no, m.member_contact, m.member_email, m.member_post,
+	    	m.member_address1, m.member_address2, m.member_rank, m.member_bank,
+	    	m.member_bank_no, m.member_join, m.member_state
+	    from member m
+	    where m.member_no != #{myNo}
+	      and not exists (
+	          select 1
+	          from room_user ru
+	          where ru.room_no = #{roomNo}
+	          and ru.member_no = m.member_no
 	      )
-	    order by member_department, member_name
+	    order by m.member_department, m.member_name
 	</select>
 	
 	
