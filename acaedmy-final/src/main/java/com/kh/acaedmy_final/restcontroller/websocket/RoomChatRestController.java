@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.acaedmy_final.dto.websocket.RoomChatDto;
@@ -34,13 +33,12 @@ public class RoomChatRestController {
 		roomChatService.sendMessage(roomChatDto, claimVO);
 	}
 	
-	// 해당 방의 최근 채팅 조회
+	// 해당 방의 전체 채팅 조회
 	@GetMapping("/recent/{roomNo}")
 	public ChatRoomResponseVO recent(@PathVariable long roomNo,
-									 @RequestParam(defaultValue = "20") int count,
-									 @RequestHeader("Authorization") String bearerToken) {
-		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
-		return roomChatService.getRecentChats(roomNo, count, claimVO);
+	                                 @RequestHeader("Authorization") String bearerToken) {
+	    ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+	    return roomChatService.getChatsByRoom(roomNo, claimVO);
 	}
-	
+
 }
