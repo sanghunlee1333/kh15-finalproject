@@ -5,6 +5,7 @@ import koLocale from '@fullcalendar/core/locales/ko';
 
 import axios from 'axios';
 import { Modal } from 'bootstrap';
+import { toast } from "react-toastify";
 import DatePicker from "react-datepicker";
 import moment from 'moment';
 import dayjs from 'dayjs';
@@ -15,16 +16,24 @@ dayjs.locale('ko');
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import Jumbotron from '../template/Jumbotron';
 import { fetchHolidays } from "../utils/holiday";
 import "react-datepicker/dist/react-datepicker.css";
 import './TeamPlan.css';
 
 import { FaCheck, FaLightbulb, FaList, FaListUl, FaRegCalendarCheck, FaRegCalendarPlus } from 'react-icons/fa';
 import { IoPersonSharp } from 'react-icons/io5';
+import './PlanColor.css';
+import TodoList from './TodoList';
+
+const colorOptions = ['#dc3545', '#fd7e14', '#ffc107', '#28a745', '#20c997', '#0d6efd', '#6f42c1', '#d63384', '#6c757d'];
 
 export default function CalendarComponent() {
+
     //state
+    const [isPersonal, setIsPersonal] = useState(false); // 일정 유형
+    const [tab, setTab] = useState('calendar');
+
+    const [allEvents, setAllEvents] = useState([]);
     const [holidayEvents, setHolidayEvents] = useState([]);
     const [planEvents, setPlanEvents] = useState([]);
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1); //다음 달
@@ -34,9 +43,12 @@ export default function CalendarComponent() {
     const [titleChoice, setTitleChoice] = useState(false); //제목 입력 여부
     const [receiverChoice, setReceiverChoice] = useState(false); //참석자 선택 여부
     const [dateChoice, setDateChoice] = useState(false); //시작일, 종료일 선택 여부
+    const [showColorPicker, setShowColorPicker] = useState(false);
+    const [planColor, setPlanColor] = useState('#0d6efd');
 
     const [endTimeManuallyChanged, setEndTimeManuallyChanged] = useState(false); //종료일 수동 조정 여부
 
+    const [viewType, setViewType] = useState("전체");
     const [title, setTitle] = useState(""); //일정 제목
     const [content, setContent] = useState(""); //일정 내용
     const [startTime, setStartTime] = useState(null); //일정 시작일
@@ -80,7 +92,22 @@ export default function CalendarComponent() {
           isInvalidEndTime ||
           !selectedMembers.length
         );
-      }, [title, startTime, endTime, isInvalidEndTime, selectedMembers]);
+    }, [title, startTime, endTime, isInvalidEndTime, selectedMembers]);
+
+    const filteredEvents = useMemo(() => {
+        return events.filter(event => {
+            const planType = event.extendedProps?.planType;
+
+            // 공휴일은 무조건 포함
+            if (event.extendedProps?.isHoliday) return true;
+
+            return (
+                viewType === "전체" ||
+                (viewType === "개인" && planType === "개인") ||
+                (viewType === "팀" && planType === "팀")
+            );
+        });
+    }, [events, viewType]);
 
     //effect
     useEffect(() => {
@@ -90,13 +117,18 @@ export default function CalendarComponent() {
     const fetchAllEvents = useCallback(async (year, month) => {
         const holidays = await fetchHolidays(year, month);
         let token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
-        const { data: plans } = await axios.get("/plan/list", 
+        const { data: teamPlans } = await axios.get("/plan/team", //팀 일정 가져오기
             {
                 headers: { Authorization: `Bearer ${token}` } 
             }
         );
+        const { data: personalPlans } = await axios.get("/plan/personal", 
+            { 
+                headers: { Authorization: `Bearer ${token}` } 
+            }
+        );
 
-        const holidayEvents = holidays.flatMap(holiday => {
+        const holidayEvents = holidays.flatMap(holiday => { //공휴일 
             const dateStr = `${holiday.locdate}`; // 'YYYYMMDD'
             const dateObj = new Date(
                 `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`
@@ -114,19 +146,45 @@ export default function CalendarComponent() {
             };
         });
 
-        const planEvents = plans.map(plan => ({
+        const teamPlanEvents = teamPlans.map(plan => ({//팀 일정
+            id: `team-${plan.planNo}`, //고유 ID. 충돌 방지를 위해 prefix("team-") 붙임
             title: plan.planTitle,
             start: plan.planStartTime,
             end: plan.planEndTime,
+            allDay: plan.planIsAllDay === "Y", //plan.planIsAllDay가 문자열 "Y"일 때만 종일 일정으로 처리하겠다는 뜻
+            display: "block",
+            backgroundColor: plan.planColor, //일정 바 색상
+            borderColor: plan.planColor, //일정 바 테두리
             extendedProps: { //FullCalendar의 커스텀 속성 저장 공간 -> 내용, 참여자 정보도 저장할 수 있음
+                planType: "팀",
                 content: plan.planContent,
                 planNo: plan.planNo,
-                receivers: plan.receivers
+                receivers: plan.receivers,  
+                planColor: plan.planColor,
+            }
+        }));
+
+        const personalPlanEvents = personalPlans.map(plan => ({ //개인-Todo
+            id: `personal-${plan.planNo}`,
+            title: plan.planTitle,
+            start: plan.planStartTime,
+            end: plan.planEndTime,
+            allDay: plan.planIsAllDay === "Y", //plan.planIsAllDay가 문자열 "Y"일 때만 종일 일정으로 처리하겠다는 뜻
+            display: "block",
+            backgroundColor: plan.planColor,
+            borderColor: plan.planColor,
+            extendedProps: {
+                planType: '개인',
+                content: plan.planContent,
+                planNo: plan.planNo,
+                planColor: plan.planColor
             }
         }));
 
         setHolidayEvents(holidayEvents);
-        setPlanEvents(planEvents);
+        setPlanEvents([...teamPlanEvents, ...personalPlanEvents]);
+        const combinedEvents = [...holidayEvents, ...teamPlanEvents, ...personalPlanEvents];
+        setAllEvents(combinedEvents);
     }, []);
 
     useEffect(() => {
@@ -160,16 +218,37 @@ export default function CalendarComponent() {
     //종일 일정이면 자동으로 종료일 설정 (단, 사용자가 종료일을 직접 조정하지 않았을 때만)
     useEffect(()=>{
         if (allDay && startTime && !endTimeManuallyChanged) {
+            //종일 체크 시, 00:00 ~ 다음 날 00:00
             const start = new Date(startTime);
             start.setHours(0, 0, 0, 0);
-            setStartTime(start);
+            
+            if (start.getTime() !== new Date(startTime).getTime()) {
+                setStartTime(start);
+            }
 
             const end = new Date(start);
             end.setDate(end.getDate() + 1); // 다음 날 00:00:00
             end.setHours(0, 0, 0, 0);
             setEndTime(end);
         }
-    }, [allDay, startTime, endTimeManuallyChanged]);
+
+        if(!allDay && startTime && endTime) {
+            //종일 체크 해제 시, 현재 시각 기준으로 복원
+            const now = new Date();
+
+            if(new Date(startTime).getHours() === 0 && new Date(startTime).getMinutes() === 0) {
+                const updatedStart = new Date(startTime);
+                updatedStart.setHours(now.getHours(), now.getMinutes(), 0, 0);
+                setStartTime(updatedStart);
+            }
+            if(new Date(endTime).getHours() === 0 && new Date(endTime).getMinutes() === 0) {
+                const updatedEnd = new Date(endTime);
+                updatedEnd.setHours(now.getHours() + 1, now.getMinutes(), 0, 0);
+                setEndTime(updatedEnd);
+            }
+
+        }
+    }, [allDay, startTime, endTime, endTimeManuallyChanged]);
 
     useEffect(() => {
         const calendarApi = calendar.current?.getApi();
@@ -213,26 +292,36 @@ export default function CalendarComponent() {
     const submitPlan = useCallback(async ()=>{
         if (validAllFields()) return;
 
-        // if (!title || !startTime || !endTime) return;
-        // if (endTime < startTime) return;
-        // if (!selectedMembers.length) return;
+        let adjustedStartTime = startTime;
+        let adjustedEndTime = endTime;
+        if (allDay) {
+            adjustedStartTime = new Date(startTime);
+            adjustedStartTime.setHours(0, 0, 0, 0);
+
+            adjustedEndTime = new Date(endTime);
+            adjustedEndTime.setDate(adjustedEndTime.getDate() + 1); // +1일
+            adjustedEndTime.setHours(0, 0, 0, 0); // 00:00:00
+        }
 
         const body = { //서버에 보낼 body 객체
-            planType :"팀",
+            planType: isPersonal ? "개인" : "팀",
             planTitle : title,
             planContent : content,
-            planStartTime : startTime,
-            planEndTime : endTime,
+            planStartTime : adjustedStartTime,
+            planEndTime: adjustedEndTime,
+            planColor: planColor,
+            planIsAllDay: allDay ? "Y" : "N",
             receivers: selectedMembers //체크된 참여자 목록 (번호 배열)
         };
 
         let token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
 
-        await axios.post("/plan/receiver", body, {
+        await axios.post("/plan/team", body, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         });
+        toast.success("일정이 등록되었습니다.");
 
         //(수정 필요)캘린더에 즉시 반영
 
@@ -267,53 +356,47 @@ export default function CalendarComponent() {
     }, []);
 
     //종일 일정 -> 날짜만 설정 가능 (시작일/종료일)
-    const startTimeChange = useCallback(date=>{
+    const startTimeChange = useCallback(date => {
         const start = new Date(date);
-        if(allDay) {
-            start.setHours(0, 0, 0, 0);
-        }
+        if (allDay) start.setHours(0, 0, 0, 0);
         setStartTime(start);
+        setEndTimeManuallyChanged(false); // 리셋
     }, [allDay]);
-    const endTimeChange = useCallback(date=>{
-        const end = new Date(date); //Full Calendar의 end는 하루 뒤 00:00으로 설정해야 실제 종료일까지
-        if(allDay) {
-            end.setHours(0, 0, 0, 0); // 정확히 하루의 마지막 순간
-        }
+    const endTimeChange = useCallback(date => {
+        const end = new Date(date);
+        if (allDay) end.setHours(0, 0, 0, 0);
         setEndTime(end);
-        setEndTimeManuallyChanged(true); //사용자 입력으로 간주
+        setEndTimeManuallyChanged(true);
     }, [allDay]);
 
     //날짜 클릭 -> 해당 날짜의 일정들 보기
     const detailDate = useCallback(info => {
         const calendarApi = calendar.current?.getApi();
-        const clicked = new Date(info.dateStr);
-
-        clicked.setHours(0, 0, 0, 0);
-
-        const events = calendarApi.getEvents().filter(event => {//달력에 등록된 모든 이벤트를 배열로 가져옴
+        const clickedDay = new Date(info.dateStr);
+        clickedDay.setHours(0, 0, 0, 0);
+    
+        const nextDay = new Date(clickedDay);
+        nextDay.setDate(clickedDay.getDate() + 1);
+    
+        const events = calendarApi.getEvents().filter(event => {
             const start = new Date(event.start);
-            const end = new Date(event.end ?? event.start); //end 없으면 start로 처리
-
-            //날짜만 비교(시각 제거)
-            start.setHours(0, 0, 0, 0);
-            end.setHours(0, 0, 0, 0);
-            const clickedDay = new Date(clicked);
-            clickedDay.setHours(0, 0, 0, 0);
-
+            const end = new Date(event.end ?? event.start);
+    
+            // 클릭한 날짜와 비교
             return (
-                (clickedDay >= start && clickedDay < end) || //일반적인 기간 이벤트
-                (clickedDay.getTime() === start.getTime() && !event.end) //end 없는 단일 날짜 이벤트 (공휴일 등)
+                (start < nextDay && end > clickedDay) || // 일반 일정 포함 (범위가 겹치면 포함)
+                (start.getTime() === clickedDay.getTime() && !event.end) // 단일 이벤트 (공휴일 등)
             );
-        }); 
-
-        setSelectedDate(events); //필터링한 결과를 state에 저장해서, 모달에서 이 날짜에 해당하는 일정들을 표시할 수 있도록 준비
-        
-        if(events.length === 0 ) { //일정이 없으면
-            openMakeModal(clicked); 
-        }
-        else {
-            setClickedDate(clicked);
-            openListModal(); //일정이 있으면
+        });
+    
+        const sorted = [...events].sort((a, b) => new Date(a.start) - new Date(b.start));
+        setSelectedDate(sorted);
+    
+        if (sorted.length === 0) {
+            openMakeModal(clickedDay);
+        } else {
+            setClickedDate(clickedDay);
+            openListModal();
         }
     }, []);
 
@@ -339,6 +422,7 @@ export default function CalendarComponent() {
         closeDeleteModal();
 
         await axios.delete(`/plan/${selectedEvent.extendedProps.planNo}`);
+        await fetchAllEvents(currentYear, currentMonth);
     }, [selectedEvent]); //selectedEvent가 변경될 때만 이 함수를 새로 만듦
 
     //일정 등록 모달 열기/닫기
@@ -349,19 +433,10 @@ export default function CalendarComponent() {
         if (!makeModal.current) return;
         const target = Modal.getOrCreateInstance(makeModal.current);
         
-        const baseDate = date ? new Date(date) : new Date(); //baseDate = 이번 일정 등록의 기준 날짜. 날짜가 전달되면 그걸 기준으로, 없으면 현재 날짜로 사용
         const now = new Date(); //현재 날짜
-
-        const start = new Date(baseDate); //이 시점에서는 날짜만 같고 시각은 기본값(00:00) 상태
-        start.setHours(now.getHours(), now.getMinutes(), 0, 0); //설정한 날짜에 현재 시간, 분까지 설정
+        const baseDate = date ? new Date(date) : new Date(); //baseDate = 이번 일정 등록의 기준 날짜. 날짜가 전달되면 그걸 기준으로, 없으면 현재 날짜로 사용
         
-        const end = new Date(baseDate); //이 시점에서는 날짜만 같고 시각은 기본값(00:00) 상태
-        end.setHours(now.getHours() + 1, now.getMinutes(), 0, 0); //설정한 날짜에 현재 시간, 분까지 설정
-
         setAllDay(false); //종일 체크 해제
-        setStartTime(start); //시작일 업데이트
-        setEndTime(end); //종료일 업데이트
-        setClickedDate(baseDate); //클릭한 날짜 상태 저장
 
         // 입력 초기화
         setTitle("");
@@ -369,9 +444,24 @@ export default function CalendarComponent() {
         setSearchContacts(""); //검색어 초기화
         setSelectedMembers([]); //수신자 리스트 초기화
 
+        if (!date && !title) {
+            setPlanColor('#0d6efd'); // 새 등록일 때만 초기화
+        }
+
         setTitleChoice(false); //제목 경고 초기화
         setReceiverChoice(false); //수신자 경고 초기화
         setDateChoice(false); //시작일, 종료일 경고 초기화
+        setEndTimeManuallyChanged(false);
+
+        const start = new Date(baseDate); //이 시점에서는 날짜만 같고 시각은 기본값(00:00) 상태
+        start.setHours(now.getHours(), now.getMinutes(), 0, 0);
+        
+        const end = new Date(baseDate); //이 시점에서는 날짜만 같고 시각은 기본값(00:00) 상태
+        end.setHours(now.getHours() + 1, now.getMinutes(), 0, 0);
+
+        setStartTime(start); //시작일 업데이트
+        setEndTime(end); //종료일 업데이트
+        setClickedDate(baseDate); //클릭한 날짜 상태 저장
 
         target.show();
     }, [listModal, makeModal, clickedDate]);
@@ -386,6 +476,7 @@ export default function CalendarComponent() {
         setEndTime(null);
         setSearchContacts(""); //검색어 초기화
         setSelectedMembers([]); //수신자 리스트 초기화
+        setPlanColor('#0d6efd');
     }, [makeModal]);
 
     //일정 리스트(날짜 클릭) 모달 열기/닫기
@@ -442,10 +533,55 @@ export default function CalendarComponent() {
     }, [deleteModal]);
 
     return (<>
-        <Jumbotron subject="일정" />
+        <div className="row mt-2">
+            <div className="col">
+                <div className="d-flex align-items-center justify-content-between">
+                    <div className="d-flex align-items-center">
+                        <h2>
+                            <FaListUl className="text-primary me-1" />
+                            <span className="align-middle">일정</span>
+                        </h2>
+                    </div>
+                    <div className="d-flex align-items-center">
+                        <button className={`btn ${tab === 'calendar' ? 'btn-primary' : 'btn-outline-primary'} text-responsive me-2`} onClick={() => setTab('calendar')}>
+                            캘린더
+                        </button>
+                        <button className={`btn ${tab === 'todo' ? 'btn-primary' : 'btn-outline-primary'} text-responsive`} onClick={() => setTab('todo')}>
+                            Todo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        <hr/>
+        <hr className="hr-stick" />
+
         <div className="calendar-wrapper">
+        {/* 개인-Todo */}
+        {tab === 'todo' && (
+        <TodoList allEvents={allEvents} fetchAllEvents={fetchAllEvents} />
+        )}            
+
+        {/* 캘린더 */}
+        {tab === 'calendar' && (
+        <>
+            <div className="row align-items-center mb-3">
+                <div className="col">
+                    <div className="d-flex justify-content-start align-items-center">
+                        <div className="btn-group" role="group">
+                            <input type="radio" className="btn-check" name="planTypeFilter" id="allPlans" autoComplete="off"
+                                checked={viewType === "전체"} onChange={() => setViewType("전체")} />
+                            <label className="btn btn-outline-primary text-responsive" htmlFor="allPlans">전체</label>
+                            <input type="radio" className="btn-check" name="planTypeFilter" id="teamPlans" autoComplete="off"
+                                checked={viewType === "팀"} onChange={() => setViewType("팀")} />
+                            <label className="btn btn-outline-primary text-responsive" htmlFor="teamPlans">팀</label>
+                            <input type="radio" className="btn-check" name="planTypeFilter" id="personalPlans" autoComplete="off"
+                                checked={viewType === "개인"} onChange={() => setViewType("개인")} />
+                            <label className="btn btn-outline-primary text-responsive" htmlFor="personalPlans">개인</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <FullCalendar
                 ref={calendar} //이 FullCalendar 컴포넌트에 접근할 수 있는 참조를 연결. .current.getApi()로 달력의 메서드에 접근할 수 있음
                 plugins={[dayGridPlugin, interactionPlugin]} //FullCalendar에서 사용할 플러그인 목록. dayGridPlugin: 월간(month) 보기 기능을 제공, interactionPlugin: 날짜 클릭 등의 사용자 인터랙션을 처리
@@ -461,11 +597,21 @@ export default function CalendarComponent() {
                 expandRows={true} //세로줄 자동 확장
                 aspectRatio={2.0}
                 height="auto"
-                events={events} //실제 달력에 표시할 이벤트 목록. useState로 관리 중인 events 배열이 들어가고, loadPlans()에서 서버에서 불러온 데이터를 여기로 채워 넣음
+                headerToolbar={{
+                    // start: ''
+                }}
+                events={filteredEvents} //실제 달력에 표시할 이벤트 목록. useState로 관리 중인 events 배열이 들어가고, loadPlans()에서 서버에서 불러온 데이터를 여기로 채워 넣음
                 eventOrder={(a, b) => {
                     const aIsHoliday = a.extendedProps?.isHoliday ? 1 : 0;
                     const bIsHoliday = b.extendedProps?.isHoliday ? 1 : 0;
-                    return bIsHoliday - aIsHoliday; // 공휴일이면 우선순위 업
+                    if(aIsHoliday !== bIsHoliday) {
+                        return bIsHoliday - aIsHoliday; // 공휴일이면 우선순위 업
+                    }
+
+                    //같은 유형이면 시작
+                    const startA = new Date(a.start).getTime();
+                    const startB = new Date(b.start).getTime();
+                    return startA - startB;
                 }}
                 dayCellClassNames={(arg) => {
                     const toLocalDateStr = (date) => {
@@ -482,20 +628,21 @@ export default function CalendarComponent() {
                     return isHoliday ? ['fc-holiday'] : [];
                 }}
                 datesSet={async () => {
+                    // 기존 코드 유지
                     const calendarApi = calendar.current?.getApi();
-                    const currentDate = calendarApi?.getDate(); // 정확한 기준 날짜 확보
+                    if (!calendarApi) return;
 
-                    if (!currentDate) return;
-
+                    const currentDate = calendarApi.getDate();
                     const newMonth = currentDate.getMonth() + 1;
                     const newYear = currentDate.getFullYear();
 
                     setCurrentMonth(newMonth);
                     setCurrentYear(newYear);
-
-                    await fetchAllEvents(newYear, newMonth);
+                    fetchAllEvents(newYear, newMonth);
                 }}
             />
+        </>
+        )}
         </div>
 
         {/* 일정 등록 모달 */}
@@ -534,6 +681,23 @@ export default function CalendarComponent() {
                                 <div className="d-flex text-responsive">
                                     <FaRegCalendarCheck className="mt-1 me-2"/>
                                     <span className="fw-bold">일정</span> 
+                                    <div className="color-picker-container d-flex align-items-center ms-1">
+                                        <div className="color-picker-button" style={{ backgroundColor: planColor }} onClick={() => setShowColorPicker(!showColorPicker)}></div>
+                                        {showColorPicker && (
+                                            <div className="color-picker-popup">
+                                            {colorOptions.map(color => (
+                                                <div key={color} className={`color-picker-option ${planColor === color ? 'selected' : ''}`} 
+                                                    style={{ backgroundColor: color }}
+                                                    onClick={() => { 
+                                                        setPlanColor(color);
+                                                        setShowColorPicker(false);
+                                                    }}
+                                                >
+                                                </div>
+                                            ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="d-flex align-items-center gap-2 mt-1">
                                     <DatePicker 
@@ -547,6 +711,8 @@ export default function CalendarComponent() {
                                         onCalendarClose={() => setDateChoice(true)}
                                         dateFormat={allDay ? "yyyy-MM-dd" : "yyyy-MM-dd HH:mm"} 
                                         placeholderText="시작일"
+                                        popperPlacement="bottom-start"
+                                        
                                     />
                                     <span> - </span>
                                     <DatePicker
@@ -554,12 +720,13 @@ export default function CalendarComponent() {
                                             ${dateChoice ? (isInvalidEndTime ? 'is-invalid' : 'is-valid') : ''}`}
                                         selected={endTime} 
                                         minDate={startTime || new Date()} //시작일 이후만 선택 가능
-                                        showTimeSelect={!allDay} //종일이면 시간 선택 안 보임
+                                        showTimeSelect={!allDay}
                                         timeIntervals={30}
                                         onChange={endTimeChange}
                                         onCalendarClose={() => setDateChoice(true)}
                                         dateFormat={allDay ? "yyyy-MM-dd" : "yyyy-MM-dd HH:mm"} 
                                         placeholderText="종료일"
+                                        popperPlacement="top-start"
                                     />
                                 </div>
                                 
@@ -594,7 +761,7 @@ export default function CalendarComponent() {
                             <div className="col">
                                 <div className="d-flex text-responsive">
                                     <IoPersonSharp className="mt-1 me-2" />
-                                    <span className="fw-bold">참여자</span>
+                                    <span className="fw-bold">수신자</span>
                                 </div>
                                 <div className="d-flex text-responsive mt-1 mb-2">
                                     <input type="text" className="form-control text-responsive" placeholder="이름 또는 부서명 검색" 
@@ -724,21 +891,26 @@ export default function CalendarComponent() {
                             }
                         
                             //일반 요일일 경우
+                            const receivers = event.extendedProps?.receivers || [];
+                            const accepted = receivers.filter(r => r.planReceiveIsAccept === 'Y').length;
+                            const total = receivers.length;
+                            const percent = total > 0 ? Math.round((accepted / total) * 100) : 0;
+
                             return (
                                 <div key={`${event.title}-${event.startStr}`} onClick={() => moveListToDetail(event)}
                                     className="border rounded p-3 mb-2 hover-shadow text-responsive" style={{ cursor: 'pointer' }}>
-                                    <h6 className="text-responsive">
-                                        <small className={status.className}>{status.text}</small> {event.title}
-                                    </h6>
-                                    <div className="d-flex flex-wrap gap-2">
-                                    {Object.values(groupContacts).flat()
-                                    .filter(member => event.extendedProps?.receivers?.includes(member.memberNo))
-                                    .map(member => (
-                                        <div key={member.memberNo} className="d-flex align-items-center small custom-badge">
-                                            <span>{member.memberName}</span>
+                                    <div className="d-flex align-items-center text-responsive">
+                                        <div className="d-flex align-items-center gap-1">
+                                            <small className={`${status.className} fw-bold`}>{status.text}</small>
+                                            <span className="fw-bold">{event.title}</span>
                                         </div>
-                                    ))}
+                                        <div className="color-box ms-1" style={{ backgroundColor: event.extendedProps?.planColor }}></div>
                                     </div>
+                                    {event.extendedProps.planType === "팀" && (
+                                    <div className="d-flex flex-wrap gap-2 mt-2">
+                                        <span className="text-responsive">수신자: {total}명, 수락: {accepted}명 ({percent}%)</span>
+                                    </div>
+                                    )}
                                 </div>
                             );
                         })}
@@ -770,6 +942,9 @@ export default function CalendarComponent() {
                                 <div className="d-flex text-responsive">
                                     <FaRegCalendarCheck className="mt-1 me-2"/>
                                     <span className="fw-bold">일정</span> 
+                                    <div className="color-picker-container d-flex align-items-center ms-1">
+                                        <div className="color-box" style={{ backgroundColor: selectedEvent?.extendedProps?.planColor }}></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -798,12 +973,12 @@ export default function CalendarComponent() {
                             </div>
                         </div>
 
-                        {/* 상세일정 - 참여자 */}
+                        {/* 상세일정 - 수신자 */}
                         <div className="row mt-3">
                             <div className="col">
                                 <div className="d-flex text-responsive">
                                     <IoPersonSharp className="mt-1 me-2" />
-                                    <span className="fw-bold">참여자</span>
+                                    <span className="fw-bold">수신자</span>
                                 </div>
                             </div>
                         </div>

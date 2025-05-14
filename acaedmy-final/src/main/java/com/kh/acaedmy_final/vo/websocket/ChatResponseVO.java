@@ -15,4 +15,7 @@ public class ChatResponseVO {
 	private String senderName;//보낸 사람 이름
 	private String content; //채팅 내용
 	private LocalDateTime time;//채팅 전송 시간
+	
+	//시스템 메세지 구분용 필드
+	private String type;//"CHAT" 또는 "SYSTEM"
 }

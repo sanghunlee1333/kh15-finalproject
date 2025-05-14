@@ -33,22 +33,48 @@
 		order by room_chat_time asc
 	</select>
 	
-	<!-- 최근 채팅 몇 개만 조회 -->
+	<!-- 최근 채팅 조회 -->
 	<select id="listRecent" parameterType="map" resultType="RoomChatDto">
-		select
-			room_chat_no, room_chat_sender, room_chat_origin,
-			room_chat_type, room_chat_content, room_chat_time
+	    select *
 		from (
 			select
-				room_chat_no, room_chat_sender, room_chat_origin,
-				room_chat_type, room_chat_content, room_chat_time
+				room_chat_no,
+				room_chat_sender,
+				room_chat_origin,
+				room_chat_type,
+				room_chat_content,
+				room_chat_time
 			from room_chat
 			where room_chat_origin = #{roomChatOrigin}
 			order by room_chat_time desc
 		)
-		<![CDATA[
-		where rownum <= #{count}
-		]]>
+	    <![CDATA[
+	    where rownum <= #{count}
+	    ]]>
+	    order by room_chat_time asc
+	</select>
+	
+	<!-- 시스템 메세지 -->
+	<insert id="insertSystemMessage" parameterType="RoomChatDto">
+		insert into room_chat (
+			room_chat_no, room_chat_sender, room_chat_origin,
+			room_chat_type, room_chat_content
+		)
+		values (
+			room_chat_seq.nextval,
+			#{roomChatSender},
+			#{roomChatOrigin},
+			'SYSTEM',
+			#{roomChatContent}
+		)
+	</insert>
+	
+	<select id="selectChatList" parameterType="long" resultType="RoomChatDto">
+		select
+			room_chat_no, room_chat_sender, room_chat_origin,
+			room_chat_type, room_chat_content, room_chat_time
+		from room_chat
+		where room_chat_origin = #{roomNo}
 		order by room_chat_time asc
 	</select>
 	

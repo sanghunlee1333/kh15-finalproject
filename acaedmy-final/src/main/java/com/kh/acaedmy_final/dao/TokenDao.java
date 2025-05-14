@@ -28,11 +28,15 @@ public class TokenDao {
 		return sqlSession.delete("token.delete",tokenNo) > 0;
 	}
 	public boolean deleteByTarget(long memberNo) {
-		return sqlSession.delete("token.deleteByTarget",memberNo) > 0;		
+		System.out.println("memberNo");
+		long tokenTarget = memberNo;
+		
+		return sqlSession.delete("token.deleteByTarget",tokenTarget) > 0;		
 	}
-	public boolean deleteByTarget(TokenDto tokenDto) {
-		return sqlSession.delete("token.deleteByTarget", tokenDto) > 0;
-	}
+//	public boolean deleteByTarget(TokenDto tokenDto) {
+//		System.out.println("DTO");
+//		return sqlSession.delete("token.deleteByTarget", tokenDto) > 0;
+//	}
 	
 	public TokenDto selectOne(long tokenNo) {
 		return sqlSession.selectOne("token.find",tokenNo);

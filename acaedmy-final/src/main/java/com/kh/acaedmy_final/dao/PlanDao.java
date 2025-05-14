@@ -21,10 +21,7 @@ public class PlanDao {
 	    return sqlSession.selectOne("plan.sequence");
 	}
 	
-	//등록(Todo)
-	
-	
-	//등록(일정)
+	//등록
 	public void insert(PlanDto planDto) {
 		sqlSession.insert("plan.make", planDto);
 	}
@@ -34,9 +31,19 @@ public class PlanDao {
 		return sqlSession.delete("plan.delete", planNo) > 0;
 	}
 	
-	//전체 조회
-	public List<PlanDto> selectList(long planSenderNo){
-		return sqlSession.selectList("plan.list", planSenderNo);
+	//전체 조회(개인 + 팀)
+	public List<PlanDto> selectAllList(long memberNo) {
+		return sqlSession.selectList("plan.allList", memberNo);
+	}
+	
+	//전체 조회(개인-Todo)
+	public List<PlanDto> selectPersonalList(long memberNo) {
+		return sqlSession.selectList("plan.personalList", memberNo);
+	}
+	
+	//전체 조회(팀-일정)
+	public List<PlanDto> selectTeamList(long planSenderNo){
+		return sqlSession.selectList("plan.teamList", planSenderNo);
 	}
 	
 	//상세 조회

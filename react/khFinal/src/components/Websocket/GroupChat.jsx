@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FaArrowTurnUp, FaMagnifyingGlass, FaPlus } from "react-icons/fa6";
 import { IoArrowBack } from "react-icons/io5";
 import { PiUserList } from "react-icons/pi";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import SockJS from 'sockjs-client';
 import { Client } from "@stomp/stompjs";
 import { userNoState } from "../utils/stroage";
@@ -19,11 +19,14 @@ dayjs.locale("ko");         // 한글로 설정
 
 
 export default function GroupChat() {
+    //navigate
+    const navigate = useNavigate();
 
     //recoil
     const memberNo = useRecoilValue(userNoState);
 
     //ref
+    const wsConnected = useRef(false);
     const chatBoxRef = useRef(null);
     //모달을 제어하기 위한 ref
     //기존 멤버 모달
@@ -98,6 +101,27 @@ export default function GroupChat() {
         }
     };
 
+    //채팅방 나가기
+    const handleExitRoom = async ()=> {
+        const confirmed = window.confirm("채팅방에서 나가시겠습니까?");
+        if(!confirmed) return;
+
+        try {
+            await axios.delete(`/rooms/${roomNo}/exit`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            closeModal();
+            navigate("/chat/room");
+        }
+        catch (error) {
+            console.error("채팅방 나가기 실패", error);
+            alert("채팅방 나가기 중 오류가 발생했습니다");
+        }
+    };
+
     //callback
     //연락처 검색
     const searchContact = useCallback((contacts = groupContacts) => {
@@ -151,41 +175,6 @@ export default function GroupChat() {
         }
     }, [roomNo, searchContact]);
 
-    //모달 열기
-    const openModal = useCallback(() => {
-        if (!modal.current) return;
-        loadRoomMembers();
-        const target = Modal.getOrCreateInstance(modal.current);
-        target.show();
-    }, [modal, loadRoomMembers]);
-
-    //모달 닫기
-    const closeModal = useCallback(() => {
-        const target = Modal.getInstance(modal.current);
-        if (target) target.hide();
-    }, [modal]);
-
-    //초대 모달 열기
-    const openInviteModal = useCallback(() => {
-        closeModal();
-
-        //검색 상태 초기화
-        setSearchContacts("");
-        setNoResults(null);
-        setNoResultsType(null);
-        setFilterContacts(groupContacts);//원래 전체 연락처로 되돌림
-
-        if (!modalInvite.current) return;
-        const target = Modal.getOrCreateInstance(modalInvite.current);
-        target.show();
-    }, [modalInvite, closeModal, groupContacts]);
-
-    //초대 모달 닫기
-    const closeInviteModal = useCallback(() => {
-        const target = Modal.getInstance(modalInvite.current);
-        if (target) target.hide();
-    }, [modalInvite]);
-
     //연락처 불러오기
     const loadContacts = useCallback(async () => {
         try {
@@ -203,8 +192,8 @@ export default function GroupChat() {
             setFilterContacts(data); // 검색 안했을 때 초기 목록도 표시
 
             let rawMatchCount = 0;
-            Object.keys(groupContacts).forEach(dept => {
-                const matches = groupContacts[dept].filter(c =>
+            Object.keys(data).forEach(dept => {
+                const matches = data[dept].filter(c =>
                     c.memberName.includes(searchContacts) ||
                     dept.includes(searchContacts)
                 );
@@ -219,8 +208,49 @@ export default function GroupChat() {
         } catch (error) {
             console.error("초대 가능한 연락처 불러오기 실패", error);
         }
-    }, [roomNo, searchContacts, groupContacts]);
+    }, [roomNo, searchContacts]);
 
+    //모달 열기
+    const openModal = useCallback(() => {
+        if (!modal.current) return;
+        loadRoomMembers();
+        const target = Modal.getOrCreateInstance(modal.current);
+        target.show();
+    }, [modal, loadRoomMembers]);
+
+    //모달 닫기
+    const closeModal = useCallback(() => {
+        const target = Modal.getInstance(modal.current);
+        if (target) target.hide();
+
+        // 포커스를 모달 밖 적절한 요소로 옮기기
+        document.querySelector(".chat-container input")?.focus();
+    }, [modal]);
+
+    //초대 모달 열기
+    const openInviteModal = useCallback(() => {
+        closeModal();
+
+        //검색 상태 초기화
+        setSearchContacts("");
+        setNoResults(null);
+        setNoResultsType(null);
+
+        loadContacts();
+
+        if (!modalInvite.current) return;
+        const target = Modal.getOrCreateInstance(modalInvite.current);
+        target.show();
+    }, [modalInvite, closeModal, loadContacts]);
+
+    //초대 모달 닫기
+    const closeInviteModal = useCallback(() => {
+        const target = Modal.getInstance(modalInvite.current);
+        if (target) target.hide();
+
+        // 포커스를 입력창으로 이동
+        document.querySelector(".chat-container input")?.focus();
+    }, [modalInvite]);
 
     //체크박스 선택/해제 객체 저장
     const memberSelection = useCallback((memberNo) => {
@@ -263,9 +293,10 @@ export default function GroupChat() {
         return !(sameSender && sameTime);
     }, []);
 
-
     //effect
-    useEffect(() => {
+    const connectWebSocket = useCallback(() => {
+        if(wsConnected.current) return;
+        wsConnected.current = true;
         const socket = new SockJS("http://localhost:8080/ws");
         const stompClient = new Client({
             webSocketFactory: () => socket,
@@ -283,25 +314,54 @@ export default function GroupChat() {
                 }, {
                     accessToken: token
                 });
+
+                stompClient.subscribe(`/topic/room-users/${roomNo}`, ()=>{
+                    loadContacts();
+                    loadRoomMembers();
+                });
             },
         });
 
         setClient(stompClient);
         stompClient.activate();
-
-        return () => stompClient.deactivate();
     }, [roomNo]);
 
     useEffect(() => {
-        axios.get(`/chat/recent/${roomNo}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        }).then(response => {
-            if (response.data?.roomTitle) setRoomTitle(response.data.roomTitle);
-            if (Array.isArray(response.data?.messages)) setMessages(response.data.messages);
-        }).catch(err => {
-            console.error("채팅방 정보를 불러오지 못했습니다", err);
-        });
-    }, [roomNo]);
+        const fetchRoomInfo = async () => {
+            try {
+                // 1. 메시지 정보
+                const { data: chatData } = await axios.get(`/chat/recent/${roomNo}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (Array.isArray(chatData?.messages)) {
+                    setMessages(chatData.messages);
+                }
+    
+                // 2. 참여자 목록
+                const { data: users } = await axios.get(`/rooms/${roomNo}/users`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setMembers(users);
+    
+                // 3. 제목 설정
+                if (users.length === 2) {
+                    const opponent = users.find(user => user.memberNo !== memberNo);
+                    if (opponent) setRoomTitle(opponent.memberName);
+                } else {
+                    // 그룹 채팅인 경우
+                    if (chatData?.roomTitle) setRoomTitle(chatData.roomTitle);
+                }
+    
+                // 4. WebSocket 연결
+                connectWebSocket();
+            } catch (err) {
+                console.error("채팅방 정보 불러오기 실패", err);
+            }
+        };
+    
+        fetchRoomInfo();
+    }, [roomNo, memberNo, token, connectWebSocket]);
+    
 
     //메세지 읽음 처리(입장, 퇴장)
     useEffect(() => {
@@ -366,6 +426,7 @@ export default function GroupChat() {
                         </Link>
                         <h5 className="mb-0 text-nowrap">{roomTitle}</h5>
                     </div>
+                    {/* 채팅 참여자 목록 */}
                     <button className="btn btn-sm me-2">
                         <PiUserList className="fs-4" onClick={openModal} />
                     </button>
@@ -378,8 +439,11 @@ export default function GroupChat() {
         <div className="chat-container">
             <div className="chat-messages" ref={chatBoxRef}>
                 {messages.map((msg, index) => {
-                    if (!msg || !msg.content?.trim()) return null;
+                    if (!msg) return null;
 
+                    const isSystem = msg.type === "SYSTEM";
+                    // if(msg.type === "CHAT" && !msg.content?.trim()) return null;
+                    if (!msg || typeof msg.content !== "string" || !msg.content.trim()) return null;
                     const isMine = String(msg.senderNo) === String(memberNo);
                     const showSender = isSenderVisible(messages, index, memberNo);
                     const showTime = isLastMessage(messages, index);
@@ -400,6 +464,14 @@ export default function GroupChat() {
                                 </div>
                             )}
 
+                            {/* 시스템 메세지일 경우 */}
+                            {isSystem ? (
+                                <div className="d-flex justify-content-center my-2">
+                                    <div className="text-muted small text-center px-2 py-1 system-message">
+                                        {msg.content}
+                                    </div>
+                                </div>
+                            ) : (
                             <div className={`d-flex flex-column ${isMine ? "align-items-end" : "align-items-start"} mb-2`}>
                                 {!isMine && showSender && msg.senderName && (
                                     <div className="small fw-bold ps-1 mb-1">{msg.senderName}</div>
@@ -416,11 +488,10 @@ export default function GroupChat() {
                                     )}
                                 </div>
                             </div>
+                            )}
                         </div>
                     );
                 })}
-
-
             </div>
 
             <hr />
@@ -493,8 +564,8 @@ export default function GroupChat() {
                     </div>
 
                     <div className="modal-footer">
-                        <button type="button" className="btn btn-secondary" onClick={closeModal}>
-                            취소
+                        <button type="button" className="btn btn-danger" onClick={handleExitRoom}>
+                            채팅방 나가기
                         </button>
                     </div>
                 </div>
