@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,8 +48,8 @@ public class MemberRestController {
 	@PostMapping("/")
 	public boolean join(@RequestBody MemberDto memberDto) {
 		
-		System.out.println("ggwgwgwgw");
-		System.out.println(memberDto);
+//		System.out.println("ggwgwgwgw");
+//		System.out.println(memberDto);
 		
 		// 유효성 검사
 		boolean isValid = memberDao.insert(memberDto);
@@ -80,14 +81,20 @@ public class MemberRestController {
 		.build();
 	}
 	
-	@GetMapping("/logout")
+	@DeleteMapping("/logout")
 	public boolean logout(@RequestHeader ("Authorization") String bearerToken) {
 		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+//		System.err.println(bearerToken);
+//		System.out.println("claimVO");
+//		System.err.println(claimVO);
+//		System.out.println("nono");
+//		System.err.println(claimVO.getMemberNo());
 		return tokenDao.deleteByTarget(claimVO.getMemberNo());
 	}
 	
 	@PostMapping("/refresh")
 	public LoginResponseVO refresh(@RequestHeader ("Authorization") String refreshToken) {
+		//System.err.println(refreshToken);
 		ClaimVO claimVO = tokenService.parseBearerToken(refreshToken);
 		boolean isValid = tokenService.checkBearerToken(claimVO, refreshToken);
 		if(!isValid) {
