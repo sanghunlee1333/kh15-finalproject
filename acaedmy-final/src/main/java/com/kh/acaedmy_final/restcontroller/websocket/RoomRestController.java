@@ -3,15 +3,20 @@ package com.kh.acaedmy_final.restcontroller.websocket;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.acaedmy_final.dao.MemberDao;
 import com.kh.acaedmy_final.dao.websocket.RoomDao;
+import com.kh.acaedmy_final.dto.MemberDto;
 import com.kh.acaedmy_final.dto.websocket.RoomCreateRequestDto;
 import com.kh.acaedmy_final.dto.websocket.RoomDto;
 import com.kh.acaedmy_final.service.TokenService;
@@ -36,10 +41,12 @@ public class RoomRestController {
     @Autowired
     private RoomDao roomDao;
     
+    @Autowired
+    private MemberDao memberDao;
+    
     @PostMapping
-    public boolean createRoom(@RequestBody RoomCreateRequestDto request,
+    public long createRoom(@RequestBody RoomCreateRequestDto request,
                                         @RequestHeader("Authorization") String bearerToken) {
-        System.err.println(request);
         ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
         //방 생성
         long roomNo = roomDao.getSequence();
@@ -57,7 +64,7 @@ public class RoomRestController {
         // 참여자 추가
         roomDao.insertMembers(roomNo, request.getMemberNos());
 
-        return true;
+        return roomNo;
 
     }
 
@@ -114,5 +121,44 @@ public class RoomRestController {
         
     	//사용자 정보로 초대 처리
     	roomService.inviteMembers(roomNo, request.getMemberNos(), claimVO.getMemberNo());
+    }
+    
+    @DeleteMapping("/{roomNo}/exit")
+    public ResponseEntity<?> exitRoom(@PathVariable long roomNo,
+    														@RequestHeader("Authorization") String bearerToken) {
+    	ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+    	long memberNo = claimVO.getMemberNo();
+    	
+    	//나가기 처리
+    	roomService.exitRoom(roomNo, memberNo);
+    	
+    	return ResponseEntity.ok().build();
+    }
+    
+    @GetMapping("/{roomNo}/invitable")
+    public List<MemberDto> getInvitableMembers(@PathVariable long roomNo,
+    																			@RequestHeader("Authorization") String bearerToken) {
+    	ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+    	long memberNo = claimVO.getMemberNo();
+    	
+    	return memberDao.selectInvitableContacts(roomNo, memberNo);
+    }
+    
+    @GetMapping("/{roomNo}/invitable/search")
+    public List<MemberDto> searchInvitableMembers(@PathVariable long roomNo,
+    																				@RequestParam("search") String search,
+    																				@RequestHeader("Authorization") String bearerToken) {
+    	ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+    	long memberNo = claimVO.getMemberNo();
+    	
+    	return memberDao.searchInvitableContacts(roomNo, memberNo, search);
+    }
+    
+    @PostMapping("/direct/{targetNo}")
+    public Long startDirectChat(@PathVariable long targetNo,
+    											@RequestHeader("Authorization") String bearerToken) {
+    	ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+    	long ownerNo = claimVO.getMemberNo();
+    	return roomService.startDirectChat(ownerNo, targetNo);
     }
 }

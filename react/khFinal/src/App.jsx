@@ -24,6 +24,8 @@ import { Bounce, ToastContainer } from 'react-toastify'
 import NoticeEdit from './components/Notice/NoticeEdit'
 import TeamPlan from './components/Plan/TeamPlan'
 import DateMange from './components/Admin/DateManage'
+import SockJS from 'sockjs-client'
+import { Client } from '@stomp/stompjs';
 import TodoList from './components/Plan/TodoList'
 import Member from './components/utils/member';
 import Admin from './components/utils/admin';
@@ -72,14 +74,38 @@ function App() {
     refreshLogin();
   }, []);
 
+  // WebSocket 구독 설정
+  useEffect(() => {
+    if (!userNo) return;
+    
+    const socket = new SockJS("http://localhost:8080/ws");
+    const client = new Client({
+      webSocketFactory: () => socket,
+      connectHeaders: {
+        Authorization: axios.defaults.headers.common["Authorization"]
+      },
+      onConnect: () => {
+        const topic = `/topic/room-list/${userNo}`;
+        client.subscribe(topic, () => {
+          window.dispatchEvent(new CustomEvent("refreshRoomList"));
+        });
+      },
+      debug: () => {}
+    });
+    
+    client.activate();
+    return () => client.deactivate();
+  }, [userNo]);
+
   useEffect(()=>{
     console.log("loadingSTATE");
     console.log(loading);
 
+
   },[loading])
 
   if (!loading) return <div>로딩 중...</div>;
-
+  
   return (
     <>
       {/* 메뉴 */}
@@ -120,8 +146,9 @@ function App() {
           <Route path="/member/contact" element={<MemberContact/>}></Route>
 
           {/* Chat */}
-          <Route path="/chat/room" element={<ChatRoom/>}></Route>
+          <Route path="/chat/room/" element={<ChatRoom/>}></Route>
           <Route path="/chat/group/:roomNo" element={<GroupChat/>}></Route>
+          <Route path="/chat/room/:roomNo" element={<GroupChat />}></Route>
         </Routes>
 
         <Footer/>
