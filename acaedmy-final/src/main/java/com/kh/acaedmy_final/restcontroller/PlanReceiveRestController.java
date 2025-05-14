@@ -1,18 +1,18 @@
 package com.kh.acaedmy_final.restcontroller;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.acaedmy_final.dao.PlanReceiveDao;
 import com.kh.acaedmy_final.vo.PlanReceiveResponseVO;
+import com.kh.acaedmy_final.vo.PlanStatusUpdateRequestVO;
 
 //수신자 입장에서 받은 일정 목록을 조회하는 API
 @RestController
@@ -30,7 +30,7 @@ public class PlanReceiveRestController {
 	}
 	
 	//수신자가 일정을 수락하는 API
-	@PatchMapping("/planNo/{planNo}/receiverNo/{planReceiverNo}")
+	@PatchMapping("/{planNo}/receiverNo/{planReceiverNo}/accept")
 	public void accept(@PathVariable long planNo, @PathVariable long planReceiverNo) {
 	    planReceiveDao.accept(planNo, planReceiverNo);
 	}

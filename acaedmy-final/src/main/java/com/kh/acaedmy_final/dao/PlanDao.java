@@ -56,7 +56,7 @@ public class PlanDao {
 		return sqlSession.selectList("plan.listReceiver", planNo);
 	}
 	
-	//수정(일정 상태)
+	//수정(일정 달성 여부)
 	public boolean updateStatus(long planNo, String planStatus) {
 		Map<String, Object> params = new HashMap<>();
 		params.put("planNo", planNo);

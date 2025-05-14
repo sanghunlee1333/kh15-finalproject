@@ -25,6 +25,7 @@ import com.kh.acaedmy_final.error.TargetNotFoundException;
 import com.kh.acaedmy_final.service.TokenService;
 import com.kh.acaedmy_final.vo.ClaimVO;
 import com.kh.acaedmy_final.vo.PlanRequestVO;
+import com.kh.acaedmy_final.vo.PlanStatusUpdateRequestVO;
 import com.kh.acaedmy_final.vo.PlanWithReceiversVO;
 
 
@@ -60,6 +61,7 @@ public class PlanRestController {
 		planDto.setPlanNo(planNo);
 		planDto.setPlanSenderNo(claimVO.getMemberNo());
 		planDto.setPlanType("개인");
+		planDto.setPlanStatus("미달성");
 		
 		planDto.setPlanIsAllDay(
 				isAllDay(planDto.getPlanStartTime(), planDto.getPlanEndTime()) ? "Y" : "N"
@@ -82,6 +84,7 @@ public class PlanRestController {
 		PlanDto planDto = PlanDto.builder()
 					.planNo(planNo)
 					.planSenderNo(memberNo)
+					.planStatus("미달성")
 					.planType(vo.getPlanType()) //"팀"
 					.planTitle(vo.getPlanTitle())
 					.planContent(vo.getPlanContent())
@@ -94,12 +97,24 @@ public class PlanRestController {
 		//3. 등록
 		planDao.insert(planDto);
 		
+		//4. 작성자도 참여자 테이블에 추가
+		PlanReceiveDto writerDto = PlanReceiveDto.builder()
+		        .planReceivePlanNo(planNo)
+		        .planReceiveReceiverNo(memberNo)
+		        .planReceiveIsWriter("Y")
+		        .planReceiveIsAccept("Y") // 작성자는 자동 수락
+		        .planReceiveStatus("미달성")
+		        .build();
+		planReceiveDao.insert(writerDto);
+		
 		//4. 수신자 리스트 저장
 		for(Long receiverNo : vo.getReceivers()) {
 			PlanReceiveDto planReceiveDto = PlanReceiveDto.builder()
-						.planReceiveNo(planNo)
+						.planReceivePlanNo(planNo)
 						.planReceiveReceiverNo(receiverNo)
+						.planReceiveIsWriter("N")
 						.planReceiveIsAccept("N")
+						.planReceiveStatus("미달성")
 					.build();
 			planReceiveDao.insert(planReceiveDto);
 		}
@@ -142,7 +157,8 @@ public class PlanRestController {
 	        vo.setPlanStartTime(plan.getPlanStartTime());
 	        vo.setPlanEndTime(plan.getPlanEndTime());
 	        vo.setPlanIsAllDay(plan.getPlanIsAllDay());
-	        vo.setReceivers(planReceiveDao.selectReceiverList(plan.getPlanNo())); // 참여자 번호들
+	        vo.setPlanStatus(plan.getPlanStatus());
+	        vo.setReceivers(planReceiveDao.selectReceiverList(plan.getPlanNo())); //수신자 상태
 	        return vo;
 	    }).toList();
 	    
@@ -165,11 +181,19 @@ public class PlanRestController {
 		planDao.delete(planNo);
 	}
 	
+	//이 API의 역할은 "일정"의 상태를 업데이트하는 것이기 때문에 PlanReceiverRestController가 아닌 이 컨트롤러에 작성
 	//수정(일정 달성 여부)
-	@PatchMapping("/{planNo}")
-	public void editUnit(@PathVariable long planNo, @RequestBody PlanDto planDto) {
-		PlanDto targetDto = planDao.selectOne(planNo);
-		if(targetDto == null) throw new TargetNotFoundException();
-		planDao.updateStatus(planNo, planDto.getPlanStatus());
+	@PatchMapping("/{planNo}/status")
+	public void updateStatus(@PathVariable long planNo, @RequestBody PlanStatusUpdateRequestVO vo, @RequestHeader("Authorization") String bearerToken) {
+		long memberNo = tokenService.parseBearerToken(bearerToken).getMemberNo();
+
+	    //모든 참여자(작성자+수신자)는 plan_receive에 있으므로 거기서 상태 업데이트
+	    planReceiveDao.updateReceiveStatus(planNo, memberNo, vo.getPlanStatus());
+	    
+	    //전체 완료 여부 확인
+	    boolean isAllComplete = planReceiveDao.isAllComplete(planNo);
+
+	    //plan 테이블 상태 업데이트
+	    planDao.updateStatus(planNo, isAllComplete ? "완료" : "미완료");
 	}
 }
