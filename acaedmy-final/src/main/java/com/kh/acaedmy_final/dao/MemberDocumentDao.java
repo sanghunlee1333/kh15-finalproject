@@ -1,6 +1,8 @@
 package com.kh.acaedmy_final.dao;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,5 +35,30 @@ public class MemberDocumentDao {
 		
 		return sqlSession.selectOne("member-docs.findName", attachmentNo);
 	}
+	public boolean connect(int attachmentNo, long memberNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("attachmentNo", attachmentNo);
+		params.put("memberNo", memberNo);
+		return sqlSession.insert("member-docs.connectProfile", params) > 0;
+	}
+	public boolean update(int attachmentNo, long memberNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("attachmentNo", attachmentNo);
+		params.put("memberNo", memberNo);
+		return sqlSession.update("member-docs.updateProfile", params) > 0;
+	}
+	public boolean delete(long memberNo) {
+		return sqlSession.delete("member-docs.deleteProfile", memberNo) > 0;
+	}
+	public Integer selectOne(long memberNo) {
+		return sqlSession.selectOne("member-docs.selectProfile", memberNo);
+	}
+	
+	
+	
+	
+	
+	
+	
 	
 }

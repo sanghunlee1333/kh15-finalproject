@@ -270,10 +270,12 @@ export default function MemberManage(){
         console.log("type");
         console.log(type);
         const resp = await axios.get(`/admin/member/attachment/${number}/${type}`)
-        if(resp.data.length !== 0) {console.log("getget"); 
+        if(resp.data.length !== 0) {
             //setPreviewList({attachNo:resp.data.attachList, fileName:resp.data.nameList});
         }
-        else{console.log("fail")}
+        else{
+        //    console.log("fail")
+        }
         
         const response = await Promise.all(// 비동기 상태에서 map 으로 쌓는거라 순서 보장해줄수 있는 키워드
             resp.data.attachList.map(no =>

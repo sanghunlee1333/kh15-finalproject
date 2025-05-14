@@ -22,46 +22,66 @@
 	
 	<!-- 채팅방 목록 조회 (현재 로그인한 사용자가 속한 방만) -->
 	<select id="listByMember" resultType="RoomListVO">
-	    select
-	        r.room_no as roomNo,
-	        r.room_title as roomTitle,
-	        r.room_owner as roomOwner,
-	        rc.room_chat_content as lastMessage,
-	        rc.room_chat_time as lastMessageTime,
-	        (
-	            select count(*)
-	            from room_chat rc2
-	            where rc2.room_chat_origin = r.room_no
-	            and rc2.room_chat_time > nvl((
-	                select ru2.last_read_time
-	                from room_user ru2
-	                where ru2.room_no = r.room_no
-	                and ru2.member_no = #{memberno}
-	            ), to_timestamp('1900-01-01 00:00:00', 'yyyy-mm-dd hh24:mi:ss'))
-	        ) as unreadcount
-	    from room r
-	    join room_user ru on ru.room_no = r.room_no
-	    left join (
-	        select *
-	        from (
-	            select rc.*
-	            from room_chat rc
-	            join (
-	                select room_chat_origin, max(room_chat_time) as max_time
-	                from room_chat
-	                group by room_chat_origin
-	            ) latest
-	            on rc.room_chat_origin = latest.room_chat_origin
-	            and rc.room_chat_time = latest.max_time
-	        )
-	    ) rc on rc.room_chat_origin = r.room_no
-	    where ru.member_no = #{memberNo}
-	    order by lastMessageTime desc nulls last
-	</select>
+    select
+        r.room_no as roomNo,
+
+        <!-- [수정된 부분] 개인 채팅일 경우 상대방 이름으로 설정 -->
+        case 
+            when r.room_title is not null then r.room_title
+            else (
+                select m.member_name
+                from room_user ru2
+                join member m on m.member_no = ru2.member_no
+                where ru2.room_no = r.room_no
+                  and ru2.member_no != #{memberNo}
+                  and rownum = 1
+            )
+        end as roomTitle,
+
+        r.room_owner as roomOwner,
+        rc.room_chat_content as lastMessage,
+        rc.room_chat_time as lastMessageTime,
+
+        (
+            select count(*)
+            from room_chat rc2
+            where rc2.room_chat_origin = r.room_no
+              and rc2.room_chat_type = 'CHAT'
+              and rc2.room_chat_time > nvl((
+                  select ru2.last_read_time
+                  from room_user ru2
+                  where ru2.room_no = r.room_no
+                    and ru2.member_no = #{memberNo}
+              ), to_timestamp('1900-01-01 00:00:00', 'yyyy-mm-dd hh24:mi:ss'))
+        ) as unread_count
+
+    from room r
+    join room_user ru on ru.room_no = r.room_no
+
+    left join (
+        select *
+        from (
+            select rc.*
+            from room_chat rc
+            join (
+                select room_chat_origin, max(room_chat_time) as max_time
+                from room_chat
+                where room_chat_type = 'CHAT'
+                group by room_chat_origin
+            ) latest
+              on rc.room_chat_origin = latest.room_chat_origin
+             and rc.room_chat_time = latest.max_time
+        )
+    ) rc on rc.room_chat_origin = r.room_no
+
+    where ru.member_no = #{memberNo}
+    order by lastMessageTime desc nulls last
+</select>
+
 
 	<!-- 특정 채팅방 조회 -->
 	<select id="find" resultType="RoomDto">
-		select room_no, room_title, room_owner
+		select room_no, nullif(room_title, '') as room_title, room_owner
 		from room
 		where room_no = #{roomNo}
 	</select>
@@ -69,6 +89,12 @@
 	<!-- 채팅방 삭제 -->
 	<delete id="delete">
 		delete from room where room_no = #{roomNo}
+	</delete>
+	
+	<!-- 채팅방 나가기 -->
+	<delete id="exit">
+		delete from room_user
+		where room_no = #{roomNo} and member_no = #{memberNo}
 	</delete>
 	
 	<!-- 채팅방 입장 -->
@@ -124,5 +150,37 @@
 		select join_time from room_user
 		where room_no = #{roomNo} and member_no = #{memberNo}
 	</select>
+	
+	<!-- 채팅방 참여자 번호 조회 -->
+	<select id="getParticipantNos" resultType="long">
+		select member_no
+		from room_user
+		where room_no = #{roomNo}
+	</select>
+	
+	<update id="increaseUnreadCount">
+		update room_user
+		set room_chat_read = 'N'
+		where room_no = #{roomNo}
+		and member_no != #{senderNo}
+	</update>
+	
+	<!-- 1:1 채팅방 존재 여부 확인 쿼리 -->
+	<select id="findDirectRoom" parameterType="map" resultType="Long">
+	  SELECT ru1.room_no
+	  FROM room ru
+	  JOIN room_user ru1 ON ru.room_no = ru1.room_no
+	  JOIN room_user ru2 ON ru1.room_no = ru2.room_no
+	  WHERE ru.room_title IS NULL
+	    AND ru1.member_no = #{ownerNo}
+	    AND ru2.member_no = #{targetNo}
+	    AND ru.room_no IN (
+	      SELECT room_no
+	      FROM room_user
+	      GROUP BY room_no
+	      HAVING COUNT(*) = 2
+	    )
+	</select>
+
 	
 </mapper>

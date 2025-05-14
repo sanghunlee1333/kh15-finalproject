@@ -1,8 +1,9 @@
 package com.kh.acaedmy_final.restcontroller;
 
-import java.util.HashSet;
+import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ import com.kh.acaedmy_final.vo.ClaimVO;
 import com.kh.acaedmy_final.vo.PlanRequestVO;
 import com.kh.acaedmy_final.vo.PlanWithReceiversVO;
 
+
 @RestController
 @RequestMapping("/api/plan")
 public class PlanRestController {
@@ -39,6 +41,16 @@ public class PlanRestController {
 	@Autowired
 	private TokenService tokenService;
 	
+	private boolean isAllDay(Timestamp start, Timestamp end) {
+		if (start == null || end == null) return false;
+		boolean startIsMidnight = start.toLocalDateTime().toLocalTime().equals(LocalTime.MIDNIGHT);
+		boolean endIsMidnight = end.toLocalDateTime().toLocalTime().equals(LocalTime.MIDNIGHT);
+	
+		long hours = Duration.between(start.toLocalDateTime(), end.toLocalDateTime()).toHours();
+		
+		return startIsMidnight && endIsMidnight && hours >= 24;
+	}
+	
 	//등록(개인-Todo)
 	@Transactional
 	@PostMapping("/personal")
@@ -48,6 +60,10 @@ public class PlanRestController {
 		planDto.setPlanNo(planNo);
 		planDto.setPlanSenderNo(claimVO.getMemberNo());
 		planDto.setPlanType("개인");
+		
+		planDto.setPlanIsAllDay(
+				isAllDay(planDto.getPlanStartTime(), planDto.getPlanEndTime()) ? "Y" : "N"
+		);
 		
 		
 		planDao.insert(planDto);
@@ -72,6 +88,7 @@ public class PlanRestController {
 					.planColor(vo.getPlanColor())
 					.planStartTime(vo.getPlanStartTime())
 					.planEndTime(vo.getPlanEndTime())
+					.planIsAllDay(isAllDay(vo.getPlanStartTime(), vo.getPlanEndTime()) ? "Y" : "N")
 				.build();
 		
 		//3. 등록
@@ -124,6 +141,7 @@ public class PlanRestController {
 	        vo.setPlanColor(plan.getPlanColor());
 	        vo.setPlanStartTime(plan.getPlanStartTime());
 	        vo.setPlanEndTime(plan.getPlanEndTime());
+	        vo.setPlanIsAllDay(plan.getPlanIsAllDay());
 	        vo.setReceivers(planReceiveDao.selectReceiverList(plan.getPlanNo())); // 참여자 번호들
 	        return vo;
 	    }).toList();

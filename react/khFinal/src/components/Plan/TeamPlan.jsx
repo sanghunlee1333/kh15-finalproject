@@ -174,6 +174,7 @@ export default function CalendarComponent() {
                 receivers: plan.receivers,  
                 planColor: plan.planColor,
                 planStatus: plan.planStatus
+
             }
         }));
 
@@ -387,7 +388,7 @@ export default function CalendarComponent() {
             );
         });
 
-        const sorted = [...events].sort((a, b) => new Date(a.start) - new Date(b.start));
+      const sorted = [...events].sort((a, b) => new Date(a.start) - new Date(b.start));
         setSelectedDate(sorted);
         setClickedDate(clickedDay);
 
@@ -401,6 +402,7 @@ export default function CalendarComponent() {
         if (sorted.length === 0) {
             openMakeModal(clickedDay);
         } else {
+            setClickedDate(clickedDay);
             openListModal();
         }
     }, [getPlanStatus, events]);
@@ -428,6 +430,8 @@ export default function CalendarComponent() {
         selectedEvent.remove(); //FullCalendar의 EventApi 객체의 메서드로, 화면에서 해당 일정을 삭제
         closeDeleteModal();
 
+        await axios.delete(`/plan/${selectedEvent.extendedProps.planNo}`);
+      
         await fetchAllEvents(currentYear, currentMonth);
     }, [selectedEvent]); //selectedEvent가 변경될 때만 이 함수를 새로 만듦
 

@@ -57,8 +57,6 @@ public class RoomDao {
         Map<String, Object> list = new HashMap<>();
         list.put("roomNo", roomNo);
         list.put("memberNo", memberNo);
-        System.err.println("roomno " + roomNo);
-        System.err.println("memberNo " + memberNo  );
         sqlSession.insert("room.enter", list);
     }
 
@@ -79,7 +77,7 @@ public class RoomDao {
 
     //채팅방 목록 조회(RoomListVO 전용)
     public List<RoomListVO> selectRoomListByMember(long memberNo) {
-        return sqlSession.selectList("room.listByMember", memberNo);
+        return sqlSession.selectList("room.listByMember", Map.of("memberNo", memberNo));
     }
 	
     //채팅방에 속한 사용자 목록 조회
@@ -104,5 +102,24 @@ public class RoomDao {
 		params.put("roomNo", roomNo);
 		params.put("memberNo", memberNo);
 		return sqlSession.selectOne("room.getJoinTime", params);
+	}
+	
+	public void increaseUnreadCount(Long roomNo, Long senderNo) {
+		sqlSession.update("room.increaseUnreadCount", Map.of(
+					"roomNo", roomNo,
+					"senderName", senderNo
+		));
+	}
+	
+	public List<Long> findParticipantNos(Long roomNo) {
+		return sqlSession.selectList("room.getParticipantNos", roomNo);
+	}
+	
+	//1:1 채팅방이 이미 있는지 확인
+	public Long findDirectRoom(Long ownerNo, Long targetNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("ownerNo", ownerNo);
+		params.put("targetNo", targetNo);
+		return sqlSession.selectOne("room.findDirectRoom", params);
 	}
 }
