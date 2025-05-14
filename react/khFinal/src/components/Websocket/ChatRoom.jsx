@@ -3,19 +3,26 @@ import { Modal } from "bootstrap";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FaMagnifyingGlass } from "react-icons/fa6";
 import { IoChatbubbles } from "react-icons/io5";
-import { RiChatNewLine, RiContactsBook3Fill } from "react-icons/ri";
+import { RiChatNewLine } from "react-icons/ri";
 import { IoMdPhonePortrait } from "react-icons/io";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import "dayjs/locale/ko"; // 한글 로케일 불러오기
 import localizedFormat from "dayjs/plugin/localizedFormat";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
+import { useRecoilValue } from "recoil";
+import { userNoState } from "../utils/stroage";
 
 dayjs.extend(localizedFormat);
 dayjs.locale("ko");         // 한글로 설정
 
 export default function ChatRoom() {
+    //navigate
+    const navigate =  useNavigate();
+
+    //recoil
+    const memberNo = useRecoilValue(userNoState);
 
     //모달을 제어하기 위한 ref
     const modal = useRef();
@@ -118,6 +125,7 @@ export default function ChatRoom() {
     }, []);
 
     const loadRooms = useCallback(async () => {
+        
         try {
 
             const token = axios.defaults.headers.common['Authorization'];
@@ -158,9 +166,7 @@ export default function ChatRoom() {
             }
 
             const token = axios.defaults.headers.common['Authorization'];
-            console.log(token);
-            console.log("memberNos");
-            console.log(selectMembers);
+            
             //채팅방 생성 요청
             const response = await axios.post("/rooms", {
                 roomTitle,
@@ -171,19 +177,20 @@ export default function ChatRoom() {
                 }
             });
 
-            //서버에서 생성된 채팅방 데이터 확인
-            console.log("채팅방 생성 성공 : ", response.data);
-
-            //채팅방 목록 새로 불러오기
-            await loadRooms();
+            const roomNo = response.data;
+            console.log("채팅방 생성 성공 : ", roomNo);
 
             closeModal(); // 모달 닫기
             setRoomTitle(""); // 입력 초기화
             setSelectMembers([]); // 선택 초기화
+
+            //생성된 방으로 이동
+            navigate(`/chat/group/${roomNo}`);
+
         } catch (error) {
             console.error("채팅방 생성 실패", error);
         }
-    }, [roomTitle, selectMembers, closeModal, loadRooms]);
+    }, [roomTitle, selectMembers, closeModal, navigate]);
 
     //키보드 enter 누르면 검색되게
     const handleKeyPress = (e) => {
@@ -193,24 +200,37 @@ export default function ChatRoom() {
     };
 
     //effect
-    useEffect(()=>{
+    useEffect(() => {
+        if (!memberNo) return;
+    
         const socket = new SockJS("http://localhost:8080/ws");
         const client = new Client({
             webSocketFactory: () => socket,
-            onConnect: ()=> {
-                client.subscribe("/topic/room-list", () => {
-                    loadRooms();//서버가 보낸 메세지를 받으면 목록 갱신
+            onConnect: () => {
+                const topic = `/topic/room-list/${memberNo}`;
+            
+                client.subscribe(topic, () => {
+                    loadRooms();
                 });
             },
-            debug: () => {}, //콘솔 출력 생략
+            debug: (str) => {},
         });
         client.activate();
-
-        return ()=> {
+    
+        return () => {
             client.deactivate();
         };
-    }, [loadRooms]);
-
+    }, [memberNo, loadRooms]);
+    
+    useEffect(() => {
+        const handleRefresh = () => {
+          console.log("🔄 전역 이벤트 수신 → 채팅방 목록 갱신");
+          loadRooms();
+        };
+      
+        window.addEventListener("refreshRoomList", handleRefresh);
+        return () => window.removeEventListener("refreshRoomList", handleRefresh);
+      }, [loadRooms]);
 
     useEffect(() => {
         loadContacts();
@@ -271,7 +291,7 @@ export default function ChatRoom() {
                                 {/* 채팅방 제목 */}
                                 <div className="fw-bold mb-1">{room.roomTitle}</div>
                                 {/* 최근 받은 메세지 내용 */}
-                                <div className="text-muted small">{room.lastMessage}</div>
+                                <div className="text-muted small message-preview">{room.lastMessage}</div>
                             </div>
                         </div>
                         <div className="text-end">
