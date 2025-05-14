@@ -70,11 +70,11 @@ function App() {
     refreshLogin();
   }, []);
 
-  useEffect(()=>{
-    console.log("loadingSTATE");
-    console.log(loading);
+  // useEffect(()=>{
+  //   console.log("loadingSTATE");
+  //   console.log(loading);
 
-  },[loading])
+  // },[loading])
 
   if (!loading) return <div>로딩 중...</div>;
 
