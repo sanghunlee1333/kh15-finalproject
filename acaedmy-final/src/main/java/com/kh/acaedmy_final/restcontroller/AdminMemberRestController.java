@@ -137,11 +137,9 @@ public class AdminMemberRestController {
 			 nameList.add(memberDocumentDao.selectName(no));
 		 }
 
-		 
 		 ret.put("attachList", attachmentList);
 		 ret.put("nameList", nameList);
 		 return ret;
-
 	}
 	
 	@GetMapping("/member/attachment/{attachmentNo}")

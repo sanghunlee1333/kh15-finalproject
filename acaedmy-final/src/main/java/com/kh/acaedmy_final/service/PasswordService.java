@@ -42,4 +42,7 @@ public class PasswordService {
 		
 		return memberDao.resetPw(target);
 	}
+//	public boolean changePw(long memberNo) {
+//		
+//	}
 }
