@@ -6,7 +6,7 @@ import java.util.List;
 import lombok.Data;
 
 @Data
-public class PlanRequestVO { //일정 등록 요청용 VO)
+public class PlanRequestVO { //일정 등록 요청용 VO
 //	목적 | 프론트에서 일정 등록 시 사용하는 요청 바디
 //	특징 | receivers 포함 -> DB에는 없는 필드
 	private String planType;
