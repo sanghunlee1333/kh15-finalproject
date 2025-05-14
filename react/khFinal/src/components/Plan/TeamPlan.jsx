@@ -17,6 +17,8 @@ dayjs.locale('ko');
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { fetchHolidays } from "../utils/holiday";
+import { isPlanAllCompleted } from '../utils/plan';
+import { parseJwt } from '../utils/jwt';
 import "react-datepicker/dist/react-datepicker.css";
 import './TeamPlan.css';
 
@@ -26,6 +28,7 @@ import './PlanColor.css';
 import TodoList from './TodoList';
 
 const colorOptions = ['#dc3545', '#fd7e14', '#ffc107', '#28a745', '#20c997', '#0d6efd', '#6f42c1', '#d63384', '#6c757d'];
+
 
 export default function CalendarComponent() {
 
@@ -63,6 +66,9 @@ export default function CalendarComponent() {
     const [selectedDate, setSelectedDate] = useState([]); //클릭한 날짜에 해당하는 일정
     const [selectedEvent, setSelectedEvent] = useState(null); //클릭한 일정의 상세 정보
 
+    // const [status, setStatus] = useState({});
+    const [currentStatus, setCurrentStatus] = useState({});
+
     //ref
     const calendar = useRef(); //FullCalendar 컴포넌트를 조작하기 위한 참조
     const makeModal = useRef(); //일정 등록 모달 참조
@@ -78,6 +84,12 @@ export default function CalendarComponent() {
         if (!startTime || !endTime) return false; // 둘 다 존재할 때만 비교
         return endTime < startTime;
     }, [startTime, endTime]);
+
+    const loginUserNo = useMemo(() => {
+        const token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
+        const payload = parseJwt(token);
+        return payload?.memberNo;
+    }, []);
 
     //등록 버튼 클릭 시, 전체 입력값 검사
     const validAllFields = useCallback(() => {
@@ -161,6 +173,7 @@ export default function CalendarComponent() {
                 planNo: plan.planNo,
                 receivers: plan.receivers,  
                 planColor: plan.planColor,
+                planStatus: plan.planStatus
             }
         }));
 
@@ -177,7 +190,8 @@ export default function CalendarComponent() {
                 planType: '개인',
                 content: plan.planContent,
                 planNo: plan.planNo,
-                planColor: plan.planColor
+                planColor: plan.planColor,
+                planStatus: plan.planStatus
             }
         }));
 
@@ -316,11 +330,13 @@ export default function CalendarComponent() {
 
         let token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
 
-        await axios.post("/plan/team", body, {
-            headers: {
-                Authorization: `Bearer ${token}`
+        const url = isPersonal ? "/plan/personal" : "/plan/team";
+
+        await axios.post(url, body, 
+            { 
+                headers: { Authorization: `Bearer ${token}` } 
             }
-        });
+        );
         toast.success("일정이 등록되었습니다.");
 
         //(수정 필요)캘린더에 즉시 반영
@@ -328,32 +344,6 @@ export default function CalendarComponent() {
         await fetchAllEvents(currentYear, currentMonth);
         closeMakeModal();
     }, [title, content, startTime, endTime, selectedMembers, currentMonth, currentYear, fetchAllEvents]);
-
-    //상태 라벨만 추출하는 함수
-    const getStatus = useCallback(event => {
-        const now = dayjs();
-        const start = dayjs(event.start);
-        const end = dayjs(event.end);
-
-        if(now.isBefore(start)){
-            return {
-                text: `(${start.fromNow()} 시작)`,
-                className: "text-danger"
-            }
-        }
-        else if(now.isAfter(end)){
-            return {
-                text: `(종료)`,
-                className: "text-muted"
-            }
-        }
-        else {
-            return {
-                text: `(진행중)`,
-                className: "text-primary"
-            }
-        }
-    }, []);
 
     //종일 일정 -> 날짜만 설정 가능 (시작일/종료일)
     const startTimeChange = useCallback(date => {
@@ -368,6 +358,14 @@ export default function CalendarComponent() {
         setEndTime(end);
         setEndTimeManuallyChanged(true);
     }, [allDay]);
+
+    //개인의 일정 상태를 가져오는 함수
+    const getPlanStatus = useCallback((planNo) => {
+        const target = allEvents.find(e => e.extendedProps.planNo === planNo);
+        const me = target?.extendedProps?.receivers?.find(r => r.planReceiveReceiverNo === loginUserNo);
+        return me?.planReceiveStatus || target?.extendedProps?.planStatus || '미달성';
+    }, [allEvents, loginUserNo]);
+
 
     //날짜 클릭 -> 해당 날짜의 일정들 보기
     const detailDate = useCallback(info => {
@@ -388,17 +386,24 @@ export default function CalendarComponent() {
                 (start.getTime() === clickedDay.getTime() && !event.end) // 단일 이벤트 (공휴일 등)
             );
         });
-    
+
         const sorted = [...events].sort((a, b) => new Date(a.start) - new Date(b.start));
         setSelectedDate(sorted);
+        setClickedDate(clickedDay);
+
+        const newStatus = {};
+        sorted.forEach(event => {
+            const planNo = event.extendedProps.planNo;
+            newStatus[planNo] = getPlanStatus(planNo);
+        });
+        setCurrentStatus(newStatus);
     
         if (sorted.length === 0) {
             openMakeModal(clickedDay);
         } else {
-            setClickedDate(clickedDay);
             openListModal();
         }
-    }, []);
+    }, [getPlanStatus, events]);
 
     //일정 클릭 -> 특정 일정 상세 정보 보기
     //달력에서 이벤트(일정)를 클릭하면 detailEvent 실행됨 -> 해당 일정의 정보를 꺼내서 selectedEvent에 저장 -> 이 상태는 모달에서 쓰이고, 모달은 곧바로 열림
@@ -418,12 +423,87 @@ export default function CalendarComponent() {
     //일정 삭제
     const deleteEvent = useCallback(async ()=>{
         if(!selectedEvent) return; //만약 삭제할 일정이 선택되지 않았다면
+        
+        await axios.delete(`/plan/${selectedEvent.extendedProps.planNo}`);
         selectedEvent.remove(); //FullCalendar의 EventApi 객체의 메서드로, 화면에서 해당 일정을 삭제
         closeDeleteModal();
 
-        await axios.delete(`/plan/${selectedEvent.extendedProps.planNo}`);
         await fetchAllEvents(currentYear, currentMonth);
     }, [selectedEvent]); //selectedEvent가 변경될 때만 이 함수를 새로 만듦
+
+    //일정 상태 변경
+    const changeStatusToggle = useCallback(async (planNo, newStatus) => {
+        let token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
+        await axios.patch(`/plan/${planNo}/status`, {
+            planStatus: newStatus
+        }, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }).then(()=>{
+            toast.success("상태가 변경되었습니다.");
+            // fetchAllEvents(currentYear, currentMonth);
+        })
+
+        //1. FullCalendar 내부 이벤트도 업데이트
+        const calendarApi = calendar.current?.getApi();
+        const eventObj = calendarApi?.getEvents().find(e => e.extendedProps.planNo === planNo);
+        if (eventObj) {
+            eventObj.setExtendedProp("planStatus", newStatus);
+        }
+
+        //2. selectedDate도 업데이트
+        const updatedSelected = selectedDate.map(event => {
+            if (event.extendedProps.planNo !== planNo) return event;
+          
+            const updatedReceivers = event.extendedProps.receivers.map(r => {
+                return r.planReceiveReceiverNo === loginUserNo
+                    ? { ...r, planReceiveStatus: newStatus }
+                    : r;
+            });
+          
+            return {
+                id: event.id,
+                title: event.title,
+                start: event.start,
+                end: event.end,
+                allDay: event.allDay,
+                display: event.display,
+                backgroundColor: event.backgroundColor,
+                borderColor: event.borderColor,
+                extendedProps: {
+                    ...event.extendedProps,
+                    planStatus: newStatus,
+                    receivers: updatedReceivers
+                }
+            };
+            });
+            setSelectedDate([...updatedSelected]);
+
+        //3. 전체 이벤트도 동기화 (리스트 밖에서도 쓰일 수 있으므로)
+        const updatedAllEvents = allEvents.map(event =>
+            event.extendedProps.planNo === planNo
+              ? {
+                  ...event,
+                  extendedProps: {
+                    ...event.extendedProps,
+                    planStatus: newStatus,
+                    receivers: event.extendedProps.receivers?.map(r =>
+                      r.planReceiveReceiverNo === loginUserNo
+                        ? { ...r, planReceiveStatus: newStatus }
+                        : r
+                    )
+                  }
+                }
+              : event
+          );
+          setAllEvents(updatedAllEvents);
+
+        setCurrentStatus(prev => ({
+            ...prev,
+            [planNo]: newStatus
+        }));
+    }, [selectedDate, allEvents]);
 
     //일정 등록 모달 열기/닫기
     const openMakeModal = useCallback((date = null) => {
@@ -877,7 +957,7 @@ export default function CalendarComponent() {
                     </div>
                     <div className="modal-body text-responsive">
                         {selectedDate.map(event => {
-                            const status = getStatus(event);
+                            const status = getPlanStatus(event.extendedProps.planNo);
                             const isHoliday = event.extendedProps?.isHoliday;
 
                             //공휴일 또는 일요일일 경우
@@ -893,22 +973,58 @@ export default function CalendarComponent() {
                             //일반 요일일 경우
                             const receivers = event.extendedProps?.receivers || [];
                             const accepted = receivers.filter(r => r.planReceiveIsAccept === 'Y').length;
+                            const doneCount = receivers.filter(r => r.planReceiveStatus === '달성').length;
                             const total = receivers.length;
-                            const percent = total > 0 ? Math.round((accepted / total) * 100) : 0;
+                            const percent = total > 0 ? Math.round((doneCount / total) * 100) : 0;
 
                             return (
-                                <div key={`${event.title}-${event.startStr}`} onClick={() => moveListToDetail(event)}
-                                    className="border rounded p-3 mb-2 hover-shadow text-responsive" style={{ cursor: 'pointer' }}>
+                                <div key={`event-${event.extendedProps.planNo}`}  onClick={() => moveListToDetail(event)}
+                                    className={`border rounded p-3 mb-2 hover-shadow text-responsive ${isPlanAllCompleted(event) ? 'border-success' : ''}`}
+                                    style={{ cursor: 'pointer' }}>
                                     <div className="d-flex align-items-center text-responsive">
                                         <div className="d-flex align-items-center gap-1">
                                             <small className={`${status.className} fw-bold`}>{status.text}</small>
-                                            <span className="fw-bold">{event.title}</span>
+                                            <span className="fw-bold">
+                                                {event.title}
+                                                {isPlanAllCompleted(event) ? (
+                                                    <span className="text-success ms-1">(완료)</span>
+                                                ) : (
+                                                    <span className="text-secondary ms-1">(미완료)</span>
+                                                )}
+                                            </span>
                                         </div>
                                         <div className="color-box ms-1" style={{ backgroundColor: event.extendedProps?.planColor }}></div>
                                     </div>
                                     {event.extendedProps.planType === "팀" && (
-                                    <div className="d-flex flex-wrap gap-2 mt-2">
-                                        <span className="text-responsive">수신자: {total}명, 수락: {accepted}명 ({percent}%)</span>
+                                    <div className="d-flex align-items-center justify-content-between">
+                                        <span className="text-responsive">참여자: {total}명, 수락: {accepted}명 (달성률 : {percent}%)</span>
+                                        <div className="btn-group btn-group-sm" role="group" aria-label="상태 토글">
+                                            <button type="button" className={`btn ${currentStatus[event.extendedProps.planNo] === '미달성' ? 'btn-secondary' : 'btn-outline-secondary'}`}
+                                                onClick={e=>{
+                                                    e.stopPropagation(); // 부모 div 클릭 방지
+                                                    changeStatusToggle(event.extendedProps.planNo, '미달성');
+                                                    // setCurrentStatus(prev => (
+                                                    //     {
+                                                    //      ...prev, [event.extendedProps.planNo]: '미달성' 
+                                                    //     }
+                                                    // )
+                                                // );
+                                                }}>
+                                                미달성
+                                            </button>
+                                            <button type="button" className={`btn ${currentStatus[event.extendedProps.planNo] === '달성' ? 'btn-success' : 'btn-outline-success'}`}
+                                                onClick={e => {
+                                                    e.stopPropagation();
+                                                    changeStatusToggle(event.extendedProps.planNo, '달성');
+                                                    // setCurrentStatus(prev => (
+                                                    //     {
+                                                    //      ...prev, [event.extendedProps.planNo]: '달성' 
+                                                    //     }
+                                                    // ));
+                                                }}>
+                                                달성
+                                            </button>
+                                        </div>
                                     </div>
                                     )}
                                 </div>
@@ -988,7 +1104,9 @@ export default function CalendarComponent() {
                                     <ul className="list-group text-responsive" style={{ maxHeight: '300px', overflowY: 'auto' }}>
                                         {Object.keys(groupContacts).map(department => {
                                             const members = groupContacts[department].filter(
-                                                contact => selectedEvent?.extendedProps?.receivers?.includes(contact.memberNo)
+                                                contact => selectedEvent?.extendedProps?.receivers?.some(
+                                                    r => r.planReceiveReceiverNo === contact.memberNo
+                                                )
                                             );
 
                                             if (members.length === 0) return null;
