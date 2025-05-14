@@ -92,6 +92,8 @@ export default function TodoList({ allEvents = [], fetchAllEvents }) {
     const todayEvents = useMemo(() => {
         return allEvents
             .filter(event => {
+                if (event.extendedProps?.isHoliday) return true;
+
                 const planType = event.extendedProps?.planType;
 
                 return (
