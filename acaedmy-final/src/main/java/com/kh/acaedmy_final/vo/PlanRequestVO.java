@@ -15,5 +15,6 @@ public class PlanRequestVO { //일정 등록 요청용 VO)
 	private String planColor;
 	private Timestamp planStartTime;
 	private Timestamp planEndTime;
+	private String planIsAllDay;
 	private List<Long> receivers; // 수신자 member_no 목록
 }

@@ -24,11 +24,11 @@ export default function MemberList(){
     const [attachList, setAttachList] = useState([]);
 
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(2);
+    const [pageSize, setPageSize] = useState(15);
     const [search, setSearch] = useState({
         memberNo:"",
         memberId:"", memberName:"", memberDepartment:"", memberRank:"", memberContact:"", memberEmail:"",
-        beginRow:1, endRow:2, order:"", column:null, keyword:null, memberDepartmentCk:"",
+        beginRow:1, endRow:15, order:"", column:null, keyword:null, memberDepartmentCk:"",
     });
     const [searching, setSearching] = useState({
         col:"", key:"",

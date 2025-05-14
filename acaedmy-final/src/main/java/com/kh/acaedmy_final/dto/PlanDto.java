@@ -18,5 +18,6 @@ public class PlanDto { //DB 매핑용 DTO
 	private String planColor;
 	private Timestamp planStartTime;
 	private Timestamp planEndTime;
+	private String planIsAllDay;
 	private Timestamp planCreateTime;
 }

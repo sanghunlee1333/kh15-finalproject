@@ -4,8 +4,11 @@ import { FaMagnifyingGlass } from "react-icons/fa6";
 import { IoMdPhonePortrait } from "react-icons/io";
 import { RiContactsBook3Fill } from "react-icons/ri";
 import { BsPersonRaisedHand } from "react-icons/bs";
+import { useNavigate } from "react-router";
 
 export default function MemberContact() {
+    //navigate
+    const navigate = useNavigate();
     //state
     //연락처 전체 목록
     const [groupContacts, setGroupContacts] = useState({});
@@ -85,6 +88,25 @@ export default function MemberContact() {
         }
     };
 
+    const startDirectChat = async(targetNo) => {
+        const token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
+        const response = await axios.post(`/rooms/direct/${targetNo}`, null, {
+            headers: {Authorization: `Bearer ${token}`}
+        });
+        return response.data;
+    };
+
+    const handleChatClick = async(memberNo) => {
+        try {
+            const roomNo = await startDirectChat(memberNo);
+            navigate(`/chat/group/${roomNo}`);
+        }
+        catch (error) {
+            console.error("1:1 채팅방 생성 오류", error);
+            alert("채팅방을 챙성하거나 찾는 데 실패했습니다.");
+        }
+    };
+
     //effect
     useEffect(() => {
         loadContacts();
@@ -124,7 +146,6 @@ export default function MemberContact() {
                 </div>
             </div>
         )}
-
 
         {/* 연락처 리스트 */}
         <div className="list-group">
@@ -219,7 +240,10 @@ export default function MemberContact() {
 
                                 {/* 개인 채팅하기 버튼 */}
                                 <div className="d-flex align-items-center gap-2 mt-2 mt-sm-0 justify-content-end">
-                                    <button className="btn btn-outline-primary btn-sm ms-auto">채팅</button>
+                                    <button className="btn btn-outline-primary btn-sm ms-auto"
+                                        onClick={()=> handleChatClick(contact.memberNo)}>
+                                        채팅
+                                    </button>
                                 </div>
                             </div>
                         </div>
