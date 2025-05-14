@@ -74,7 +74,6 @@ function App() {
     refreshLogin();
   }, []);
 
-
   // WebSocket 구독 설정
   useEffect(() => {
     if (!userNo) return;
@@ -103,10 +102,9 @@ function App() {
     console.log(loading);
 
 
-  // },[loading])
+  },[loading])
 
   if (!loading) return <div>로딩 중...</div>;
-
   
   return (
     <>
