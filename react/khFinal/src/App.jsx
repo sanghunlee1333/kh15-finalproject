@@ -14,12 +14,13 @@ import MemberContact from './components/Member/MemberContact'
 import Footer from './components/template/Footer'
 import NoticeWrite from './components/Notice/NoticeWrite'
 import { loginState, userDepartmentState, userLoadingState, userNoState } from './components/utils/stroage'
-import { useRecoilState, useRecoilValue } from 'recoil'
+import { alarmListState } from './components/utils/alarm';
+import { unReadAlarmCountState } from './components/utils/alarm'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { useCallback, useEffect } from 'react'
 import axios from 'axios'
 import MemberList from './components/Admin/MemberList'
 import MemberManage from './components/Admin/MemberManage'
-import NoticeUpdate from './components/Notice/NoticeEdit'
 import { Bounce, ToastContainer } from 'react-toastify'
 import NoticeEdit from './components/Notice/NoticeEdit'
 import TeamPlan from './components/Plan/TeamPlan'
@@ -30,12 +31,15 @@ import TodoList from './components/Plan/TodoList'
 import Member from './components/utils/member';
 import Admin from './components/utils/admin';
 import EditProfile from './components/Mypage/EditProfile'
+import AllAlarm from './components/template/AllAlarm';
 
 function App() {
   const [userNo, setUserNo] = useRecoilState(userNoState);
   const [userDepartment, setUserDepartment] = useRecoilState(userDepartmentState);
   const [loading, setLoading] = useRecoilState(userLoadingState);
   const login = useRecoilValue(loginState);
+  const setAlarmList = useSetRecoilState(alarmListState);
+  const [unReadAlarmCount, setUnReadAlarmCount] = useRecoilState(unReadAlarmCountState);
 
   let stay = false;
   const refreshLogin = useCallback(async ()=>{
@@ -89,6 +93,14 @@ function App() {
         client.subscribe(topic, () => {
           window.dispatchEvent(new CustomEvent("refreshRoomList"));
         });
+
+        //알림 채널 구독
+        const alarm = `/alarm/${userNo}`;
+        client.subscribe(alarm, (message)=>{
+          const payload = JSON.parse(message.body); 
+          setUnReadAlarmCount(prev=>prev+1);
+          setAlarmList(prev=>[payload, ...prev]); // 최신 알림을 앞으로 추가
+        });
       },
       debug: () => {}
     });
@@ -101,7 +113,6 @@ function App() {
     console.log("loadingSTATE");
     console.log(loading);
 
-
   },[loading])
 
   if (!loading) return <div>로딩 중...</div>;
@@ -109,7 +120,7 @@ function App() {
   return (
     <>
       {/* 메뉴 */}
-      <Menu/>
+      <Menu unReadAlarmCount={unReadAlarmCount}/>
 
       {/* 사이드바 */}
       <Sidebar/>
@@ -119,6 +130,9 @@ function App() {
         {/* Routes에 주소와 연결될 컴포넌트를 작성하여 상황에 맞는 화면 출력 */}
         <Routes>
           <Route path="/" element={<Member><Mainpage/></Member>}></Route>
+
+          {/* Alarm */}
+          <Route path="/alarm" element={<AllAlarm />} />
 
           {/* Member */}
           <Route path="/member/login" element={<MemberLogin/>}></Route>

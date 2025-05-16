@@ -17,20 +17,24 @@ dayjs.locale('ko');
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { fetchHolidays } from "../utils/holiday";
-import { isPlanAllCompleted } from '../utils/plan';
+import { isPlanAllCompleted, refreshPlanEventsState } from '../utils/plan';
 import { parseJwt } from '../utils/jwt';
 import "react-datepicker/dist/react-datepicker.css";
 import './TeamPlan.css';
 
-import { FaCheck, FaLightbulb, FaList, FaListUl, FaRegCalendarCheck, FaRegCalendarPlus } from 'react-icons/fa';
+import { FaCheck, FaCrown, FaLightbulb, FaList, FaListUl, FaRegCalendarCheck, FaRegCalendarPlus } from 'react-icons/fa';
 import { IoPersonSharp } from 'react-icons/io5';
 import './PlanColor.css';
 import TodoList from './TodoList';
+import { useSetRecoilState } from 'recoil';
 
 const colorOptions = ['#dc3545', '#fd7e14', '#ffc107', '#28a745', '#20c997', '#0d6efd', '#6f42c1', '#d63384', '#6c757d'];
 
 
-export default function CalendarComponent() {
+export default function TeamPlan() {
+
+    //recoil
+    const setRefreshPlanEvents = useSetRecoilState(refreshPlanEventsState);
 
     //state
     const [isPersonal, setIsPersonal] = useState(false); // 일정 유형
@@ -173,7 +177,10 @@ export default function CalendarComponent() {
                 planNo: plan.planNo,
                 receivers: plan.receivers,  
                 planColor: plan.planColor,
-                planStatus: plan.planStatus
+                planSenderNo: plan.planSenderNo, 
+                planStatus: plan.planStatus,
+                planSenderName: plan.planSenderName,
+                planSenderDepartment: plan.planSenderDepartment
             }
         }));
 
@@ -191,7 +198,9 @@ export default function CalendarComponent() {
                 content: plan.planContent,
                 planNo: plan.planNo,
                 planColor: plan.planColor,
-                planStatus: plan.planStatus
+                planSenderNo: plan.planSenderNo,
+                planStatus: plan.planStatus,
+                planSenderName: plan.planSenderName
             }
         }));
 
@@ -200,6 +209,10 @@ export default function CalendarComponent() {
         const combinedEvents = [...holidayEvents, ...teamPlanEvents, ...personalPlanEvents];
         setAllEvents(combinedEvents);
     }, []);
+
+    useEffect(() => {
+        setRefreshPlanEvents(() => fetchAllEvents); // 함수 자체를 저장
+    }, [fetchAllEvents]);
 
     useEffect(() => {
         fetchAllEvents(currentYear, currentMonth);
@@ -288,7 +301,7 @@ export default function CalendarComponent() {
     //callback
     //연락처 데이터를 불러오기
     const loadContacts = useCallback(async ()=>{
-        const { data } = await axios.get("/member/contact"); //응답으로 받은 데이터를 data라는 이름으로 저장
+        const { data } = await axios.get("/member/contactIncludeMe"); //응답으로 받은 데이터를 data라는 이름으로 저장
         setGroupContacts(data); //부서별 연락처 목록 전체 저장
         setFilterContacts(data); //처음에는 전체 목록 그대로 보여주기 위해 filterContacts에도 저장
     }, []);
@@ -362,9 +375,16 @@ export default function CalendarComponent() {
     //개인의 일정 상태를 가져오는 함수
     const getPlanStatus = useCallback((planNo) => {
         const target = allEvents.find(e => e.extendedProps.planNo === planNo);
-        const me = target?.extendedProps?.receivers?.find(r => r.planReceiveReceiverNo === loginUserNo);
-        return me?.planReceiveStatus || target?.extendedProps?.planStatus || '미달성';
-    }, [allEvents, loginUserNo]);
+        const planType = target?.extendedProps?.planType;
+        const statusFromReceiver = target?.extendedProps?.receivers?.find(r => r.planReceiveReceiverNo === loginUserNo)?.planReceiveStatus;
+
+        if (planType === '개인') {
+            // 개인일정이면 planStatus 기준으로 '완료' → '달성', '미완료' → '미달성' 변환
+            return target?.extendedProps?.planStatus === '완료' ? '달성' : '미달성';
+        }
+
+        return statusFromReceiver || '미달성';
+        }, [allEvents, loginUserNo]);
 
 
     //날짜 클릭 -> 해당 날짜의 일정들 보기
@@ -432,37 +452,55 @@ export default function CalendarComponent() {
     }, [selectedEvent]); //selectedEvent가 변경될 때만 이 함수를 새로 만듦
 
     //일정 상태 변경
-    const changeStatusToggle = useCallback(async (planNo, newStatus) => {
-        let token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
-        await axios.patch(`/plan/${planNo}/status`, {
-            planStatus: newStatus
+    const changeStatusToggle = useCallback(async (planNo, newStatus) => { //planNo 일정 번호, newStatus는 '달성' 또는 '미달성' 상태로 전달
+        let token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken"); // JWT 토큰을 localStorage나 sessionStorage에서 가져옴. 서버에 인증된 요청을 보내기 위해 사용
+        
+        const calendarApi = calendar.current?.getApi(); //FullCalendar의 인스턴스를 가져오고
+        const eventObj = calendarApi?.getEvents().find(e => e.extendedProps.planNo === planNo); //해당 일정(planNo)에 해당하는 이벤트 객체를 찾음
+
+        const isTeam = eventObj?.extendedProps?.planType === "팀"; //해당 일정이 팀 일정인지 여부를 판별
+
+        //팀 일정이면 plan_receive에 저장 → '달성' / '미달성'
+        //개인 일정이면 plan 테이블에 저장 → '완료' / '미완료'
+        const statusForServer = isTeam ? (newStatus === '달성' ? '달성' : '미달성') : (newStatus === '달성' ? '완료' : '미완료');
+
+        //1. 서버에 상태 PATCH 요청
+        await axios.patch(`/plan/${planNo}/status`, { // 팀 일정 상태 변경 → plan_receive 테이블 대상
+            planStatus: statusForServer
         }, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         }).then(()=>{
             toast.success("상태가 변경되었습니다.");
-            // fetchAllEvents(currentYear, currentMonth);
         })
 
-        //1. FullCalendar 내부 이벤트도 업데이트
-        const calendarApi = calendar.current?.getApi();
-        const eventObj = calendarApi?.getEvents().find(e => e.extendedProps.planNo === planNo);
-        if (eventObj) {
-            eventObj.setExtendedProp("planStatus", newStatus);
+        //2. FullCalendar 내부 이벤트도 업데이트
+        if (eventObj) { 
+            eventObj.setExtendedProp("planStatus", newStatus); //클라이언트 상의 FullCalendar 이벤트 객체의 상태를 직접 업데이트
+            if (isTeam) { //팀 일정인 경우에만 receivers 배열 내부의 내 수신자 상태를 바꿈
+                const updatedReceivers = eventObj.extendedProps.receivers.map(r =>
+                    r.planReceiveReceiverNo === loginUserNo
+                        ? { ...r, planReceiveStatus: newStatus }
+                        : r
+                    );
+                eventObj.setExtendedProp("receivers", updatedReceivers); //setExtendedProp으로 FullCalendar 내부 상태까지 동기화
+            }
         }
 
-        //2. selectedDate도 업데이트
-        const updatedSelected = selectedDate.map(event => {
+        //3. selectedDate도 업데이트
+        const updatedSelected = selectedDate.map(event => { //날짜별 모달에서 선택된 일정들 중, 현재 planNo에 해당하는 것만 수정
             if (event.extendedProps.planNo !== planNo) return event;
           
-            const updatedReceivers = event.extendedProps.receivers.map(r => {
-                return r.planReceiveReceiverNo === loginUserNo
-                    ? { ...r, planReceiveStatus: newStatus }
-                    : r;
-            });
+            const updatedReceivers = isTeam // 팀이면 receivers 내부의 내 상태만 갱신
+                ? event.extendedProps.receivers.map(r => 
+                    r.planReceiveReceiverNo === loginUserNo
+                        ? { ...r, planReceiveStatus: newStatus }
+                        : r
+                    )
+                : event.extendedProps.receivers; //개인이면 따로 손댈 필요 없음
           
-            return {
+            return { //상태 변경된 이벤트로 새 배열을 만들어 selectedDate 상태 갱신
                 id: event.id,
                 title: event.title,
                 start: event.start,
@@ -473,33 +511,49 @@ export default function CalendarComponent() {
                 borderColor: event.borderColor,
                 extendedProps: {
                     ...event.extendedProps,
-                    planStatus: newStatus,
+                    planStatus: statusForServer,
                     receivers: updatedReceivers
                 }
             };
-            });
-            setSelectedDate([...updatedSelected]);
+        });
+        setSelectedDate([...updatedSelected]);
 
         //3. 전체 이벤트도 동기화 (리스트 밖에서도 쓰일 수 있으므로)
+        //전체 이벤트 배열에서도 동일한 방식으로 상태를 반영하여 allEvents 갱신
         const updatedAllEvents = allEvents.map(event =>
             event.extendedProps.planNo === planNo
               ? {
-                  ...event,
-                  extendedProps: {
-                    ...event.extendedProps,
-                    planStatus: newStatus,
-                    receivers: event.extendedProps.receivers?.map(r =>
-                      r.planReceiveReceiverNo === loginUserNo
-                        ? { ...r, planReceiveStatus: newStatus }
-                        : r
-                    )
-                  }
+                    ...event,
+                    extendedProps: {
+                        ...event.extendedProps,
+                        planStatus: statusForServer,
+                        receivers: isTeam //팀일 경우에만 receivers 내부도 함께 갱신
+                            ? event.extendedProps.receivers?.map(r =>
+                                r.planReceiveReceiverNo === loginUserNo
+                                    ? { ...r, planReceiveStatus: newStatus }
+                                    : r
+                        )
+                        : event.extendedProps.receivers
+                    }
                 }
               : event
-          );
-          setAllEvents(updatedAllEvents);
+        );
+        setAllEvents(updatedAllEvents);
 
-        setCurrentStatus(prev => ({
+        if (selectedEvent?.extendedProps.planNo === planNo) { //현재 모달에서 보고 있던 일정이라면 모달 내부에서도 반영
+            selectedEvent.setExtendedProp("planStatus", statusForServer);
+        
+            if (isTeam) { //모달에서도 team이면 receivers 상태까지 반영
+                const updatedReceivers = selectedEvent.extendedProps.receivers.map(r =>
+                    r.planReceiveReceiverNo === loginUserNo
+                        ? { ...r, planReceiveStatus: newStatus }
+                        : r
+                );
+                selectedEvent.setExtendedProp("receivers", updatedReceivers);
+            }
+        }
+        //이 값은 상태 토글 버튼 하이라이트 등 UI 조건 판단에 사용됨
+        setCurrentStatus(prev => ({ //currentStatus 상태도 동기화
             ...prev,
             [planNo]: newStatus
         }));
@@ -639,7 +693,7 @@ export default function CalendarComponent() {
         <div className="calendar-wrapper">
         {/* 개인-Todo */}
         {tab === 'todo' && (
-        <TodoList allEvents={allEvents} fetchAllEvents={fetchAllEvents} />
+        <TodoList allEvents={allEvents} fetchAllEvents={fetchAllEvents} groupContacts={groupContacts}/>
         )}            
 
         {/* 캘린더 */}
@@ -654,7 +708,7 @@ export default function CalendarComponent() {
                             <label className="btn btn-outline-primary text-responsive" htmlFor="allPlans">전체</label>
                             <input type="radio" className="btn-check" name="planTypeFilter" id="teamPlans" autoComplete="off"
                                 checked={viewType === "팀"} onChange={() => setViewType("팀")} />
-                            <label className="btn btn-outline-primary text-responsive" htmlFor="teamPlans">팀</label>
+                            <label className="btn btn-outline-primary text-responsive" htmlFor="teamPlans">공유</label>
                             <input type="radio" className="btn-check" name="planTypeFilter" id="personalPlans" autoComplete="off"
                                 checked={viewType === "개인"} onChange={() => setViewType("개인")} />
                             <label className="btn btn-outline-primary text-responsive" htmlFor="personalPlans">개인</label>
@@ -978,10 +1032,11 @@ export default function CalendarComponent() {
                             const percent = total > 0 ? Math.round((doneCount / total) * 100) : 0;
 
                             return (
-                                <div key={`event-${event.extendedProps.planNo}`}  onClick={() => moveListToDetail(event)}
+                                <div key={`event-${event.extendedProps.planNo}`} onClick={()=>moveListToDetail(event)}
                                     className={`border rounded p-3 mb-2 hover-shadow text-responsive ${isPlanAllCompleted(event) ? 'border-success' : ''}`}
                                     style={{ cursor: 'pointer' }}>
                                     <div className="d-flex align-items-center text-responsive">
+                                        <div className="color-box ms-1" style={{ backgroundColor: event.extendedProps?.planColor }}></div>
                                         <div className="d-flex align-items-center gap-1">
                                             <small className={`${status.className} fw-bold`}>{status.text}</small>
                                             <span className="fw-bold">
@@ -993,22 +1048,16 @@ export default function CalendarComponent() {
                                                 )}
                                             </span>
                                         </div>
-                                        <div className="color-box ms-1" style={{ backgroundColor: event.extendedProps?.planColor }}></div>
                                     </div>
-                                    {event.extendedProps.planType === "팀" && (
-                                    <div className="d-flex align-items-center justify-content-between">
-                                        <span className="text-responsive">참여자: {total}명, 수락: {accepted}명 (달성률 : {percent}%)</span>
+                                    <div className={`d-flex align-items-center ${event.extendedProps.planType === "팀" ? "justify-content-between" : "justify-content-end"}`}>
+                                        {event.extendedProps.planType === "팀" && (
+                                        <span className="text-responsive">참여: {total}명, 수락: {accepted}명 (진행 : {percent}%)</span>
+                                        )}
                                         <div className="btn-group btn-group-sm" role="group" aria-label="상태 토글">
                                             <button type="button" className={`btn ${currentStatus[event.extendedProps.planNo] === '미달성' ? 'btn-secondary' : 'btn-outline-secondary'}`}
                                                 onClick={e=>{
                                                     e.stopPropagation(); // 부모 div 클릭 방지
                                                     changeStatusToggle(event.extendedProps.planNo, '미달성');
-                                                    // setCurrentStatus(prev => (
-                                                    //     {
-                                                    //      ...prev, [event.extendedProps.planNo]: '미달성' 
-                                                    //     }
-                                                    // )
-                                                // );
                                                 }}>
                                                 미달성
                                             </button>
@@ -1016,17 +1065,11 @@ export default function CalendarComponent() {
                                                 onClick={e => {
                                                     e.stopPropagation();
                                                     changeStatusToggle(event.extendedProps.planNo, '달성');
-                                                    // setCurrentStatus(prev => (
-                                                    //     {
-                                                    //      ...prev, [event.extendedProps.planNo]: '달성' 
-                                                    //     }
-                                                    // ));
                                                 }}>
                                                 달성
                                             </button>
                                         </div>
                                     </div>
-                                    )}
                                 </div>
                             );
                         })}
@@ -1089,52 +1132,94 @@ export default function CalendarComponent() {
                             </div>
                         </div>
 
-                        {/* 상세일정 - 수신자 */}
-                        <div className="row mt-3">
-                            <div className="col">
-                                <div className="d-flex text-responsive">
-                                    <IoPersonSharp className="mt-1 me-2" />
-                                    <span className="fw-bold">수신자</span>
+                        {/* 상세일정 - 주최자 */}
+                        {Array.isArray(selectedEvent?.extendedProps?.receivers) && selectedEvent.extendedProps.receivers.length > 0 && ( //개인 일정에는 표시 X
+                        <>
+                            <div className="row mt-3">
+                                <div className="col">
+                                    <div className="d-flex text-responsive">
+                                        <FaCrown className="mt-1 me-2" />
+                                        <span className="fw-bold">주최</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="row mt-2">
-                            <div className="col">
-                                <div className="mb-2">
-                                    <ul className="list-group text-responsive" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                                        {Object.keys(groupContacts).map(department => {
-                                            const members = groupContacts[department].filter(
-                                                contact => selectedEvent?.extendedProps?.receivers?.some(
-                                                    r => r.planReceiveReceiverNo === contact.memberNo
-                                                )
-                                            );
+                            <div className="row mt-2">
+                                <div className="col">
+                                    <div className="d-flex text-responsive">
+                                        <span>{selectedEvent?.extendedProps?.planSenderName}</span>
+                                        <span className="badge bg-primary ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            </>
+                        )}
 
-                                            if (members.length === 0) return null;
+                        {/* 상세일정 - 참여자 */}
+                        {Array.isArray(selectedEvent?.extendedProps?.receivers) && selectedEvent.extendedProps.receivers.length > 0 && ( //개인 일정에는 표시 X
+                        <>
+                            <div className="row mt-3">
+                                <div className="col">
+                                    <div className="d-flex text-responsive">
+                                        <IoPersonSharp className="mt-1 me-2" />
+                                        <span className="fw-bold">참여</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="row mt-2">
+                                <div className="col">
+                                    <div className="mb-2">
+                                        <ul className="list-group text-responsive" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                                            {Object.keys(groupContacts).map(department => {
+                                                const members = groupContacts[department].filter(
+                                                    contact => selectedEvent?.extendedProps?.receivers?.some(
+                                                        r => r.planReceiveReceiverNo === contact.memberNo
+                                                    )
+                                                );
 
-                                            // JSX 블록 전체를 괄호로 감싸고 return 앞에는 반드시 중괄호로 열어야 함
-                                            return (
-                                                <li key={department}>
-                                                    <div className="bg-light px-3 py-2 border-top text-secondary">
-                                                        {department}
-                                                    </div>
-                                                    <ul className="list-group list-group-flush">
-                                                        {members.map(contact => (
-                                                            <li className="list-group-item d-flex align-items-center" key={contact.memberNo}>
-                                                                <span>{contact.memberName}</span>
+                                                if (members.length === 0) return null;
+
+                                                // JSX 블록 전체를 괄호로 감싸고 return 앞에는 반드시 중괄호로 열어야 함
+                                                return (
+                                                    <li key={department}>
+                                                        <div className="bg-light px-3 py-2 border-top text-secondary">{department}</div>
+                                                        <ul className="list-group list-group-flush">
+                                                        {members.map(contact => {
+                                                            const isMe = contact.memberNo === loginUserNo;
+                                                            const status = selectedEvent?.extendedProps?.receivers?.find(
+                                                                r => r.planReceiveReceiverNo === contact.memberNo)
+                                                                ?.planReceiveStatus || '미달성';
+                                                        
+                                                        return (    
+                                                            <li className="list-group-item d-flex justify-content-between align-items-center" key={contact.memberNo}>
+                                                                {isMe ? ( 
+                                                                <span className="fw-bold">{contact.memberName}
+                                                                    <span className="ms-1">(나)</span>
+                                                                </span>
+                                                                ) : (
+                                                                <span>{contact.memberName}</span>    
+                                                                )}
+                                                                <span className={`badge ${status === '달성' ? 'bg-success' : 'bg-secondary'}`}>
+                                                                    {status}
+                                                                </span>
                                                             </li>
-                                                        ))}
-                                                    </ul>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
+                                                            );
+                                                        })}
+                                                        </ul>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </>
+                        )}
                     </div>
                     <div className="modal-footer">
                         <button type="button" className="btn btn-secondary text-responsive" onClick={closeDetailModal}>닫기</button>
+                        {selectedEvent?.extendedProps?.planSenderNo === loginUserNo && (
                         <button type="button" className="btn btn-danger text-responsive" onClick={openDeleteModal}>삭제</button>
+                        )}
                     </div>
                 </div>
             </div>

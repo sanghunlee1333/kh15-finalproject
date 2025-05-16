@@ -8,13 +8,14 @@ import { Modal } from "bootstrap";
 import axios from "axios";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { loginState, userDepartmentState, userNoState } from "../utils/stroage";
+import { unReadAlarmCountState } from '../utils/alarm';
 
 export default function Menu() {
     const navigate = useNavigate();
-      const [userNo, setUserNo] = useRecoilState(userNoState);
+    const [userNo, setUserNo] = useRecoilState(userNoState);
     const [userDepartment,setUserDepartment] = useRecoilState(userDepartmentState);
     const login = useRecoilValue(loginState);
-
+    const unReadAlarmCount = useRecoilValue(unReadAlarmCountState);
 
     const logoutModal = useRef();
     const gotoLogout = useCallback( ()=>{
@@ -39,7 +40,6 @@ export default function Menu() {
         const target = Modal.getInstance(logoutModal.current);
         target.hide();
     },[])
-
 
     return (<>
         {/* 메뉴(Navbar) */}
@@ -90,17 +90,19 @@ export default function Menu() {
                                 <Link to="" className="dropdown-item">3</Link>
                             </div>
                         </li>
-                        
                     </ul>
 
                     {/* 우측 메뉴 */}
                     <ul className="navbar-nav">
 
                         {/* 전체 알림 */}
-                        <li className="nav-item me-4">
-                            <Link to="#" className="nav-link">
+                        <li className="nav-item dropdownme-4">
+                            <Link to="/alarm" className="nav-link">
                                 <i className="fa-solid fa-list-ul"></i>
                                 <FaLightbulb className="fs-5 text-warning"/>
+                                {unReadAlarmCount > 0 && (
+                                    <span className="badge rounded-pill bg-danger">{unReadAlarmCount}</span>
+                                )}
                             </Link>
                         </li>
                 
@@ -111,7 +113,6 @@ export default function Menu() {
                                 <i className="fa-solid fa-right-to-bracket"></i>
                                 <CiLogout className="fs-4"/>
                             </Link> 
-                            
                         </li>
 
                         {/* 마이페이지 Link, 회원가입 Link */}
@@ -121,35 +122,30 @@ export default function Menu() {
                                 <FaUserCircle className="fs-4"/>
                             </Link>
                         </li>
+
                     </ul>
                 </div>
             </div>
         </nav>
         <div className="modal fade" tabIndex="-1" role="dialog" ref={logoutModal} data-bs-backdrop="static">
-              <div className="modal-dialog modal-sm" role="document">
-                  <div className="modal-content">
-                      <div className="modal-header">
-                      <h2>로그아웃</h2>
-                      <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"  >
-                      </button>
-                      </div>
-                      <div className="modal-body">
+            <div className="modal-dialog modal-sm" role="document">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h2>로그아웃</h2>
+                        <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" />
+                    </div>
+                    <div className="modal-body">
                         <span>정말 로그아웃 하시겠습니까?</span>
+                    </div>
+                    <div className="modal-footer">
+                        <div className="d-flex justify-content-between">
+                            <button className="btn btn-success" onClick={sayYes}>예</button>
+                            <button className="btn btn-secondary" onClick={sayNo}> 아니요</button>
+                        </div>
+                    </div>
+                </div>
+            </div> 
+        </div>
 
-                       
-                     </div>
-                      <div className="modal-footer">
-                      <div className="d-flex justify-content-between">
-
-                        <button className="btn btn-success" onClick={sayYes}>예</button>
-                          <button className="btn btn-secondary" onClick={sayNo}> 아니요</button>
-                                          
-                         
-                      </div>
-                      
-                      </div>
-                  </div>
-              </div> 
-              </div>
     </>)
 }
