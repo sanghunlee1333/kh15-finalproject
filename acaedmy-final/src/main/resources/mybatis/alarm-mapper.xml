@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="alarm">
+
+	<!-- 시퀀스 생성  -->
+	<select id="sequence" resultType="long">
+		select alarm_seq.nextval from dual
+	</select>
+	
+	<!-- 등록 -->
+	<insert id="insert">
+		insert into alarm (
+			alarm_no, alarm_receiver_no, alarm_sender_no,
+			alarm_type, alarm_message, alarm_plan_no,
+			alarm_read
+		) 
+		values(
+			#{alarmNo}, #{alarmReceiverNo}, #{alarmSenderNo},
+			#{alarmType}, #{alarmMessage}, #{alarmPlanNo},
+			#{alarmRead}
+		)
+	</insert>
+	
+	<!-- 삭제(일정 삭제 시 관련 알람) -->
+	<delete id="deleteByPlanNo">
+		delete from alarm 
+		where alarm_plan_no = #{planNo} 
+		and (alarm_type is null or alarm_type != 'PLAN_DELETE')
+	</delete>
+	
+	<!-- 알림 삭제(1개) -->
+	<delete id="delete">
+		delete alarm where alarm_no = #{alarmNo}
+	</delete>
+	
+	<!-- 삭제(전체)  -->
+	<delete id="deleteAll">
+		delete alarm where alarm_receiver_no = #{receiverNo}
+	</delete>
+	
+	<!-- 전체 알림 조회(수신자 기준) -->
+	<select id="listByReceiver" resultType="AlarmResponseVO">
+		select 
+			a.alarm_no, a.alarm_message, a.alarm_type,
+			a.alarm_read, a.alarm_create_time,
+			a.alarm_plan_no, a.alarm_receiver_no, a.alarm_sender_no,
+			m.member_name as alarm_sender_name,
+			p.plan_title, p.plan_start_time, p.plan_end_time
+		from alarm a
+			left outer join member m on a.alarm_sender_no = m.member_no
+			left outer join plan p on a.alarm_plan_no = p.plan_no
+		where a.alarm_receiver_no = #{receiverNo}
+		order by a.alarm_create_time desc
+	</select>
+	
+	<!-- 상세 알림 조회(DTO용) -->
+	<select id="detail" resultType="AlarmDto">
+		select * from alarm where alarm_no = #{alarmNo}
+	</select>
+	
+	<!-- 상세 알림 조회(프론트 응답용-VO) -->
+	<select id="find" resultType="AlarmResponseVO">
+		select 
+			a.alarm_no, a.alarm_message, a.alarm_type,
+			a.alarm_read, a.alarm_create_time,
+			a.alarm_plan_no, a.alarm_receiver_no,
+			m.member_name as alarm_sender_name,
+			p.plan_title, p.plan_start_time, p.plan_end_time
+		from alarm a
+			left outer join member m on a.alarm_sender_no = m.member_no
+			left outer join plan p on a.alarm_plan_no = p.plan_no
+		where a.alarm_no = #{alarmNo}
+	</select>
+	
+	<!-- 알림 모두 읽음 처리 -->
+	<update id="updateReadByReceiver">
+		update alarm 
+		set alarm_read = 'Y'
+		where alarm_receiver_no = #{receiverNo}
+	</update>
+	
+	<!-- 안 읽은 알림 개수 세기 -->
+	<select id="countUnRead" resultType="int">
+		select count(*) from alarm
+		where alarm_receiver_no = #{receiverNo}
+		and alarm_read = 'N'
+	</select>
+	
+	<!-- 알림 조회(무한 스크롤) -->
+	<select id="listByReceiverWithPaging" resultType="AlarmResponseVO">
+		select * from (
+			select TMP.*, ROWNUM rn from (
+				select 
+					a.alarm_no, a.alarm_message, a.alarm_type,
+					a.alarm_read, a.alarm_create_time,
+					m.member_name as alarm_sender_name,
+					p.plan_title, p.plan_start_time, p.plan_end_time
+				from alarm a
+				left outer join member m on a.alarm_sender_no = m.member_no
+				left outer join plan p on a.alarm_plan_no = p.plan_no
+				where a.alarm_receiver_no = #{receiverNo}
+				order by a.alarm_create_time desc
+			)TMP
+			<![CDATA[
+			where rownum <= #{offset} + #{size}
+			]]>
+		)
+		where rn > #{offset}
+	</select>
+	
+</mapper>
