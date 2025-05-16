@@ -148,6 +148,38 @@ public class MemberRestController {
 	    return groupByDepartment;
 	}
 	
+	//연락처 부서별로 전체 회원 목록 가져오기 (로그인 유저-포함)
+	@GetMapping("/contactIncludeMe")
+	public Map<String, List<MemberDto>> getContactsIncludeMe(@RequestParam(value = "search", required = false) String search,
+				@RequestHeader ("Authorization") String bearerToken) {
+		//로그인된 사용자의 정보 가져오기
+		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+		
+		//부서별로 그룹화
+	    Map<String, List<MemberDto>> groupByDepartment = new LinkedHashMap<>();
+	    
+	    //검색어가 있으면 검색 결과 , 없으면 전체 목록 불러오기
+	    List<MemberDto> members;
+	    if(search != null && !search.isEmpty()) {
+	    	members = memberDao.seachContacts(search);
+	    }
+	    else {
+	    	members = memberDao.selectList();//전체 목록 가져오기
+	    }
+	    
+	    // 각 부서별로 회원 정보를 그룹화
+	    for (MemberDto member : members) {
+	    	String department = member.getMemberDepartment() != null ? member.getMemberDepartment() : "미지정";
+	    	
+	    	// 해당 부서가 없으면 새로 리스트를 생성하고 있으면 기존 리스트에 추가
+	    	groupByDepartment.putIfAbsent(department, new ArrayList<>());
+	    	groupByDepartment.get(department).add(member);
+	    }
+	    
+	    //부서별로 그룹화된 데이터 변환
+	    return groupByDepartment;
+	}
+	
 	//전체 회원 목록 가져오기(+ 이름 or 연락처 검색 조회도 가능)
 	@GetMapping("/")
 	public List<MemberDto> list(@RequestParam(required = false) String search){

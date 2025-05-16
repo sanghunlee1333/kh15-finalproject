@@ -1,5 +1,6 @@
 package com.kh.acaedmy_final.dao;
 
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.acaedmy_final.dto.PlanDto;
+import com.kh.acaedmy_final.vo.PlanWithReceiversVO;
 
 @Repository
 public class PlanDao {
@@ -62,6 +64,21 @@ public class PlanDao {
 		params.put("planNo", planNo);
 		params.put("planStatus", planStatus);
 		return sqlSession.update("plan.updateStatus", params) > 0;
+	}
+	
+	//조회(일정 시작 30분 전 알림)
+	public List<PlanWithReceiversVO> findPlansStartingSoon(Timestamp time) {
+		return sqlSession.selectList("plan.findPlansStartingSoon", time);
+	}
+	
+	//조회(일정 시작 알림)
+	public List<PlanWithReceiversVO> findPlansStartingAt(Timestamp time) {
+		return sqlSession.selectList("plan.findPlansStartingAt", time);
+	}
+	
+	//조회(일정 종료 알림)
+	public List<PlanWithReceiversVO> findPlansEndingAt(Timestamp time) {
+		return sqlSession.selectList("plan.findPlansEndingAt", time);
 	}
 	
 }

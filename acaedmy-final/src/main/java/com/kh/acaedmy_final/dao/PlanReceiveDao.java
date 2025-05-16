@@ -58,8 +58,16 @@ public class PlanReceiveDao {
 	public void accept(long planNo, long planReceiveReceiverNo) {
 		Map<String, Object> params = new HashMap<>();
 		params.put("planNo", planNo);
-		params.put("receiverNo", planReceiveReceiverNo);
+		params.put("planReceiveReceiverNo", planReceiveReceiverNo);
 		sqlSession.update("planReceive.accept", params);
+	}
+	
+	//일정 거절
+	public void reject(long planNo, long planReceiveReceiverNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("planNo", planNo);
+		params.put("planReceiveReceiverNo", planReceiveReceiverNo);
+		sqlSession.update("planReceive.reject", params);
 	}
 	
 	//수정(참여자 + 수신자의 일정 상태)
@@ -81,6 +89,11 @@ public class PlanReceiveDao {
 	    int total = sqlSession.selectOne("planReceive.countAllReceivers", planNo);
 	    int done = sqlSession.selectOne("planReceive.countCompletedReceivers", planNo);
 	    return total == done;
+	}
+	
+	//특정 일정에 대한 개별 수신자의 상태와 정보 조회
+	public List<PlanReceiverStatusVO> selectPlanReceiverStatusList(long planNo) {
+		return sqlSession.selectList("planReceive.listReceiverStatus", planNo);
 	}
 	
 }
