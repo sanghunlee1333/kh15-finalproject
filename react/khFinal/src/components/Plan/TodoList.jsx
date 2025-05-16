@@ -67,10 +67,37 @@ export default function TodoList({ allEvents = [], fetchAllEvents, groupContacts
         return endTime < startTime;
     }, [startTime, endTime]);
     
+    // const todayEvents = useMemo(() => {
+    //     const today = new Date();
+    //     today.setHours(0, 0, 0, 0);
+
+    //     return allEvents.filter(event => {
+    //         const planType = event.extendedProps?.planType;
+    //         const matchesType =
+    //             viewType === "전체" ||
+    //             (viewType === "개인" && planType === "개인") ||
+    //             (viewType === "팀" && planType === "팀");
+    //         return matchesType;
+    //     }).map(event => {
+    //         const isAllDay = event.allDay || event.extendedProps?.planIsAllDay === "Y";
+          
+    //         const start = new Date(event.start);
+    //         const end = new Date(event.end);
+          
+    //         return {
+    //             ...event,
+    //             start: isAllDay ? dayjs(start).format("YYYY-MM-DD") : start,
+    //             end: isAllDay ? dayjs(end).add(1, "day").format("YYYY-MM-DD") : end,
+    //             allDay: isAllDay,
+    //         };
+    //     });
+    // }, [allEvents, viewType]);
+
     const todayEvents = useMemo(() => {
         return allEvents
             .filter(event => {
                 if (event.extendedProps?.isHoliday) return true;
+
                 const planType = event.extendedProps?.planType;
                 
                 return (
