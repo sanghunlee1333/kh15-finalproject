@@ -97,16 +97,26 @@ export default function Menu() {
                     <ul className="navbar-nav">
 
                         {/* 전체 알림 */}
-                        <li className="nav-item dropdownme-4">
-                            <Link to="/alarm" className="nav-link">
-                                <i className="fa-solid fa-list-ul"></i>
-                                <FaLightbulb className="fs-5 text-warning"/>
+                        <li className="nav-item">   
+                            <Link to="/alarm" className="nav-link position-relative">
+                                <FaLightbulb className="fs-5 text-warning" />
                                 {unReadAlarmCount > 0 && (
-                                    <span className="badge rounded-pill bg-danger">{unReadAlarmCount}</span>
+                                    <span className="badge bg-danger rounded-pill small position-absolute"
+                                    style={{
+                                        bottom: 0,
+                                        right: 0,
+                                        transform: "translate(35%, 35%)",
+                                        zIndex: 10,
+                                        padding: "5px 8px",
+                                        fontSize: "0.8rem"
+                                    }}
+                                    >
+                                    {unReadAlarmCount}
+                                    </span>
                                 )}
                             </Link>
                         </li>
-                
+
                         {/* 로그인, 로그아웃 Link */}
                         <li className="nav-item">
                             {/* 로그아웃 */}
