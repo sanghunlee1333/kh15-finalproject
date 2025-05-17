@@ -78,6 +78,15 @@ public class PlanRestController {
 				isAllDay(planDto.getPlanStartTime(), planDto.getPlanEndTime()) ? "Y" : "N"
 		);
 		planDao.insert(planDto);
+		
+//		PlanReceiveDto writerDto = PlanReceiveDto.builder()
+//			    .planReceivePlanNo(planNo)
+//			    .planReceiveReceiverNo(claimVO.getMemberNo())
+//			    .planReceiveIsWriter("Y")
+//			    .planReceiveIsAccept("Y")
+//			    .planReceiveStatus("미달성")
+//			    .build();
+//		planReceiveDao.insert(writerDto);
 	}
 	
 	//등록(팀-일정)
@@ -195,7 +204,7 @@ public class PlanRestController {
 	@DeleteMapping("/{planNo}")
 	public void delete(@PathVariable long planNo) {
 		PlanDto planDto = planDao.selectOne(planNo);
-		if(planDto == null) throw new TargetNotFoundException();
+		if(planDto == null) return;
 		
 		//참여자 목록 추출
 		List<Long> receiverList = planReceiveDao.selectReceiverList(planNo)
@@ -203,11 +212,11 @@ public class PlanRestController {
 				.map(PlanReceiverStatusVO::getPlanReceiveReceiverNo)
 				.collect(Collectors.toList());
 		
+		//새 알림 전송
+		alarmService.sendPlanDeleteAlarm(planDto.getPlanSenderNo(), receiverList, planDto.getPlanNo(), planDto.getPlanTitle());
+		
 		//일정 삭제
 		planDao.delete(planNo);
-		
-		//알림 삭제 + 새 알림 전송
-		alarmService.sendPlanDeleteAlarm(planDto.getPlanSenderNo(), receiverList, planDto.getPlanNo(), planDto.getPlanTitle());
 	}
 	
 	//이 API의 역할은 "일정"의 상태를 업데이트하는 것이기 때문에 PlanReceiverRestController가 아닌 이 컨트롤러에 작성

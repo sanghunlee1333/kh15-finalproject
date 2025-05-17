@@ -2,12 +2,11 @@ package com.kh.acaedmy_final.service.websocket;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.academy_final.constant.AlarmType;
 import com.kh.acaedmy_final.dao.websocket.AlarmDao;
@@ -43,9 +42,6 @@ public class AlarmService { //알림을 생성하고 DB에 저장하는 비즈�
 	
 	@Autowired
 	private AlarmSender alarmSender;
-	
-	@Autowired
-	private SimpMessagingTemplate simpMessagingTemplate; //SimpMessagingTemplate = Spring에서 WebSocket으로 메시지를 보내는 도구
 	
 	//공통 알림 전송 메소드
 	public void sendAlarm(long receiverNo, long alarmSenderNo, long planNo, AlarmType alarmType, String alarmMessage) {

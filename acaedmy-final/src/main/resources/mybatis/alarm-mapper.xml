@@ -68,7 +68,8 @@
 			a.alarm_read, a.alarm_create_time,
 			a.alarm_plan_no, a.alarm_receiver_no,
 			m.member_name as alarm_sender_name,
-			p.plan_title, p.plan_start_time, p.plan_end_time
+			nvl(p.plan_title, '[삭제된 일정]') as plan_title,
+			p.plan_start_time, p.plan_end_time
 		from alarm a
 			left outer join member m on a.alarm_sender_no = m.member_no
 			left outer join plan p on a.alarm_plan_no = p.plan_no

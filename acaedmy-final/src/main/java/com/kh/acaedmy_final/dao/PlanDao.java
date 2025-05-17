@@ -67,18 +67,27 @@ public class PlanDao {
 	}
 	
 	//조회(일정 시작 30분 전 알림)
-	public List<PlanWithReceiversVO> findPlansStartingSoon(Timestamp time) {
-		return sqlSession.selectList("plan.findPlansStartingSoon", time);
+	public List<PlanWithReceiversVO> findPlansStartingSoon(Timestamp timeStart, Timestamp timeEnd) {
+		Map<String, Object> param = new HashMap<>();
+		param.put("timeStart", timeStart);
+		param.put("timeEnd", timeEnd);
+		return sqlSession.selectList("plan.findPlansStartingSoon", param);
 	}
-	
+
 	//조회(일정 시작 알림)
-	public List<PlanWithReceiversVO> findPlansStartingAt(Timestamp time) {
-		return sqlSession.selectList("plan.findPlansStartingAt", time);
+	public List<PlanWithReceiversVO> findPlansStartingAt(Timestamp timeStart, Timestamp timeEnd) {
+		Map<String, Object> param = new HashMap<>();
+		param.put("timeStart", timeStart);
+		param.put("timeEnd", timeEnd);
+		return sqlSession.selectList("plan.findPlansStartingAt", param);
 	}
-	
+
 	//조회(일정 종료 알림)
-	public List<PlanWithReceiversVO> findPlansEndingAt(Timestamp time) {
-		return sqlSession.selectList("plan.findPlansEndingAt", time);
+	public List<PlanWithReceiversVO> findPlansEndingAt(Timestamp timeStart, Timestamp timeEnd) {
+		Map<String, Object> param = new HashMap<>();
+		param.put("timeStart", timeStart);
+		param.put("timeEnd", timeEnd);
+		return sqlSession.selectList("plan.findPlansEndingAt", param);
 	}
 	
 }
