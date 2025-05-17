@@ -1,12 +1,13 @@
 import axios from "axios";
 import { toast } from "react-toastify";
-import dayjs from 'dayjs';
+import './AllAlarm.css';
 
 import { useCallback, useState, useEffect } from "react";
-import { FaLightbulb, FaTrash } from "react-icons/fa";
+import { FaCheck, FaLightbulb, FaTrash } from "react-icons/fa";
 import { unReadAlarmCountState } from "../utils/alarm";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { refreshPlanEventsState } from "../utils/plan";
+import { FaXmark } from "react-icons/fa6";
 
 export default function AllAlarm() {
     //recoil
@@ -16,47 +17,65 @@ export default function AllAlarm() {
     const [alarms, setAlarms] = useState([]);
     const setUnReadAlarmCount = useSetRecoilState(unReadAlarmCountState);
 
-    useEffect(() => {
-        console.log("알림 수신:", alarms);
-      }, [alarms]);
-
     //callback
     //알림 불러오기
     const loadAlarm = useCallback(async ()=>{
         const token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
+        
+        // 서버에 전체 읽음 요청
+        await axios.patch("/alarm/", null, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        
+        //알림 목록 불러오기
         const resp = await axios.get("/alarm/", {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         });
-
-        console.log("📥 최신 서버 응답:", resp.data);
-        const withZeroPlan = resp.data.filter(alarm =>
-          alarm.alarmPlanNo === 0 || alarm.alarmReceiverNo === 0 || alarm.alarmSenderNo === 0
-        );
-        if (withZeroPlan.length > 0) {
-          console.warn("❗ 잘못된 알림이 포함됨:", withZeroPlan);
-        }
-
-
         setAlarms(resp.data);
+
+        //Recoil 알림 개수 상태도 0으로
+        setUnReadAlarmCount(0);
     }, []);
 
     //알림 삭제(1개)
-    const deleteAlarm = useCallback(async (alarmNo)=>{
-        await axios.delete(`/alarm/${alarmNo}`)
-            .then(()=>{
-                toast.success("알림을 삭제했습니다.");
-            }
-        );
-        setAlarms(prev=>prev.filter(alarm => alarm.alarmNo !== alarmNo));
+    const deleteAlarm = useCallback(async (alarm)=>{
+        const token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
+        
+        //PLAN_CREATE 알림이면 거절 처리도 같이 진행
+        if (alarm.alarmType === "PLAN_CREATE") {
+            await axios.patch(`/plan/receive/planNo/${alarm.alarmPlanNo}/receiverNo/${alarm.alarmReceiverNo}/response`, {
+                planStatus: "N"
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            //알림 거절
+            await axios.delete(`/alarm/${alarm.alarmNo}`)
+                .then(()=>{
+                    toast.error("알림을 거절했습니다.");
+                }
+            );
+        }
+        else { //알림 삭제
+            await axios.delete(`/alarm/${alarm.alarmNo}`)
+                .then(()=>{
+                    toast.error("알림을 삭제했습니다.");
+                }
+            );
+        }
+        setAlarms(prev => prev.filter(a => a.alarmNo !== alarm.alarmNo));
     }, []);
 
     //알림 삭제(전체)
     const deleteAllAlarms = useCallback(async ()=>{
         await axios.delete("/alarm/all")
             .then(()=>{
-                toast.success("알림을 삭제했습니다.");
+                toast.error("알림을 삭제했습니다.");
             }
         );
         setAlarms([]);
@@ -73,7 +92,7 @@ export default function AllAlarm() {
                 Authorization: `Bearer ${token}`
             }
         }).then(()=>{
-                toast.success(accepted ? "일정을 수락했습니다." : "일정을 거절했습니다.");
+            accepted ? toast.success("일정을 수락했습니다.") : toast.error("일정을 거절했습니다.");
         });
         //2. 해당 알림 삭제 API 호출
         await axios.delete(`/alarm/${alarmNo}`);
@@ -92,6 +111,21 @@ export default function AllAlarm() {
         loadAlarm();
         setUnReadAlarmCount(0); //읽음 처리
     }, []);
+
+    useEffect(() => {
+        const handle = () => {
+          loadAlarm(); // 강제로 알림 다시 불러옴
+        };
+      
+        // 🚨 이벤트 등록 시 콘솔 로그 추가해서 확인도 가능
+        console.log("✅ 이벤트 등록됨");
+        window.addEventListener("refreshAlarmList", handle);
+      
+        return () => {
+          console.log("❌ 이벤트 해제됨");
+          window.removeEventListener("refreshAlarmList", handle);
+        };
+    }, [loadAlarm]);
 
     //view
     return (<>
@@ -121,27 +155,32 @@ export default function AllAlarm() {
                         <div key={alarm.alarmNo} className="border border-secondary d-flex align-items-center justify-content-between 
                                 rounded p-3 mb-2 hover-shadow text-responsive">
                             <div>
-                                <div className="text-bold">{alarm.alarmMessage}</div>
+                                <div>
+                                    {alarm.alarmType === "PLAN_SOON" && <span className="text-primary">[30분 후 시작]</span>}
+                                    {alarm.alarmType === "PLAN_START" && <span className="text-success">[시작]</span>}
+                                    {alarm.alarmType === "PLAN_END" && <span className="text-muted">[종료]</span>}
+                                    {alarm.alarmMessage}
+                                    </div>
                                 {alarm.planTitle
                                     ? <div className="text-muted">{alarm.planTitle}</div>
-                                    : <div className="text-muted text-danger">[삭제된 일정]</div>
+                                    : <div className="text-danger fw-bold">[삭제된 일정]</div>
                                 }
-                                <div className="text-muted">{dayjs(alarm.planStartTime).format("YYYY-MM-DD HH:mm")} ~ {dayjs(alarm.planEndTime).format("YYYY-MM-DD HH:mm")}</div>
                             </div>
+                            
                             <div className="d-flex">
                                 {/* 수락/거절이 필요한 알림일 경우 */}
                                 {(alarm.alarmType === "PLAN_CREATE") && (
                                     <>
-                                        <button className="btn btn-outline-success" onClick={()=>responseAlarm(alarm.alarmPlanNo, alarm.alarmReceiverNo, alarm.alarmNo, true)}>
-                                            수락
+                                        <button className="btn p-2 d-flex align-items-center text-responsive" onClick={()=>responseAlarm(alarm.alarmPlanNo, alarm.alarmReceiverNo, alarm.alarmNo, true)}>
+                                            <FaCheck className="text-success" />
                                         </button>
-                                        <button className="btn btn-outline-danger ms-2" onClick={()=>responseAlarm(alarm.alarmPlanNo, alarm.alarmReceiverNo, alarm.alarmNo, false)}>
-                                            거절
+                                        <button className="btn p-2 d-flex align-items-center ms-1" onClick={()=>responseAlarm(alarm.alarmPlanNo, alarm.alarmReceiverNo, alarm.alarmNo, false)}>
+                                            <FaXmark className="text-danger" />
                                         </button>
                                     </>
                                 )}
-                                <button className="btn ms-2">
-                                    <FaTrash className="text-danger" onClick={()=>deleteAlarm(alarm.alarmNo)}/>
+                                <button className="btn p-2 ms-1">
+                                    <FaTrash className="d-flex align-items-center text-danger" onClick={()=>deleteAlarm(alarm)}/>
                                 </button>
                             </div>
                         </div>
