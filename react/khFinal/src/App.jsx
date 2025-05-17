@@ -14,12 +14,13 @@ import MemberContact from './components/Member/MemberContact'
 import Footer from './components/template/Footer'
 import NoticeWrite from './components/Notice/NoticeWrite'
 import { loginState, userDepartmentState, userLoadingState, userNoState } from './components/utils/stroage'
-import { useRecoilState, useRecoilValue } from 'recoil'
-import { useCallback, useEffect } from 'react'
+import { alarmListState } from './components/utils/alarm';
+import { unReadAlarmCountState } from './components/utils/alarm'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import { useCallback, useEffect, useState } from 'react'
 import axios from 'axios'
 import MemberList from './components/Admin/MemberList'
 import MemberManage from './components/Admin/MemberManage'
-import NoticeUpdate from './components/Notice/NoticeEdit'
 import { Bounce, ToastContainer } from 'react-toastify'
 import NoticeEdit from './components/Notice/NoticeEdit'
 import TeamPlan from './components/Plan/TeamPlan'
@@ -33,12 +34,17 @@ import EditProfile from './components/Mypage/EditProfile'
 import AdminAttendancePolicy from './components/Admin/AdminAttendancePolicy'
 import AdminAttendanceDetail from './components/Admin/AdminAttendanceDetail'
 
+import AllAlarm from './components/template/AllAlarm';
+import AlarmInitializer from './AlarmInitializer'
+ 
 function App() {
   const [userNo, setUserNo] = useRecoilState(userNoState);
   const [userDepartment, setUserDepartment] = useRecoilState(userDepartmentState);
   const [loading, setLoading] = useRecoilState(userLoadingState);
   const login = useRecoilValue(loginState);
-
+  const setAlarmList = useSetRecoilState(alarmListState);
+  const [unReadAlarmCount, setUnReadAlarmCount] = useRecoilState(unReadAlarmCountState);
+  
   let stay = false;
   const refreshLogin = useCallback(async ()=>{
     let refreshToken = window.sessionStorage.getItem("refreshToken");
@@ -54,9 +60,10 @@ function App() {
     try{
       axios.defaults.headers.common["Authorization"] = `Bearer ${refreshToken}`;
       const resp = await axios.post("/member/refresh");
+      
       setUserNo(resp.data.memberNo);
       setUserDepartment(resp.data.memberDepartment);
-      // console.log(resp.data);
+
       if(stay){
         window.sessionStorage.removeItem("refreshToken");
         window.localStorage.setItem("refreshToken", resp.data.refreshToken);
@@ -91,6 +98,17 @@ function App() {
         client.subscribe(topic, () => {
           window.dispatchEvent(new CustomEvent("refreshRoomList"));
         });
+
+        //알림 채널 구독
+        const alarm = `/alarm/${userNo}`;
+        client.subscribe(alarm, (message)=>{
+          const payload = JSON.parse(message.body); 
+          setUnReadAlarmCount(prev=>prev+1);
+          setAlarmList(prev=>[payload, ...prev]); // 최신 알림을 앞으로 추가
+
+          //강제로 알림 목록 다시 불러오게 AllAlarm 컴포넌트에 이벤트 전달
+          window.dispatchEvent(new CustomEvent("refreshAlarmList"));
+        });
       },
       debug: () => {}
     });
@@ -103,15 +121,17 @@ function App() {
     console.log("loadingSTATE");
     console.log(loading);
 
-
   },[loading])
 
   if (!loading) return <div>로딩 중...</div>;
   
   return (
     <>
+      {/* 로그인 시, 알림 갯수 초기화 */}
+      {userNo && loading && <AlarmInitializer />}
+
       {/* 메뉴 */}
-      <Menu/>
+      <Menu unReadAlarmCount={unReadAlarmCount}/>
 
       {/* 사이드바 */}
       <Sidebar/>
@@ -121,6 +141,9 @@ function App() {
         {/* Routes에 주소와 연결될 컴포넌트를 작성하여 상황에 맞는 화면 출력 */}
         <Routes>
           <Route path="/" element={<Member><Mainpage/></Member>}></Route>
+
+          {/* Alarm */}
+          <Route path="/alarm" element={<AllAlarm />} />
 
           {/* Member */}
           <Route path="/member/login" element={<MemberLogin/>}></Route>

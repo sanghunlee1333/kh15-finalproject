@@ -7,51 +7,55 @@
 	<!-- 등록 -->
 	<insert id="add">
 		insert into plan_receive(
-			plan_receive_no, plan_receive_receiver_no, plan_receive_is_accept
+			plan_receive_plan_no, plan_receive_receiver_no, plan_receive_is_writer, 
+			plan_receive_is_accept, plan_receive_status
 		)
 		values(
-			#{planReceiveNo}, #{planReceiveReceiverNo}, #{planReceiveIsAccept}
+			#{planReceivePlanNo}, #{planReceiveReceiverNo}, #{planReceiveIsWriter},
+			#{planReceiveIsAccept}, #{planReceiveStatus}
 		)
 	</insert>
 	
 	<!-- 삭제 -->
 	<delete id="delete">
 		delete plan_receive 
-		where plan_receive_no = #{planReceiveNo}
+		where plan_receive_plan_no = #{planReceivePlanNo} 
+		and plan_receive_receiver_no = #{planReceiveReceiverNo}
 	</delete>
 	
 	<!-- 전체 조회(일정) -->
 	<select id="list" resultType="PlanReceiveDto">
 		select * from plan_receive
 		where plan_receive_receiver_no = #{planReceiveReceiverNo}
-		order by plan_receive_no desc
+		order by plan_receive_plan_no desc
 	</select>
 	
 	<!-- 목록 조회(일정에 포함된 수신자 목록) -->
-	<select id="listReceiver" resultType="long">
-		select plan_receive_receiver_no
-		from plan_receive
-		where plan_receive_no = #{planNo}
+	<select id="listReceiver" resultType="PlanReceiverStatusVO">
+		select plan_receive_receiver_no, plan_receive_status
+		from plan_receive 
+		where plan_receive_plan_no = #{planNo}
 	</select>
 
 	<!-- 상세 조회 -->
 	<select id="detail" resultType="PlanReceiveDto">
 		select * from plan_receive 
-		where plan_receive_no = #{planReceiveNo}
+		where plan_receive_plan_no = #{planReceivePlanNo}
+			and plan_receive_receiver_no = #{planReceiveReceiverNo}
 	</select>
-	
+	 
 	<!-- 일정 + 보낸사람 이름 + 수신자 상태 조회 -->
 	<!-- (참고)join : 두 개 이상의 테이블을 공통된 키로 연결해서 정보를 합치는 것 -->
 	<select id="listReceived" resultType="PlanReceiveResponseVO">
 		select
-		    plan_receive_no,
-		    plan_title,
-		    plan_start_time,
-		    plan_end_time,
-		    member_name,
-		    plan_receive_is_accept
+		    pr.plan_receive_plan_no,
+		    p.plan_title,
+		    p.plan_start_time,
+		    p.plan_end_time,
+		    m.member_name,
+		    pr.plan_receive_is_accept
 		from plan_receive pr
-		join plan p on pr.plan_receive_no = p.plan_no
+		join plan p on pr.plan_receive_plan_no = p.plan_no
 		join member m on p.plan_sender_no = m.member_no
 		where pr.plan_receive_receiver_no = #{memberNo}
 		order by p.plan_start_time asc
@@ -61,25 +65,66 @@
 	<update id="accept">
 		update plan_receive
 		set plan_receive_is_accept = 'Y' 
-		where plan_receive_no = #{planReceiverNo} 
-		and plan_receive_receiver_no = #{planReceiveReceiverNo}
+		where plan_receive_plan_no = #{planNo} 
+			and plan_receive_receiver_no = #{planReceiveReceiverNo}
+      		and plan_receive_is_writer = 'N'
+	</update>
+	
+	<!-- 일정 거절 -->
+	<update id="reject">
+		update plan_receive
+		set plan_receive_is_accept = 'N' 
+		where plan_receive_plan_no = #{planNo} 
+			and plan_receive_receiver_no = #{planReceiveReceiverNo}
+      		and plan_receive_is_writer = 'N'
+	</update>
+	
+	<!-- 작성자 + 수신자 일정 상태 수정 -->
+	<update id="updateReceiveStatus">
+		update plan_receive 
+		set plan_receive_status = #{planReceiveStatus}
+		where plan_receive_plan_no = #{planNo}
+			and plan_receive_receiver_no = #{planReceiveReceiverNo}
 	</update>
 	
 	<!-- 수락한 일정 조회 -->
 	<select id="listAccepted" resultType="PlanReceiveResponseVO">
 		select
-			plan_receive_no,
-			plan_title,
-			plan_start_time,
-			plan_end_time,
-			member_name,
-			plan_receive_is_accept
+			pr.plan_receive_plan_no,
+			p.plan_title,
+			p.plan_start_time,
+			p.plan_end_time,
+			m.member_name,
+			pr.plan_receive_is_accept
 		from plan_receive pr
-		join plan p on pr.plan_receive_no = p.plan_no
+		join plan p on pr.plan_receive_plan_no = p.plan_no
 		join member m on p.plan_sender_no = m.member_no
 		where pr.plan_receive_receiver_no = #{memberNo}
-		and pr.plan_receive_is_accept = 'Y'
+			and pr.plan_receive_is_accept = 'Y'
 		order by p.plan_start_time asc
+	</select>
+	
+	<!-- 전체 참여자 수 -->
+	<select id="countAllReceivers" resultType="int">
+	    select count(*) from plan_receive
+	    where plan_receive_plan_no = #{planNo}
+	</select>
+	
+	<!-- 완료한 참여자 수 -->
+	<select id="countCompletedReceivers" resultType="int">
+	    select count(*) from plan_receive
+	    where plan_receive_plan_no = #{planNo}
+	       and plan_receive_status = '달성'
+	</select>
+	
+	<!-- 수신자 일정 달성 여부 조회 -->
+	<select id="listReceiverStatus" resultType="PlanReceiverStatusVO">
+		select
+			pr.plan_receive_receiver_no, pr.plan_receive_status,
+			m.member_name as receiver_name, m.member_department as receiver_department
+		from plan_receive pr
+		join member m on pr.plan_receive_receiver_no = m.member_no
+		where pr.plan_receive_plan_no = #{planNo}
 	</select>
 	
 </mapper>
