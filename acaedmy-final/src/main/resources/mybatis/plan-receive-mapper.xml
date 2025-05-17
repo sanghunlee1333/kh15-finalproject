@@ -32,9 +32,15 @@
 	
 	<!-- 목록 조회(일정에 포함된 수신자 목록) -->
 	<select id="listReceiver" resultType="PlanReceiverStatusVO">
-		select plan_receive_receiver_no, plan_receive_status
-		from plan_receive 
-		where plan_receive_plan_no = #{planNo}
+		select
+			pr.plan_receive_receiver_no,
+			pr.plan_receive_status,
+			pr.plan_receive_is_accept,
+			m.member_name as receiver_name,
+			m.member_department as receiver_department
+		from plan_receive pr
+		join member m on pr.plan_receive_receiver_no = m.member_no
+		where pr.plan_receive_plan_no = #{planNo}
 	</select>
 
 	<!-- 상세 조회 -->
@@ -117,10 +123,10 @@
 	       and plan_receive_status = '달성'
 	</select>
 	
-	<!-- 수신자 일정 달성 여부 조회 -->
+	<!-- 수신자 일정 수락 여부 조회 -->
 	<select id="listReceiverStatus" resultType="PlanReceiverStatusVO">
 		select
-			pr.plan_receive_receiver_no, pr.plan_receive_status,
+			pr.plan_receive_receiver_no, pr.plan_receive_status, pr.plan_receive_is_accept,
 			m.member_name as receiver_name, m.member_department as receiver_department
 		from plan_receive pr
 		join member m on pr.plan_receive_receiver_no = m.member_no

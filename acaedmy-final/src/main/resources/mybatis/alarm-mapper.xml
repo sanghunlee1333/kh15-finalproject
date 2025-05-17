@@ -97,6 +97,7 @@
 				select 
 					a.alarm_no, a.alarm_message, a.alarm_type,
 					a.alarm_read, a.alarm_create_time,
+					a.alarm_plan_no, a.alarm_receiver_no,
 					m.member_name as alarm_sender_name,
 					p.plan_title, p.plan_start_time, p.plan_end_time
 				from alarm a
