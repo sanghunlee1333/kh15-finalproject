@@ -132,7 +132,7 @@ public class PlanRestController {
 						.planReceivePlanNo(planNo)
 						.planReceiveReceiverNo(receiverNo)
 						.planReceiveIsWriter("N")
-						.planReceiveIsAccept("N")
+						.planReceiveIsAccept(null)
 						.planReceiveStatus("미달성")
 					.build();
 			planReceiveDao.insert(planReceiveDto);
@@ -193,10 +193,30 @@ public class PlanRestController {
 	
 	//상세 조회
 	@GetMapping("/{planNo}")
-	public PlanDto find(@PathVariable long planNo) {
+//	public PlanDto find(@PathVariable long planNo) {
+	public PlanWithReceiversVO find(@PathVariable long planNo) {
 		PlanDto planDto = planDao.selectOne(planNo);
 		if(planDto == null) throw new TargetNotFoundException();
-		return planDto;
+//		return planDto;
+		
+		//알림 컴포넌트에서 상세모달 구현으로 코드 변경
+		MemberDto writer = memberDao.selectOne(planDto.getPlanSenderNo());
+
+	    PlanWithReceiversVO vo = new PlanWithReceiversVO();
+	    vo.setPlanNo(planDto.getPlanNo());
+	    vo.setPlanSenderNo(planDto.getPlanSenderNo());
+	    vo.setPlanSenderName(writer.getMemberName());
+	    vo.setPlanSenderDepartment(writer.getMemberDepartment());
+	    vo.setPlanStatus(planDto.getPlanStatus());
+	    vo.setPlanTitle(planDto.getPlanTitle());
+	    vo.setPlanContent(planDto.getPlanContent());
+	    vo.setPlanColor(planDto.getPlanColor());
+	    vo.setPlanStartTime(planDto.getPlanStartTime());
+	    vo.setPlanEndTime(planDto.getPlanEndTime());
+	    vo.setPlanIsAllDay(planDto.getPlanIsAllDay());
+	    vo.setReceivers(planReceiveDao.selectPlanReceiverStatusList(planDto.getPlanNo()));
+	    
+	    return vo;
 	}
 	
 	//삭제
