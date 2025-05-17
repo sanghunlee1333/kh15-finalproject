@@ -31,6 +31,9 @@ import TodoList from './components/Plan/TodoList'
 import Member from './components/utils/member';
 import Admin from './components/utils/admin';
 import EditProfile from './components/Mypage/EditProfile'
+import AdminAttendancePolicy from './components/Admin/AdminAttendancePolicy'
+import AdminAttendanceDetail from './components/Admin/AdminAttendanceDetail'
+
 import AllAlarm from './components/template/AllAlarm';
 import AlarmInitializer from './AlarmInitializer'
  
@@ -147,12 +150,14 @@ function App() {
           <Route path="/member/join" element={<MemberJoin/>}></Route>
 
           {/* MyPage */}
-          <Route path="/mypage/edit" element={<EditProfile/>}></Route>
+          <Route path="/mypage" element={<EditProfile/>}></Route>
 
           {/* Admin */}
           <Route path="/admin/member/list" element={<Admin><MemberList/></Admin>}></Route>
           <Route path="/admin/member/:number" element={<Admin><MemberManage/></Admin>}></Route>
           <Route path="/admin/date" element={<Admin><DateMange/></Admin>}></Route>
+          <Route path="/admin/attendance" element={<Admin><AdminAttendancePolicy/></Admin>}></Route>
+          <Route path="/admin/attendance/detail/:memberNo" element={<Admin><AdminAttendanceDetail/></Admin>}></Route>
 
           {/* Notice */}
           <Route path="/notice/list" element={<NoticeList/>}></Route>

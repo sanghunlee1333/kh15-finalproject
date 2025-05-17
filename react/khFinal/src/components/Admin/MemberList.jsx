@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Jumbotron from "../template/Jumbotron";
 import axios from "axios";
-import { FaCircleXmark, FaImage, FaMagnifyingGlass, FaTrash } from "react-icons/fa6";
+import { FaCircleXmark, FaClock, FaImage, FaMagnifyingGlass, FaTrash } from "react-icons/fa6";
 import {Modal} from "bootstrap";
 import dayjs from 'dayjs';
 import { Link } from "react-router";
@@ -275,7 +275,7 @@ export default function MemberList(){
     
     const dragOver = useCallback(e=>{  e.preventDefault();console.log("dragOver")},[])
     
-    useEffect(()=>{console.log(attachList.file)},[attachList])
+    //useEffect(()=>{console.log(attachList.file)},[attachList])
 
     const dropOnID = async (e) => {
         e.preventDefault();
@@ -457,7 +457,7 @@ export default function MemberList(){
     // },[attachList])
     //useEffect(()=>{console.log(index)},[index]);
 
-    useEffect(()=>{console.log(attachList)},[attachList]);
+   // useEffect(()=>{console.log(attachList)},[attachList]);
     //useEffect(()=>{console.log(imageIndex + " = index")},[imageIndex])
 
     const saveAllAttachment = useCallback(async ()=>{
@@ -561,6 +561,7 @@ export default function MemberList(){
                         <th style={{ width: "20%" }}>이메일</th> */}
                         <th style={{ width: "15%" }}>가입일</th>
                         <th style={{ width: "10%" }}>관리</th>
+                        <th style={{width: "10%"}}>근태</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -577,7 +578,12 @@ export default function MemberList(){
                             <td>
                             <FaTrash className="text-danger" onClick={e => memberDelete(member)} />
                                 <FaImage className="ms-1 text-warning" onClick={e => openModal(member)} />
-                           
+                            </td>
+                            <td>
+                                <Link to={`/admin/attendance/detail/${member.memberNo}`} className="ms-1 text-success">
+                                    <FaClock className="inline" />
+                                </Link>
+
                             </td>
                         </tr>
                     ))
