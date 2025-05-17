@@ -19,16 +19,13 @@ export default function EditProfile(){
 
     const [memberImg, setMemberImg] = useState({attachmentNo:"", url:""})
     
-    const [newAttach,setNewAttach] = useState({
-      attachmentName:"", attachmentType:"", attachmentSize:"",
-    });
+    const [newAttach,setNewAttach] = useState("");
     const zoomModal = useRef();
     const inputImage = useRef();
     
-    const [addressValid, setAddressValid] = useState(false);
-
-    const [contactValid, setContactValid] = useState(false);
-    const [emailValid, setEmailValid] = useState(false);
+    const [addressValid, setAddressValid] = useState(true);
+    const [contactValid, setContactValid] = useState(true);
+    const [emailValid, setEmailValid] = useState(true);
 
     const checkContact = useCallback(()=>{
         const regex = /^010[0-9]{8}$/;
@@ -128,7 +125,8 @@ export default function EditProfile(){
     const closeChangeInfo = useCallback(()=>{
         const target = Modal.getInstance(infoEdit.current);
         target.hide();
-        //setMemberInfo("");
+        // setMemberInfo("");
+        loadOne();
     },[]);
    
 
@@ -183,21 +181,25 @@ export default function EditProfile(){
         return memberPwValid === true && pwCheckValid === true;
     },[memberPwValid, pwCheckValid])
 
-   // useEffect(()=>{console.log(newAttach)},[newAttach])
+
     const changeInfo = useCallback(async ()=>{
-      console.log(member);
-      if(memberImg !== preview && newAttach !== null){
-        //axios  사진저장, 프로필 저장, 기존 사진 삭제, 정보 변경
-       // const resp = await axios.post("/mypage/profile", newAttach);
-        console.log("multipart");
+    
+      if(newAttach){
+     
+      const formData = new FormData();
+      formData.append("newAttach", newAttach);
+     
+     
+        const resp = await axios.post("/mypage/profile", formData);
+      
       }
 
-      const resp = await axios.patch("/mypage", member);
-
+      const resp = await axios.patch("/mypage/edit", member);
+     
+      // console.log("email valid = " + emailValid );
+      // console.log("contact valid = " + contactValid );
+      // console.log("address valid = " + addressValid );
       closeChangeInfo();
-      console.log("email valid = " + emailValid );
-      console.log("contact valid = " + contactValid );
-      console.log("address valid = " + addressValid );
     },[memberImg, preview, newAttach, member, emailValid, contactValid, addressValid])
 
     const blockButton = useMemo(()=>{
@@ -217,11 +219,7 @@ export default function EditProfile(){
     const changeProfile = useCallback((e)=>{
       const file = e.target.files[0];
       if (!file) return;
-      setNewAttach({
-        attachmentName:file.name,
-        attachmentType:file.type,
-        attachmentSize:file.size
-      })
+      setNewAttach(file);
       const url = URL.createObjectURL(file);
       // console.log(file.name);
       // console.log(file.type);
@@ -305,7 +303,7 @@ export default function EditProfile(){
   <div className="d-flex flex-column gap-3">
     <button className="btn btn-outline-primary" onClick={openChangePw}>비밀번호 변경</button>
     <button className="btn btn-outline-secondary" onClick={openChangeInfo}>정보 수정</button>
-    <button className="btn btn-outline-danger">계정 비활성화</button>
+
   </div>
 
 </div>

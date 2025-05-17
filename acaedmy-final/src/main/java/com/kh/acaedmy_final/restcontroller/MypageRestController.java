@@ -63,37 +63,39 @@ public class MypageRestController {
 		return map;
 	}
 	
-	@PostMapping("/")
-	public boolean addOrChangeImage(@RequestHeader ("Authorization") String bearerToken, @RequestParam MultipartFile attach ) throws IllegalStateException, IOException {
+	@PostMapping("/profile")
+	public boolean addOrChangeImage(@RequestHeader ("Authorization") String bearerToken, @RequestParam MultipartFile newAttach ) throws IllegalStateException, IOException {
 		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
-		//MemberDto memberDto = memberDao.selectOne(claimVO.getMemberNo());
-		
+		MemberDto memberDto = memberDao.selectOne(claimVO.getMemberNo());
+//		System.err.println("addorChange");
+//		System.err.println(newAttach);
 		Integer targetNo = memberDocumentDao.selectOne(claimVO.getMemberNo());
-		AttachmentDto dto = attachmentService.save(attach);
+		AttachmentDto dto = attachmentService.save(newAttach);
 		if(targetNo != null) { // edit
 			boolean isValid = memberDocumentDao.update(dto.getAttachmentNo(), claimVO.getMemberNo());
 			attachmentService.delete(targetNo);
 			return isValid;
 		}//
 		else { // insert
-	//		int attachmentNo = attachmentService.save
 			boolean isValid = memberDocumentDao.connect(dto.getAttachmentNo(), claimVO.getMemberNo());
 			return isValid;
 		}
-		
+//		return true;
 	}
 	
 	@PatchMapping("/edit")
 	public boolean editInfo(@RequestHeader ("Authorization") String bearerToken, @RequestBody MemberDto memberDto) {
 		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
-		//return memberDao.editAll(claimVO.getMemberNo(),	memberDto);
+	
 		if(claimVO == null) {
 			return false;
 		}
 		return memberDao.editPart(memberDto);
 	}
+	
 	@Autowired
 	public PasswordEncoder encoder;
+	
 	@PostMapping("/changePw")
 //	public boolean changePw(@RequestHeader ("Authorization") String bearerToken) {
 		public boolean changePw(@RequestHeader ("Authorization") String bearerToken, @RequestBody PwRequestVO vo) {
@@ -129,16 +131,6 @@ public class MypageRestController {
 		return false;
 	}
 	
-	@PostMapping("/profile")
-	public boolean newAttach(@RequestHeader ("Authorization") String bearerToken, @RequestParam MultipartFile newAttach) throws IllegalStateException, IOException{
-		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
-		Integer originAttach = memberDocumentDao.selectOne(claimVO.getMemberNo());
-		if(originAttach != null) {
-			attachmentService.delete(originAttach);			
-		}
-		AttachmentDto attachmentDto = attachmentService.save(newAttach);
-		return memberDocumentDao.connect(attachmentDto.getAttachmentNo(), claimVO.getMemberNo());
-	}
 	
 }
 
