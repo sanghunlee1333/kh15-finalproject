@@ -17,8 +17,9 @@ import { loginState, userDepartmentState, userLoadingState, userNoState } from '
 import { alarmListState } from './components/utils/alarm';
 import { unReadAlarmCountState } from './components/utils/alarm'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
+import { Modal } from 'bootstrap';
 import MemberList from './components/Admin/MemberList'
 import MemberManage from './components/Admin/MemberManage'
 import { Bounce, ToastContainer } from 'react-toastify'
@@ -44,6 +45,20 @@ function App() {
   const login = useRecoilValue(loginState);
   const setAlarmList = useSetRecoilState(alarmListState);
   const [unReadAlarmCount, setUnReadAlarmCount] = useRecoilState(unReadAlarmCountState);
+
+  //일정 상세 모달을 가져오기 전에 초기화!
+  const [groupContacts, setGroupContacts] = useState({});
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const detailModal = useRef();
+  const openDetailModal = useCallback(() => {
+    if (!detailModal.current) return;
+    const target = Modal.getOrCreateInstance(detailModal.current);
+    target.show();
+  }, []);
+  const closeDetailModal = useCallback(() => {
+    const target = Modal.getInstance(detailModal.current);
+    if (target) target.hide();
+  }, []);
   
   let stay = false;
   const refreshLogin = useCallback(async ()=>{
@@ -103,8 +118,13 @@ function App() {
         const alarm = `/alarm/${userNo}`;
         client.subscribe(alarm, (message)=>{
           const payload = JSON.parse(message.body); 
-          setUnReadAlarmCount(prev=>prev+1);
-          setAlarmList(prev=>[payload, ...prev]); // 최신 알림을 앞으로 추가
+
+          if (window.location.pathname === "/alarm") {
+            setUnReadAlarmCount(0);
+          } else {
+            setUnReadAlarmCount(prev => prev + 1);
+          }
+          setAlarmList(prev=>[payload, ...prev]); //최신 알림을 앞으로 추가
 
           //강제로 알림 목록 다시 불러오게 AllAlarm 컴포넌트에 이벤트 전달
           window.dispatchEvent(new CustomEvent("refreshAlarmList"));
@@ -122,6 +142,16 @@ function App() {
     console.log(loading);
 
   },[loading])
+
+  //연락처 정보 미리 초기화
+  useEffect(() => {
+    const token = sessionStorage.getItem("refreshToken") || localStorage.getItem("refreshToken");
+    axios.get("/member/contactIncludeMe", {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(resp => {
+      setGroupContacts(resp.data);
+    });
+  }, []);
 
   if (!loading) return <div>로딩 중...</div>;
   
@@ -143,7 +173,18 @@ function App() {
           <Route path="/" element={<Member><Mainpage/></Member>}></Route>
 
           {/* Alarm */}
-          <Route path="/alarm" element={<AllAlarm />} />
+          <Route path="/alarm" element={
+            <AllAlarm
+              groupContacts={groupContacts}
+              loginUserNo={userNo}
+              detailModal={detailModal}
+              selectedEvent={selectedEvent}
+              setSelectedEvent={setSelectedEvent}
+              openDetailModal={openDetailModal}
+              closeDetailModal={closeDetailModal}
+              showDeleteButton={false} // 여기서 넣어야 함!
+            />
+          }/>
 
           {/* Member */}
           <Route path="/member/login" element={<MemberLogin/>}></Route>

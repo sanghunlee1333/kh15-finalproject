@@ -22,14 +22,13 @@ import { parseJwt } from '../utils/jwt';
 import "react-datepicker/dist/react-datepicker.css";
 import './TeamPlan.css';
 
-import { FaCheck, FaCrown, FaLightbulb, FaList, FaListUl, FaRegCalendarCheck, FaRegCalendarPlus } from 'react-icons/fa';
-import { IoPersonSharp } from 'react-icons/io5';
+import { FaCalendarAlt, FaCheck, FaCrown, FaLightbulb, FaList, FaListUl, FaRegCalendarCheck, FaRegCalendarPlus } from 'react-icons/fa';
+import { IoPerson, IoPersonSharp } from 'react-icons/io5';
 import './PlanColor.css';
 import TodoList from './TodoList';
 import { useSetRecoilState } from 'recoil';
 
 const colorOptions = ['#dc3545', '#fd7e14', '#ffc107', '#28a745', '#20c997', '#0d6efd', '#6f42c1', '#d63384', '#6c757d'];
-
 
 export default function TeamPlan() {
 
@@ -67,10 +66,10 @@ export default function TeamPlan() {
     const [noResults, setNoResults] = useState(false); //검색 결과가 없을 경우 true가 되며, 사용자에게 안내 메시지를 보여주기 위해 사용
     const [selectedMembers, setSelectedMembers] = useState([]); //일정에 참여할 수신자들의 번호 목록
 
+    const [eventRefreshKey, setEventRefreshKey] = useState(0); //selectedEvent 강제 리렌더를 위한 트리거
     const [selectedDate, setSelectedDate] = useState([]); //클릭한 날짜에 해당하는 일정
     const [selectedEvent, setSelectedEvent] = useState(null); //클릭한 일정의 상세 정보
 
-    // const [status, setStatus] = useState({});
     const [currentStatus, setCurrentStatus] = useState({});
 
     //ref
@@ -380,7 +379,7 @@ export default function TeamPlan() {
         const statusFromReceiver = target?.extendedProps?.receivers?.find(r => r.planReceiveReceiverNo === loginUserNo)?.planReceiveStatus;
 
         if (planType === '개인') {
-            // 개인일정이면 planStatus 기준으로 '완료' → '달성', '미완료' → '미달성' 변환
+            //개인일정이면 planStatus 기준으로 '완료' → '달성', '미완료' -> '미달성' 변환
             return target?.extendedProps?.planStatus === '완료' ? '달성' : '미달성';
         }
 
@@ -482,6 +481,7 @@ export default function TeamPlan() {
         //2. FullCalendar 내부 이벤트도 업데이트
         if (eventObj) { 
             eventObj.setExtendedProp("planStatus", newStatus); //클라이언트 상의 FullCalendar 이벤트 객체의 상태를 직접 업데이트
+            eventObj.setProp("title", eventObj.title.endsWith(" ") ? eventObj.title.trim() : eventObj.title + " ");
             if (isTeam) { //팀 일정인 경우에만 receivers 배열 내부의 내 수신자 상태를 바꿈
                 const updatedReceivers = eventObj.extendedProps.receivers.map(r =>
                     r.planReceiveReceiverNo === loginUserNo
@@ -489,38 +489,30 @@ export default function TeamPlan() {
                         : r
                     );
                 eventObj.setExtendedProp("receivers", updatedReceivers); //setExtendedProp으로 FullCalendar 내부 상태까지 동기화
-            }
+            } 
         }
 
+        //이 값은 상태 토글 버튼 하이라이트 등 UI 조건 판단에 사용됨
+        setCurrentStatus(prev => ({ //currentStatus 상태도 동기화
+            ...prev,
+            [planNo]: newStatus
+        }));
+
         //3. selectedDate도 업데이트
-        const updatedSelected = selectedDate.map(event => { //날짜별 모달에서 선택된 일정들 중, 현재 planNo에 해당하는 것만 수정
-            if (event.extendedProps.planNo !== planNo) return event;
+        selectedDate.forEach(event => {
+            if (event.extendedProps.planNo !== planNo) return;
           
-            const updatedReceivers = isTeam // 팀이면 receivers 내부의 내 상태만 갱신
-                ? event.extendedProps.receivers.map(r => 
-                    r.planReceiveReceiverNo === loginUserNo
-                        ? { ...r, planReceiveStatus: newStatus }
-                        : r
-                    )
-                : event.extendedProps.receivers; //개인이면 따로 손댈 필요 없음
+            event.setExtendedProp("planStatus", statusForServer);
           
-            return { //상태 변경된 이벤트로 새 배열을 만들어 selectedDate 상태 갱신
-                id: event.id,
-                title: event.title,
-                start: event.start,
-                end: event.end,
-                allDay: event.allDay,
-                display: event.display,
-                backgroundColor: event.backgroundColor,
-                borderColor: event.borderColor,
-                extendedProps: {
-                    ...event.extendedProps,
-                    planStatus: statusForServer,
-                    receivers: updatedReceivers
-                }
-            };
-        });
-        setSelectedDate([...updatedSelected]);
+            if (isTeam) {
+              const updatedReceivers = event.extendedProps.receivers.map(r =>
+                r.planReceiveReceiverNo === loginUserNo
+                  ? { ...r, planReceiveStatus: newStatus }
+                  : r
+              );
+              event.setExtendedProp("receivers", updatedReceivers);
+            }
+          });
 
         //3. 전체 이벤트도 동기화 (리스트 밖에서도 쓰일 수 있으므로)
         //전체 이벤트 배열에서도 동일한 방식으로 상태를 반영하여 allEvents 갱신
@@ -555,13 +547,32 @@ export default function TeamPlan() {
                 );
                 selectedEvent.setExtendedProp("receivers", updatedReceivers);
             }
+            //강제 리렌더링 트리거 작동
         }
-        //이 값은 상태 토글 버튼 하이라이트 등 UI 조건 판단에 사용됨
-        setCurrentStatus(prev => ({ //currentStatus 상태도 동기화
-            ...prev,
-            [planNo]: newStatus
-        }));
+        setEventRefreshKey(prev => prev + 1);
     }, [selectedDate, allEvents]);
+
+    //일정 완료되면, 캘린더 바에 완료 표시
+    const renderEventContent = (eventInfo) => {
+        const isHoliday = eventInfo.event.extendedProps?.isHoliday;
+        const isCompleted = eventInfo.event.extendedProps.planStatus === "완료";
+
+        //공휴일이면 제목만 출력
+        if (isHoliday) {
+            return null;
+        }
+
+        //일반 일정은 완료/미완료 표시
+        return (
+            <div className="fc-event-title-container">
+                {isCompleted 
+                    ? <b className="text-success me-1">완료</b>
+                    : <b className="text-muted me-1">미완료</b>
+                }
+                <span>{eventInfo.event.title}</span>
+            </div>
+        );
+    };
 
     //일정 등록 모달 열기/닫기
     const openMakeModal = useCallback((date = null) => {
@@ -676,7 +687,7 @@ export default function TeamPlan() {
                 <div className="d-flex align-items-center justify-content-between">
                     <div className="d-flex align-items-center">
                         <h2>
-                            <FaListUl className="text-primary me-1" />
+                            <FaCalendarAlt className="text-danger me-2" />
                             <span className="align-middle">일정</span>
                         </h2>
                     </div>
@@ -739,6 +750,7 @@ export default function TeamPlan() {
                     // start: ''
                 }}
                 events={filteredEvents} //실제 달력에 표시할 이벤트 목록. useState로 관리 중인 events 배열이 들어가고, loadPlans()에서 서버에서 불러온 데이터를 여기로 채워 넣음
+                eventContent={renderEventContent} //이벤트 바에 표시할 내용
                 eventOrder={(a, b) => {
                     const aIsHoliday = a.extendedProps?.isHoliday ? 1 : 0;
                     const bIsHoliday = b.extendedProps?.isHoliday ? 1 : 0;
@@ -908,10 +920,14 @@ export default function TeamPlan() {
                                 </div>
                                 <div className="form-check mb-2">
                                     <input type="checkbox" className="form-check-input" id="selectAllMembers"
-                                        checked={selectedMembers.length > 0 && selectedMembers.length === Object.values(groupContacts).flat().length}
+                                        checked={selectedMembers.length > 0 && selectedMembers.length === Object.values(groupContacts)
+                                                    .flat()
+                                                    .filter(m => m.memberNo !== loginUserNo).length}
                                         onChange={e=>{
                                             if (e.target.checked) {
-                                                const all = Object.values(groupContacts).flat().map(m => m.memberNo);
+                                                const all = Object.values(groupContacts).flat()
+                                                    .filter(m => m.memberNo !== loginUserNo)
+                                                    .map(m => m.memberNo);
                                                 setSelectedMembers(all);
                                             } else {
                                                 setSelectedMembers([]);
@@ -925,22 +941,27 @@ export default function TeamPlan() {
                                 
                                 {/* 부서별 연락처 리스트 */}
                                 <div className={`rounded p-2 ${receiverChoice ? (selectedMembers.length > 0 ? 'is-valid' : 'is-invalid') : ''}`}>
-                                <ul className="list-group text-responsive" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                                <ul className="list-group text-responsive" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                                     {Object.keys(filterContacts).map(department => {
                                         const members = filterContacts[department];
-                                        const selectAll = members.every(member=>selectedMembers.includes(member.memberNo));
+                                        const selectAll = members
+                                            .filter(m => m.memberNo !== loginUserNo)
+                                            .every(m => selectedMembers.includes(m.memberNo));
 
                                         return (
                                         <li key={department} className="list-group-item p-0 border-0">
                                             <div className="bg-light px-3 py-2 border-top text-secondary">
                                                 <input type="checkbox" className="form-check-input me-2" checked={selectAll} 
                                                     onChange={e=>{
-                                                        if(e.target.checked) {
-                                                            const newMembers= members.map(member=>member.memberNo).filter(no=>!selectedMembers.includes(no));
-                                                            setSelectedMembers(prev=>[...prev, ...newMembers]);
+                                                        const memberNos = members
+                                                            .filter(m => m.memberNo !== loginUserNo)
+                                                            .map(m => m.memberNo);
+
+                                                        if (e.target.checked) {
+                                                            const newMembers = memberNos.filter(no => !selectedMembers.includes(no));
+                                                            setSelectedMembers(prev => [...prev, ...newMembers]);
                                                         } else {
-                                                            const removeMemberNo = members.map(member=>member.memberNo);
-                                                            setSelectedMembers(prev=>prev.filter(no=>!removeMemberNo));
+                                                            setSelectedMembers(prev => prev.filter(no => !memberNos.includes(no)));
                                                         }
                                                     }}
                                                     />
@@ -948,17 +969,26 @@ export default function TeamPlan() {
                                             </div>
 
                                             <ul className="list-group list-group-flush">
-                                            {members.map(contact => (
-                                                <li className="list-group-item d-flex align-items-center" key={contact.memberNo}>
-                                                <input
-                                                    type="checkbox"
-                                                    className="form-check-input me-2"
-                                                    checked={selectedMembers.includes(contact.memberNo)}
-                                                    onChange={() => toggleMember(contact.memberNo)}
-                                                />
-                                                <span>{contact.memberName}</span>
-                                                </li>
-                                            ))}
+                                            {members.map(contact => {
+                                                const isMe = contact.memberNo === loginUserNo;
+
+                                                return (
+                                                    <li className="list-group-item d-flex align-items-center" key={contact.memberNo}>
+                                                        {!isMe && (
+                                                            <input
+                                                                type="checkbox"
+                                                                className="form-check-input me-2"
+                                                                checked={selectedMembers.includes(contact.memberNo)}
+                                                                onChange={() => toggleMember(contact.memberNo)}
+                                                            />
+                                                        )}
+                                                        <span className={isMe ? "fw-bold" : ""}>
+                                                            {contact.memberName}
+                                                            {isMe && <span className="ms-1">(나)</span>}
+                                                        </span>
+                                                    </li>
+                                                );
+                                            })}
                                             </ul>
                                         </li>
                                     );
@@ -1013,7 +1043,7 @@ export default function TeamPlan() {
                         </h1>
                         <button type="button" className="btn-close" aria-label="Close" onClick={closeListModal}></button>
                     </div>
-                    <div className="modal-body text-responsive">
+                    <div className="modal-body text-responsive" style={{ maxHeight: '40vh', overflowY: 'auto' }}>
                         {selectedDate.map(event => {
                             const status = getPlanStatus(event.extendedProps.planNo);
                             const isHoliday = event.extendedProps?.isHoliday;
@@ -1055,17 +1085,23 @@ export default function TeamPlan() {
                                     </div>
                                     <div className={`d-flex align-items-center ${event.extendedProps.planType === "팀" ? "justify-content-between" : "justify-content-end"}`}>
                                         {event.extendedProps.planType === "팀" && (
-                                        <span className="text-responsive">참여: {total}명, 수락: {accepted}명 (진행 : {percent}%)</span>
+                                            <div className="d-flex flex-column text-responsive mt-1">
+                                                <div>
+                                                    <span>참여: {total}명 | </span>
+                                                    <span>수락: {accepted} / {total}명</span>
+                                                </div>
+                                                <span>진행 : {percent}%</span>
+                                            </div>
                                         )}
                                         <div className="btn-group btn-group-sm" role="group" aria-label="상태 토글">
-                                            <button type="button" className={`btn ${currentStatus[event.extendedProps.planNo] === '미달성' ? 'btn-secondary' : 'btn-outline-secondary'}`}
+                                            <button type="button"  className={`btn ${getPlanStatus(event.extendedProps.planNo) === '미달성' ? 'btn-secondary' : 'btn-outline-secondary'}`}
                                                 onClick={e=>{
                                                     e.stopPropagation(); // 부모 div 클릭 방지
                                                     changeStatusToggle(event.extendedProps.planNo, '미달성');
                                                 }}>
                                                 미달성
                                             </button>
-                                            <button type="button" className={`btn ${currentStatus[event.extendedProps.planNo] === '달성' ? 'btn-success' : 'btn-outline-success'}`}
+                                            <button type="button" className={`btn ${getPlanStatus(event.extendedProps.planNo) === '달성' ? 'btn-success' : 'btn-outline-success'}`}
                                                 onClick={e => {
                                                     e.stopPropagation();
                                                     changeStatusToggle(event.extendedProps.planNo, '달성');
@@ -1090,6 +1126,8 @@ export default function TeamPlan() {
         <div className="modal fade" tabIndex="-1" ref={detailModal} data-bs-backdrop="static"> {/* 모달 바깥쪽 영역. tabinden -> tabIndex */}
             <div className="modal-dialog modal-lg"> {/* 모달 영역 */}
                 <div className="modal-content">
+                {selectedEvent && (
+                <div key={eventRefreshKey}>
                     {/* 상세일정 - 제목(헤더) */}
                     <div className="modal-header">
                         <h1 className="modal-title text-responsive">
@@ -1185,26 +1223,47 @@ export default function TeamPlan() {
                                                 // JSX 블록 전체를 괄호로 감싸고 return 앞에는 반드시 중괄호로 열어야 함
                                                 return (
                                                     <li key={department}>
-                                                        <div className="bg-light px-3 py-2 border-top text-secondary">{department}</div>
+                                                        <div className="bg-light fw-bold px-3 py-2 border-top text-secondary">{department}</div>
                                                         <ul className="list-group list-group-flush">
                                                         {members.map(contact => {
                                                             const isMe = contact.memberNo === loginUserNo;
-                                                            const status = selectedEvent?.extendedProps?.receivers?.find(
-                                                                r => r.planReceiveReceiverNo === contact.memberNo)
-                                                                ?.planReceiveStatus || '미달성';
+                                                            const matchedReceiver = selectedEvent?.extendedProps?.receivers?.find(
+                                                                r => r.planReceiveReceiverNo === contact.memberNo
+                                                            );
+
+                                                            console.log(matchedReceiver);
+
+                                                            const status = matchedReceiver?.planReceiveStatus || '미달성';
+                                                            const isAccepted = matchedReceiver?.planReceiveIsAccept === 'Y';
                                                         
                                                         return (    
                                                             <li className="list-group-item d-flex justify-content-between align-items-center" key={contact.memberNo}>
-                                                                {isMe ? ( 
-                                                                <span className="fw-bold">{contact.memberName}
-                                                                    <span className="ms-1">(나)</span>
-                                                                </span>
-                                                                ) : (
-                                                                <span>{contact.memberName}</span>    
-                                                                )}
-                                                                <span className={`badge ${status === '달성' ? 'bg-success' : 'bg-secondary'}`}>
-                                                                    {status}
-                                                                </span>
+                                                                <>
+                                                                    {isMe ? ( 
+                                                                        <span className="d-flex align-items-center">
+                                                                            <IoPerson className="me-1" />
+                                                                            <span className="fw-bold">{contact.memberName}</span>
+                                                                            {isAccepted ? 
+                                                                                <span className="text-success ms-1">수락</span>
+                                                                            :
+                                                                                <span className="text-muted ms-1">수락 전</span>
+                                                                            }
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span>{contact.memberName}
+                                                                            <span className="text-muted">
+                                                                                {isAccepted ? 
+                                                                                    <span className="text-success ms-1">수락</span>
+                                                                                :
+                                                                                    <span className="text-muted ms-1">수락 전</span>
+                                                                                }
+                                                                            </span>
+                                                                        </span>
+                                                                    )}
+                                                                </>
+                                                                    <span className={`badge ${status === '달성' ? 'bg-success' : 'bg-secondary'}`}>
+                                                                        {status}
+                                                                    </span>
                                                             </li>
                                                             );
                                                         })}
@@ -1219,12 +1278,32 @@ export default function TeamPlan() {
                         </>
                         )}
                     </div>
-                    <div className="modal-footer">
-                        <button type="button" className="btn btn-secondary text-responsive" onClick={closeDetailModal}>닫기</button>
-                        {selectedEvent?.extendedProps?.planSenderNo === loginUserNo && (
-                        <button type="button" className="btn btn-danger text-responsive" onClick={openDeleteModal}>삭제</button>
+                    <div className="modal-footer d-flex justify-content-between align-items-center">
+                        {/* 상태 토글 (왼쪽 정렬) */}
+                        <div className="btn-group btn-group" role="group" aria-label="상태 토글">
+                            <button type="button" className={`btn ${getPlanStatus(selectedEvent?.extendedProps.planNo) === '미달성' 
+                                ? 'btn-secondary' : 'btn-outline-secondary'} text-responsive`}
+                                onClick={() => changeStatusToggle(selectedEvent?.extendedProps.planNo, '미달성')}
+                            >
+                                미달성
+                            </button>
+                            <button type="button" className={`btn ${getPlanStatus(selectedEvent?.extendedProps.planNo) === '달성' 
+                                ? 'btn-success' : 'btn-outline-success'} text-responsive`}
+                                onClick={() => changeStatusToggle(selectedEvent?.extendedProps.planNo, '달성')}
+                            >
+                                달성
+                            </button>
+                        </div>
+                        {/* 닫기 / 삭제 버튼 (오른쪽 정렬) */}
+                        <div>
+                            <button type="button" className="btn btn-secondary text-responsive" onClick={closeDetailModal}>닫기</button>
+                            {selectedEvent?.extendedProps?.planSenderNo === loginUserNo && (
+                            <button type="button" className="btn btn-danger text-responsive ms-2" onClick={openDeleteModal}>삭제</button>
                         )}
+                        </div>
                     </div>
+                </div>
+                )}
                 </div>
             </div>
         </div>

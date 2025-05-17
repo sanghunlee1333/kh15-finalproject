@@ -21,7 +21,7 @@ import { FaCheck, FaCrown, FaLightbulb, FaList, FaRegCalendarCheck, FaRegCalenda
 import './TodoList.css';
 import './PlanColor.css';
 import { parseJwt } from '../utils/jwt';
-import { IoPersonSharp } from 'react-icons/io5';
+import { IoPerson, IoPersonSharp } from 'react-icons/io5';
 
 const colorOptions = ['#dc3545', '#fd7e14', '#ffc107', '#28a745', '#20c997', '#0d6efd', '#6f42c1', '#d63384', '#6c757d'];
 
@@ -625,26 +625,44 @@ export default function TodoList({ allEvents = [], fetchAllEvents, groupContacts
                                                 // JSX 블록 전체를 괄호로 감싸고 return 앞에는 반드시 중괄호로 열어야 함
                                                 return (
                                                     <li key={department}>
-                                                        <div className="bg-light px-3 py-2 border-top text-secondary">{department}</div>
+                                                        <div className="bg-light fw-bold px-3 py-2 border-top text-secondary">{department}</div>
                                                         <ul className="list-group list-group-flush">
                                                         {members.map(contact => {
                                                             const isMe = contact.memberNo === loginUserNo;
-                                                            const status = selectedEvent?.extendedProps?.receivers?.find(
-                                                                r => r.planReceiveReceiverNo === contact.memberNo)
-                                                                ?.planReceiveStatus || '미달성';
+                                                            const matchedReceiver = selectedEvent?.extendedProps?.receivers?.find(
+                                                                r => r.planReceiveReceiverNo === contact.memberNo
+                                                            );
+                                                            const status = matchedReceiver?.planReceiveStatus || '미달성';
+                                                            const isAccepted = matchedReceiver?.planReceiveIsAccept === 'Y';
                                                         
                                                         return (    
                                                             <li className="list-group-item d-flex justify-content-between align-items-center" key={contact.memberNo}>
-                                                                {isMe ? ( 
-                                                                <span className="fw-bold">{contact.memberName}
-                                                                    <span className="ms-1">(나)</span>
-                                                                </span>
-                                                                ) : (
-                                                                <span>{contact.memberName}</span>    
-                                                                )}
-                                                                <span className={`badge ${status === '달성' ? 'bg-success' : 'bg-secondary'}`}>
-                                                                    {status}
-                                                                </span>
+                                                                <>
+                                                                    {isMe ? ( 
+                                                                        <span className="d-flex align-items-center">
+                                                                            <IoPerson className="me-1" />
+                                                                            <span className="fw-bold">{contact.memberName}</span>
+                                                                            {isAccepted ? 
+                                                                                <span className="text-success ms-1">수락</span>
+                                                                            :
+                                                                                <span className="text-muted ms-1">수락 전</span>
+                                                                            }
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span>{contact.memberName}
+                                                                            <span className="text-muted">
+                                                                                {isAccepted ? 
+                                                                                    <span className="text-success ms-1">수락</span>
+                                                                                :
+                                                                                    <span className="text-muted ms-1">수락 전</span>
+                                                                                }
+                                                                            </span>
+                                                                        </span>
+                                                                    )}
+                                                                </>
+                                                                    <span className={`badge ${status === '달성' ? 'bg-success' : 'bg-secondary'}`}>
+                                                                        {status}
+                                                                    </span>
                                                             </li>
                                                             );
                                                         })}
