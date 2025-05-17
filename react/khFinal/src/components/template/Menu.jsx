@@ -6,7 +6,7 @@ import { FaLightbulb } from "react-icons/fa6";
 import { useCallback, useRef } from "react";
 import { Modal } from "bootstrap";
 import axios from "axios";
-import { useRecoilState, useRecoilValue } from "recoil";
+import { useRecoilState, useRecoilValue, useResetRecoilState } from "recoil";
 import { loginState, userDepartmentState, userNoState } from "../utils/stroage";
 import { unReadAlarmCountState } from '../utils/alarm';
 
@@ -16,6 +16,7 @@ export default function Menu() {
     const [userDepartment,setUserDepartment] = useRecoilState(userDepartmentState);
     const login = useRecoilValue(loginState);
     const unReadAlarmCount = useRecoilValue(unReadAlarmCountState);
+    const resetAlarmCount = useResetRecoilState(unReadAlarmCountState);
 
     const logoutModal = useRef();
     const gotoLogout = useCallback( ()=>{
@@ -25,16 +26,16 @@ export default function Menu() {
     },[])
 
     const sayYes = useCallback(async()=>{
-          await axios.delete("/member/logout");
-      window.localStorage.removeItem('refreshToken');
-      window.sessionStorage.removeItem('refreshToken');
-      setUserNo("");
-      setUserDepartment("");
-       const target = Modal.getInstance(logoutModal.current);
+        await axios.delete("/member/logout");
+        window.localStorage.removeItem('refreshToken');
+        window.sessionStorage.removeItem('refreshToken');
+        setUserNo("");
+        setUserDepartment("");
+        resetAlarmCount(); //알림 개수 초기화
+
+        const target = Modal.getInstance(logoutModal.current);
         target.hide();
-      navigate('member/login'); 
-
-
+        navigate('member/login'); 
     },[])
     const sayNo = useCallback(()=>{
         const target = Modal.getInstance(logoutModal.current);

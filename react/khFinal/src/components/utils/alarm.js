@@ -13,7 +13,7 @@ const alarmListState = atom({
         // "planNo": 12, // 수락/거절 처리 시 필요
         // "isActionRequired": true, // 수락/거절 등 액션이 필요한지
         // "isAccepted": null // null / true / false
-    ], // { message, timestamp, type } 형태
+    ], 
 });
 
 const unReadAlarmCountState = atom({

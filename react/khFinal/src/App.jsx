@@ -17,7 +17,7 @@ import { loginState, userDepartmentState, userLoadingState, userNoState } from '
 import { alarmListState } from './components/utils/alarm';
 import { unReadAlarmCountState } from './components/utils/alarm'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import axios from 'axios'
 import MemberList from './components/Admin/MemberList'
 import MemberManage from './components/Admin/MemberManage'
@@ -32,7 +32,8 @@ import Member from './components/utils/member';
 import Admin from './components/utils/admin';
 import EditProfile from './components/Mypage/EditProfile'
 import AllAlarm from './components/template/AllAlarm';
-
+import AlarmInitializer from './AlarmInitializer'
+ 
 function App() {
   const [userNo, setUserNo] = useRecoilState(userNoState);
   const [userDepartment, setUserDepartment] = useRecoilState(userDepartmentState);
@@ -40,7 +41,7 @@ function App() {
   const login = useRecoilValue(loginState);
   const setAlarmList = useSetRecoilState(alarmListState);
   const [unReadAlarmCount, setUnReadAlarmCount] = useRecoilState(unReadAlarmCountState);
-
+  
   let stay = false;
   const refreshLogin = useCallback(async ()=>{
     let refreshToken = window.sessionStorage.getItem("refreshToken");
@@ -56,9 +57,10 @@ function App() {
     try{
       axios.defaults.headers.common["Authorization"] = `Bearer ${refreshToken}`;
       const resp = await axios.post("/member/refresh");
+      
       setUserNo(resp.data.memberNo);
       setUserDepartment(resp.data.memberDepartment);
-      // console.log(resp.data);
+
       if(stay){
         window.sessionStorage.removeItem("refreshToken");
         window.localStorage.setItem("refreshToken", resp.data.refreshToken);
@@ -100,6 +102,9 @@ function App() {
           const payload = JSON.parse(message.body); 
           setUnReadAlarmCount(prev=>prev+1);
           setAlarmList(prev=>[payload, ...prev]); // 최신 알림을 앞으로 추가
+
+          //강제로 알림 목록 다시 불러오게 AllAlarm 컴포넌트에 이벤트 전달
+          window.dispatchEvent(new CustomEvent("refreshAlarmList"));
         });
       },
       debug: () => {}
@@ -119,6 +124,9 @@ function App() {
   
   return (
     <>
+      {/* 로그인 시, 알림 갯수 초기화 */}
+      {userNo && loading && <AlarmInitializer />}
+
       {/* 메뉴 */}
       <Menu unReadAlarmCount={unReadAlarmCount}/>
 
