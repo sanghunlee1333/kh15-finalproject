@@ -17,14 +17,15 @@ dayjs.extend(relativeTime);
 dayjs.locale('ko');
 
 import "react-datepicker/dist/react-datepicker.css";
-import { FaCheck, FaLightbulb, FaList, FaRegCalendarCheck, FaRegCalendarPlus } from 'react-icons/fa';
+import { FaCheck, FaCrown, FaLightbulb, FaList, FaRegCalendarCheck, FaRegCalendarPlus } from 'react-icons/fa';
 import './TodoList.css';
 import './PlanColor.css';
-import { IoPersonSharp } from 'react-icons/io5';
+import { parseJwt } from '../utils/jwt';
+import { IoPerson, IoPersonSharp } from 'react-icons/io5';
 
 const colorOptions = ['#dc3545', '#fd7e14', '#ffc107', '#28a745', '#20c997', '#0d6efd', '#6f42c1', '#d63384', '#6c757d'];
 
-export default function TodoList({ allEvents = [], fetchAllEvents }) {
+export default function TodoList({ allEvents = [], fetchAllEvents, groupContacts = {}}) {
 
     //state
     const [calendarView, setCalendarView] = useState('listWeek'); // 초기값 주간
@@ -37,8 +38,6 @@ export default function TodoList({ allEvents = [], fetchAllEvents }) {
     const [content, setContent] = useState(""); //일정 내용
     const [startTime, setStartTime] = useState(new Date()); //일정 시작일
     const [endTime, setEndTime] = useState(new Date(new Date().getTime() + 60 * 60 * 1000)); //일정 종료일
-
-    const [groupContacts, setGroupContacts] = useState({}); //전체 연락처 정보를 부서별로 저장
 
     const [allDay, setAllDay] = useState(false);
     const [planColor, setPlanColor] = useState('#0d6efd');
@@ -57,6 +56,11 @@ export default function TodoList({ allEvents = [], fetchAllEvents }) {
     const deleteModal = useRef(); //상세 일정 -> 삭제 시 뜨는 모달 참조
 
     //memo
+    const loginUserNo = useMemo(() => {
+        const token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
+        return parseJwt(token)?.memberNo;
+    }, []);
+
     //종료일이 시작일보다 앞선 경우 처리
     const isInvalidEndTime = useMemo(() => {
         if (!startTime || !endTime) return false; // 둘 다 존재할 때만 비교
@@ -92,8 +96,10 @@ export default function TodoList({ allEvents = [], fetchAllEvents }) {
     const todayEvents = useMemo(() => {
         return allEvents
             .filter(event => {
-                const planType = event.extendedProps?.planType;
+                if (event.extendedProps?.isHoliday) return true;
 
+                const planType = event.extendedProps?.planType;
+                
                 return (
                     viewType === "전체" ||
                     (viewType === "개인" && planType === "개인") ||
@@ -102,7 +108,6 @@ export default function TodoList({ allEvents = [], fetchAllEvents }) {
             })
             .map(event => {
                 const isAllDay = event.allDay || event.extendedProps?.planIsAllDay === "Y";
-    
                 return {
                     ...event,
                     start: isAllDay ? dayjs(event.start).format("YYYY-MM-DD") : event.start,
@@ -130,7 +135,7 @@ export default function TodoList({ allEvents = [], fetchAllEvents }) {
     const detailEvent = useCallback(info => { 
         //info.event는 FullCalendar에서 넘겨주는 이벤트 정보 전체를 담고 있어. title, start, end, extendedProps 같은 정보를 꺼낼 수 있음
         const event = info.event
-        
+
         //공휴일 이벤트는 무시
         if (event.extendedProps?.isHoliday) {
             return;
@@ -144,7 +149,6 @@ export default function TodoList({ allEvents = [], fetchAllEvents }) {
     useEffect(() => {
         fetchAllEvents(currentYear, currentMonth);
     }, [currentYear, currentMonth, fetchAllEvents]);
-
 
     //일정 등록
     const submitPlan = useCallback(async () => {
@@ -186,10 +190,11 @@ export default function TodoList({ allEvents = [], fetchAllEvents }) {
     //일정 삭제
     const deleteEvent = useCallback(async ()=>{
         if(!selectedEvent) return; //만약 삭제할 일정이 선택되지 않았다면
+        
+        await axios.delete(`/plan/${selectedEvent.extendedProps.planNo}`);
         selectedEvent.remove(); //FullCalendar의 EventApi 객체의 메서드로, 화면에서 해당 일정을 삭제
         closeDeleteModal();
-
-        await axios.delete(`/plan/${selectedEvent.extendedProps.planNo}`);
+        
         await fetchAllEvents(currentYear, currentMonth);
     }, [selectedEvent]); //selectedEvent가 변경될 때만 이 함수를 새로 만듦
 
@@ -290,7 +295,7 @@ export default function TodoList({ allEvents = [], fetchAllEvents }) {
                         <input type="radio" className="btn-check" name="todoTypeToggle" id="todoTeam" autoComplete="off"
                             checked={viewType === "팀"} onChange={() => setViewType("팀")}
                         />
-                        <label className="btn btn-outline-primary text-responsive" htmlFor="todoTeam">팀</label>
+                        <label className="btn btn-outline-primary text-responsive" htmlFor="todoTeam">공유</label>
                         <input type="radio" className="btn-check" name="todoTypeToggle" id="todoPersonal" autoComplete="off"
                             checked={viewType === "개인"} onChange={() => setViewType("개인")}
                         />
@@ -318,9 +323,8 @@ export default function TodoList({ allEvents = [], fetchAllEvents }) {
 
         <FullCalendar
             ref={calendar}
-            key={calendarView}
             plugins={[listPlugin, interactionPlugin]}
-            initialView="listWeek"
+            initialView={calendarView}
             eventDisplay="list-item"
             locale={koLocale}
             views={{
@@ -335,7 +339,64 @@ export default function TodoList({ allEvents = [], fetchAllEvents }) {
             events={todayEvents} //캘린더에 표시할 이벤트 목록. 일반적으로 useMemo로 필터링된 state를 전달
             noEventsContent="오늘 일정이 없습니다." //표시할 이벤트가 없을 경우 보여줄 문구
             eventClick={detailEvent} //달력에 등록된 일정(이벤트)를 클릭했을 때 실행되는 함수
-            // datesSet={dateSet}
+            eventContent={({ event }) => {
+                const planType = event.extendedProps.planType;
+                const receivers = event.extendedProps.receivers;
+                const planNo = event.extendedProps.planNo;
+                const planStatus = event.extendedProps.planStatus;
+                const isTeam = planType === "팀";
+                
+                // 내 수신자 정보 찾아서 상태 확인 (팀일정일 때)
+                const myReceiver = isTeam
+                    ? receivers?.find(r => r.planReceiveReceiverNo === loginUserNo)
+                    : null;
+            
+                const myStatus = isTeam
+                    ? myReceiver?.planReceiveStatus
+                    : planStatus;
+            
+                const isCompleted = myStatus === "완료" || myStatus === "달성";
+            
+                const handleToggle = async () => {
+                    const token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
+                    const newPlanStatus = isCompleted ? "미완료" : "완료";   // 개인 일정용
+                    const newReceiverStatus = isCompleted ? "미달성" : "달성"; // 팀 일정용
+            
+                        await axios.patch(`/plan/${planNo}/status`, {
+                            planStatus: isTeam ? newReceiverStatus : newPlanStatus
+                        }, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+            
+                        // 프론트 상태 즉시 갱신
+                        if (isTeam) {
+                            const updatedReceivers = receivers.map(r =>
+                                r.planReceiveReceiverNo === loginUserNo
+                                    ? { ...r, planReceiveStatus: newReceiverStatus }
+                                    : r
+                            );
+                            event.setExtendedProp("receivers", updatedReceivers);
+                        } else {
+                            event.setExtendedProp("planStatus", newPlanStatus);
+                        }
+            
+                        toast.success("상태가 변경되었습니다.");
+                        await fetchAllEvents(currentYear, currentMonth);
+                };
+              
+                return (
+                    <div className="d-flex justify-content-between w-100">
+                        <div>{event.title}</div>
+                        <button className={`btn btn-sm ${isCompleted ? "btn-success" : "btn-outline-secondary"} ms-2`}
+                                onClick={e=>{
+                                    e.stopPropagation();
+                                    handleToggle();
+                                }}>
+                            {isCompleted ? "달성" : "미달성"}
+                        </button>
+                    </div>
+                );
+            }}
         />
 
         {/* Todo 등록 모달 */}
@@ -515,50 +576,112 @@ export default function TodoList({ allEvents = [], fetchAllEvents }) {
                             </div>
                         </div>
 
-                        {/* 상세일정 - 수신자 */}
-                        <div className="row mt-3">
-                            <div className="col">
-                                <div className="d-flex text-responsive">
-                                    <IoPersonSharp className="mt-1 me-2" />
-                                    <span className="fw-bold">수신자</span>
+                        {/* 상세일정 - 주최자 */}
+                        {Array.isArray(selectedEvent?.extendedProps?.receivers) && selectedEvent.extendedProps.receivers.length > 0 && ( //개인 일정에는 표시 X
+                        <>
+                            <div className="row mt-3">
+                                <div className="col">
+                                    <div className="d-flex text-responsive">
+                                        <FaCrown className="mt-1 me-2" />
+                                        <span className="fw-bold">주최</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="row mt-2">
-                            <div className="col">
-                                <div className="mb-2">
-                                    <ul className="list-group text-responsive" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                                        {Object.keys(groupContacts).map(department => {
-                                            const members = groupContacts[department].filter(
-                                                contact => selectedEvent?.extendedProps?.receivers?.includes(contact.memberNo)
-                                            );
+                            <div className="row mt-2">
+                                <div className="col">
+                                    <div className="d-flex text-responsive">
+                                        <span>{selectedEvent?.extendedProps?.planSenderName}</span>
+                                        <span className="badge bg-primary ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            </>
+                        )}
 
-                                            if (members.length === 0) return null;
+                        {/* 상세일정 - 참여자 */}
+                        {Array.isArray(selectedEvent?.extendedProps?.receivers) && selectedEvent.extendedProps.receivers.length > 0 && ( //개인 일정에는 표시 X
+                        <>
+                            <div className="row mt-3">
+                                <div className="col">
+                                    <div className="d-flex text-responsive">
+                                        <IoPersonSharp className="mt-1 me-2" />
+                                        <span className="fw-bold">참여</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="row mt-2">
+                                <div className="col">
+                                    <div className="mb-2">
+                                        <ul className="list-group text-responsive" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                                            {Object.keys(groupContacts).map(department => {
+                                                const members = groupContacts[department].filter(
+                                                    contact => selectedEvent?.extendedProps?.receivers?.some(
+                                                        r => r.planReceiveReceiverNo === contact.memberNo
+                                                    )
+                                                );
 
-                                            // JSX 블록 전체를 괄호로 감싸고 return 앞에는 반드시 중괄호로 열어야 함
-                                            return (
-                                                <li key={department}>
-                                                    <div className="bg-light px-3 py-2 border-top text-secondary">
-                                                        {department}
-                                                    </div>
-                                                    <ul className="list-group list-group-flush">
-                                                        {members.map(contact => (
-                                                            <li className="list-group-item d-flex align-items-center" key={contact.memberNo}>
-                                                                <span>{contact.memberName}</span>
+                                                if (members.length === 0) return null;
+
+                                                // JSX 블록 전체를 괄호로 감싸고 return 앞에는 반드시 중괄호로 열어야 함
+                                                return (
+                                                    <li key={department}>
+                                                        <div className="bg-light fw-bold px-3 py-2 border-top text-secondary">{department}</div>
+                                                        <ul className="list-group list-group-flush">
+                                                        {members.map(contact => {
+                                                            const isMe = contact.memberNo === loginUserNo;
+                                                            const matchedReceiver = selectedEvent?.extendedProps?.receivers?.find(
+                                                                r => r.planReceiveReceiverNo === contact.memberNo
+                                                            );
+                                                            const status = matchedReceiver?.planReceiveStatus || '미달성';
+                                                            const isAccepted = matchedReceiver?.planReceiveIsAccept === 'Y';
+                                                        
+                                                        return (    
+                                                            <li className="list-group-item d-flex justify-content-between align-items-center" key={contact.memberNo}>
+                                                                <>
+                                                                    {isMe ? ( 
+                                                                        <span className="d-flex align-items-center">
+                                                                            <IoPerson className="me-1" />
+                                                                            <span className="fw-bold">{contact.memberName}</span>
+                                                                            {isAccepted ? 
+                                                                                <span className="text-success ms-1">수락</span>
+                                                                            :
+                                                                                <span className="text-muted ms-1">수락 전</span>
+                                                                            }
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span>{contact.memberName}
+                                                                            <span className="text-muted">
+                                                                                {isAccepted ? 
+                                                                                    <span className="text-success ms-1">수락</span>
+                                                                                :
+                                                                                    <span className="text-muted ms-1">수락 전</span>
+                                                                                }
+                                                                            </span>
+                                                                        </span>
+                                                                    )}
+                                                                </>
+                                                                    <span className={`badge ${status === '달성' ? 'bg-success' : 'bg-secondary'}`}>
+                                                                        {status}
+                                                                    </span>
                                                             </li>
-                                                        ))}
-                                                    </ul>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
+                                                            );
+                                                        })}
+                                                        </ul>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </>
+                        )}
                     </div>
                     <div className="modal-footer">
                         <button type="button" className="btn btn-secondary text-responsive" onClick={closeDetailModal}>닫기</button>
+                        {selectedEvent?.extendedProps?.planSenderNo === loginUserNo && (
                         <button type="button" className="btn btn-danger text-responsive" onClick={openDeleteModal}>삭제</button>
+                        )}
                     </div>
                 </div>
             </div>

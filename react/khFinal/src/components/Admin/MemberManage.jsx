@@ -269,12 +269,13 @@ export default function MemberManage(){
     const loadAttachList = useCallback(async ()=>{
         console.log("type");
         console.log(type);
-        const resp = await axios.get(`/admin/member/attachment/${number}/${type}`)
-        if(resp.data.length !== 0) {
-            //setPreviewList({attachNo:resp.data.attachList, fileName:resp.data.nameList});
-        }
-        else{
-        //    console.log("fail")
+        try {
+        const resp = await axios.get(`/admin/member/attachment/${number}/${type}`);
+        console.log(resp.data);
+            // 필요한 상태 업데이트 등
+        } catch (err) {
+            console.error("첨부파일 조회 실패", err);
+            return;
         }
         
         const response = await Promise.all(// 비동기 상태에서 map 으로 쌓는거라 순서 보장해줄수 있는 키워드

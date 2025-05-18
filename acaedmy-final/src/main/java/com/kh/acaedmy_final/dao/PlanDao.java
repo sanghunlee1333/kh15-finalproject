@@ -1,5 +1,6 @@
 package com.kh.acaedmy_final.dao;
 
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.acaedmy_final.dto.PlanDto;
+import com.kh.acaedmy_final.vo.PlanWithReceiversVO;
 
 @Repository
 public class PlanDao {
@@ -56,12 +58,36 @@ public class PlanDao {
 		return sqlSession.selectList("plan.listReceiver", planNo);
 	}
 	
-	//수정(일정 상태)
+	//수정(일정 달성 여부)
 	public boolean updateStatus(long planNo, String planStatus) {
 		Map<String, Object> params = new HashMap<>();
 		params.put("planNo", planNo);
 		params.put("planStatus", planStatus);
 		return sqlSession.update("plan.updateStatus", params) > 0;
+	}
+	
+	//조회(일정 시작 30분 전 알림)
+	public List<PlanWithReceiversVO> findPlansStartingSoon(Timestamp timeStart, Timestamp timeEnd) {
+		Map<String, Object> param = new HashMap<>();
+		param.put("timeStart", timeStart);
+		param.put("timeEnd", timeEnd);
+		return sqlSession.selectList("plan.findPlansStartingSoon", param);
+	}
+
+	//조회(일정 시작 알림)
+	public List<PlanWithReceiversVO> findPlansStartingAt(Timestamp timeStart, Timestamp timeEnd) {
+		Map<String, Object> param = new HashMap<>();
+		param.put("timeStart", timeStart);
+		param.put("timeEnd", timeEnd);
+		return sqlSession.selectList("plan.findPlansStartingAt", param);
+	}
+
+	//조회(일정 종료 알림)
+	public List<PlanWithReceiversVO> findPlansEndingAt(Timestamp timeStart, Timestamp timeEnd) {
+		Map<String, Object> param = new HashMap<>();
+		param.put("timeStart", timeStart);
+		param.put("timeEnd", timeEnd);
+		return sqlSession.selectList("plan.findPlansEndingAt", param);
 	}
 	
 }

@@ -1,14 +1,24 @@
+import axios from "axios";
+import { useCallback } from "react";
 import { FaCalendarAlt } from "react-icons/fa";
 
 export default function Mainpage() {
+    const inTime = useCallback(async ()=>{
+        const resp = await axios.post("/attendance/inTime");
+        console.log(resp);
+    },[])
+    const outTime = useCallback(async ()=>{
+        const resp = await axios.post("/attendance/outTime");
+        console.log(resp);
+    },[])
 
     return (<>
         <div className="row mt-2">
             <div className="col d-flex">
                 <div className="ms-auto">
 
-                <button className="btn btn-success">출근</button>
-                <button className="btn btn-danger">퇴근</button>
+                    <button className="btn btn-success" onClick={inTime}>출근</button>
+                    <button className="btn btn-danger" onClick={outTime}>퇴근</button>
                 </div>
             </div>
         </div>
