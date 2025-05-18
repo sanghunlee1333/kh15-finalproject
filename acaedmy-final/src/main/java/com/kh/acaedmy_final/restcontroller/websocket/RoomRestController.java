@@ -46,26 +46,9 @@ public class RoomRestController {
     
     @PostMapping
     public long createRoom(@RequestBody RoomCreateRequestDto request,
-                                        @RequestHeader("Authorization") String bearerToken) {
+                           @RequestHeader("Authorization") String bearerToken) {
         ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
-        //방 생성
-        long roomNo = roomDao.getSequence();
-        RoomDto roomDto = RoomDto.builder()
-                    .roomNo(roomNo)
-                    .roomTitle(request.getRoomTitle())
-                    .roomOwner(claimVO.getMemberNo())
-                    .memberNos(request.getMemberNos())
-                .build();
-
-        // 방먼저
-        roomDao.insert(roomDto);
-        // 방장 참여
-        roomDao.enterRoom(roomNo, claimVO.getMemberNo());
-        // 참여자 추가
-        roomDao.insertMembers(roomNo, request.getMemberNos());
-
-        return roomNo;
-
+        return roomService.createRoom(claimVO.getMemberNo(), request);
     }
 
     //사용자가 참여한 채팅방 목록 조회(상세 정보)

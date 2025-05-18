@@ -16,6 +16,7 @@ public class RoomDto {
 	private String roomTitle;//채팅방 제목
 	private long roomOwner;//방장
 	private List<Long> memberNos;//채팅방에 초대된 멤버 번호들
+	private Long roomProfileNo;
 	
 	//목록 화면용 필드
 	private String lastMessage;//최근 메세지 내용
