@@ -222,6 +222,6 @@
 		update room
 		set room_title = #{roomTitle}
 		where room_no = #{roomNo}
-	</update>
+	</update> 
 	
 </mapper>
