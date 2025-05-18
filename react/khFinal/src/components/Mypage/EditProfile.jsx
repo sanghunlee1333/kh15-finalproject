@@ -186,10 +186,17 @@ export default function EditProfile(){
    // useEffect(()=>{console.log(newAttach)},[newAttach])
     const changeInfo = useCallback(async ()=>{
       console.log(member);
-      if(memberImg !== preview && newAttach !== null){
-        //axios  사진저장, 프로필 저장, 기존 사진 삭제, 정보 변경
-       // const resp = await axios.post("/mypage/profile", newAttach);
-        console.log("multipart");
+      if (memberImg !== preview && newAttach !== null) {
+        const formData = new FormData();
+        formData.append("newAttach", inputImage.current.files[0]);
+    
+        // 프로필 이미지 변경 API 요청
+        await axios.post("/mypage/profile", formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+    
+        // ✅ 여기가 핵심!
+        window.dispatchEvent(new Event("profileImageUpdated"));
       }
 
       const resp = await axios.patch("/mypage", member);

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { Modal } from "bootstrap";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FaArrowTurnUp, FaMagnifyingGlass, FaPlus } from "react-icons/fa6";
 import { IoArrowBack } from "react-icons/io5";
 import { PiUserList } from "react-icons/pi";
@@ -13,6 +13,7 @@ import dayjs from "dayjs";
 import "dayjs/locale/ko"; // 한글 로케일 불러오기
 import relativeTime from "dayjs/plugin/relativeTime";
 import { IoMdPhonePortrait } from "react-icons/io";
+import { IoMdDownload } from "react-icons/io";
 
 dayjs.extend(relativeTime); // 상대 시간 사용 가능하게 확장
 dayjs.locale("ko");         // 한글로 설정
@@ -28,6 +29,8 @@ export default function GroupChat() {
     //ref
     const wsConnected = useRef(false);
     const chatBoxRef = useRef(null);
+    const stompClientRef = useRef(null);
+
     //모달을 제어하기 위한 ref
     //기존 멤버 모달
     const modal = useRef();
@@ -51,26 +54,43 @@ export default function GroupChat() {
     //채팅에 초대할 선택된 멤버 추적
     const [selectMembers, setSelectMembers] = useState([]);
     const [noResultsType, setNoResultsType] = useState(null);
+    //프로필 이미지
+    const [profileImages, setProfileImages] = useState({});
+    //파일첨부
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const MAX_FILE_SIZE_MB = 10;
+    const MAX_TOTAL_SIZE_MB = 30;
+    //이미지 파일 삭제
+    const [selectedImageInfo, setSelectedImageInfo] = useState(null);
 
     const token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
 
-    const handleSendMessage = () => {
-        if (newMessage.trim()) {
-            const message = {
-                roomChatOrigin: roomNo,
-                content: newMessage,
-            };
+    const handleSendMessage = async () => {
+        if (!newMessage.trim() && selectedFiles.length === 0) return;
 
-            if (client?.connected) {
-                client.publish({
-                    destination: `/app/chat/${roomNo}`,
-                    body: JSON.stringify(message),
-                    headers: {
-                        accessToken: token,
-                    },
-                });
-                setNewMessage("");
-            }
+        const formData = new FormData();
+        formData.append("roomChatOrigin", roomNo);
+        formData.append("roomChatContent", newMessage || "");
+        formData.append("roomChatType", "CHAT");
+
+        selectedFiles.forEach(file => {
+            formData.append("attachments", file); // 여러 파일 전송 (name=attachments)
+        });
+
+        try {
+            await axios.post(`/chat/send`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+
+            setNewMessage("");
+            setSelectedFiles([]);
+            document.querySelector(".btn-close[data-bs-dismiss='modal']")?.click(); // 파일 모달 닫기
+        } catch (error) {
+            console.error("메시지 전송 실패", error);
+            alert("메시지 전송 중 오류가 발생했습니다");
         }
     };
 
@@ -84,16 +104,19 @@ export default function GroupChat() {
 
             const token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
 
+            closeInviteModal();
+
+            setSelectMembers([]);
+
             await axios.post(`/rooms/${roomNo}/invite`, {
                 memberNos: selectMembers
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            // 초대한 후 연락처 다시 불러오기 (초대된 사람 제외됨)
-            await loadContacts();
-            setSelectMembers([]); // 선택 초기화
-            closeInviteModal();
+            loadContacts();     // 초대한 사람 제외된 연락처 다시 불러오기
+            loadRoomMembers();  // 참여자 목록 업데이트
+            await fetchRoomTitle();
         }
         catch (error) {
             console.error("초대 실패", error);
@@ -101,10 +124,11 @@ export default function GroupChat() {
         }
     };
 
+
     //채팅방 나가기
-    const handleExitRoom = async ()=> {
+    const handleExitRoom = async () => {
         const confirmed = window.confirm("채팅방에서 나가시겠습니까?");
-        if(!confirmed) return;
+        if (!confirmed) return;
 
         try {
             await axios.delete(`/rooms/${roomNo}/exit`, {
@@ -119,6 +143,89 @@ export default function GroupChat() {
         catch (error) {
             console.error("채팅방 나가기 실패", error);
             alert("채팅방 나가기 중 오류가 발생했습니다");
+        }
+    };
+
+    const handleFileChange = (e) => {
+        const newFiles = Array.from(e.target.files);
+
+        const updatedFiles = [...selectedFiles];
+
+        // 중복 제거 (파일 이름 + 사이즈)
+        newFiles.forEach(file => {
+            const isDuplicate = updatedFiles.some(
+                f => f.name === file.name && f.size === file.size
+            );
+            if (!isDuplicate) updatedFiles.push(file);
+        });
+
+        // 파일당 10MB 초과 확인
+        const invalidFiles = updatedFiles.filter(file => file.size > MAX_FILE_SIZE_MB * 1024 * 1024);
+        if (invalidFiles.length > 0) {
+            alert("각 파일은 최대 10MB까지만 업로드할 수 있습니다.");
+            return;
+        }
+
+        // 전체 30MB 초과 확인
+        const totalSize = updatedFiles.reduce((acc, file) => acc + file.size, 0);
+        if (totalSize > MAX_TOTAL_SIZE_MB * 1024 * 1024) {
+            alert("총 파일 크기는 최대 30MB까지만 업로드할 수 있습니다.");
+            return;
+        }
+
+        setSelectedFiles(updatedFiles);
+        e.target.value = ""; // 같은 파일 다시 선택 가능하게 초기화
+    };
+
+    const handleRemoveFile = (index) => {
+        setSelectedFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+    };
+
+    const handleDeleteImage = async () => {
+        if (!selectedImageInfo) return;
+
+        const confirmed = window.confirm("정말 이미지를 삭제하시겠습니까?");
+        if (!confirmed) return;
+
+        try {
+            //Delete 요청으로 첨부파일 삭제
+            await axios.delete(`/attachment/${selectedImageInfo.attachmentNo}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            //모달 닫기
+            const modalEl = document.getElementById("imagePreviewModal");
+            if (modalEl) {
+                const modalInstance = Modal.getInstance(modalEl);
+                if (modalInstance) modalInstance.hide();
+            }
+
+            setMessages(prev =>
+                prev.map(msg => {
+                    if (!msg.attachments) return msg;
+
+                    const newAttachments = msg.attachments.filter(
+                        att => att.attachmentNo !== selectedImageInfo.attachmentNo
+                    );
+
+                    const isOnlyImage = newAttachments.length > 0 &&
+                        newAttachments.every(att => att.attachmentType?.startsWith("image/"));
+
+                    const isEmpty = newAttachments.length === 0;
+
+                    // 텍스트는 그대로 유지하고, 렌더링에서 처리
+                    return {
+                        ...msg,
+                        attachments: newAttachments,
+                    };
+                })
+            );
+
+            setSelectedImageInfo(null);
+        }
+        catch (error) {
+            console.error("이미지 삭제 실패", error);
+            alert("이미지 삭제 중 오류가 발생했습니다.");
         }
     };
 
@@ -166,6 +273,10 @@ export default function GroupChat() {
             });
             setMembers(data);
 
+            // 프로필 이미지 로딩 추가
+            const groupMap = { 전체: data };
+            await loadProfileImagesBatch(data.map(d => d.memberNo)); // 최적화된 다건 조회
+
             setTimeout(() => {
                 searchContact(data);
             }, 0);
@@ -174,6 +285,49 @@ export default function GroupChat() {
             console.error("채팅방 멤버 목록 불러오기 실패", error);
         }
     }, [roomNo, searchContact]);
+
+    const loadProfileImages = async (contacts) => {
+        const map = {};
+
+        const memberList = Array.isArray(contacts)
+            ? contacts // 배열이면 그대로 사용
+            : Object.values(contacts).flat(); // 객체이면 전체 배열로 펼치기
+
+        for (const member of memberList) {
+            const attachmentNo = await getProfileAttachmentNo(member.memberNo);
+            if (attachmentNo !== null) {
+                map[String(member.memberNo)] = attachmentNo;
+            }
+        }
+
+        setProfileImages((prev) => ({
+            ...prev,
+            ...map,
+        }));
+    };
+
+    const loadProfileImagesBatch = async (memberNos) => {
+        try {
+            const response = await axios.post(`/mypage/profile-batch`, memberNos, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = response.data; // { 1: 101, 2: -1, 3: 102 }
+
+            const newMap = {};
+            Object.entries(data).forEach(([memberNo, attachNo]) => {
+                if (attachNo !== -1) {
+                    newMap[memberNo] = attachNo;
+                }
+            });
+
+            setProfileImages(prev => ({
+                ...prev,
+                ...newMap
+            }));
+        } catch (error) {
+            console.error("프로필 이미지 일괄 로딩 실패", error);
+        }
+    };
 
     //연락처 불러오기
     const loadContacts = useCallback(async () => {
@@ -190,6 +344,9 @@ export default function GroupChat() {
             const data = response.data;
             setGroupContacts(data);
             setFilterContacts(data); // 검색 안했을 때 초기 목록도 표시
+            //프로필 이미지도 로딩
+            const flatContacts = Object.values(data).flat();
+            await loadProfileImagesBatch(flatContacts.map(c => c.memberNo));
 
             let rawMatchCount = 0;
             Object.keys(data).forEach(dept => {
@@ -209,6 +366,16 @@ export default function GroupChat() {
             console.error("초대 가능한 연락처 불러오기 실패", error);
         }
     }, [roomNo, searchContacts]);
+
+    const getProfileAttachmentNo = async (memberNo) => {
+        try {
+            const { data } = await axios.get(`/mypage/profile/${memberNo}`);
+            return data !== -1 ? data : null;
+        } catch {
+            return null;
+        }
+    };
+
 
     //모달 열기
     const openModal = useCallback(() => {
@@ -267,15 +434,20 @@ export default function GroupChat() {
 
     const isSenderVisible = useCallback((messages, index, memberNo) => {
         const current = messages[index];
+        //내가 보낸 메세지면 이름 안보임
         if (Number(current.senderNo) === Number(memberNo)) return false;
+        //첫 메세지는 항상 보임
         if (index === 0) return true;
 
         const prev = messages[index - 1];
         const sameSender = current.senderNo === prev.senderNo;
-        const sameTime =
-            new Date(current.time).toLocaleString().slice(0, 16) ===
-            new Date(prev.time).toLocaleString().slice(0, 16);
 
+        //시간 비교는 "YYYY-MM-DD HH:mm" 형식으로 정규화
+        const currentTime = dayjs(current.time).format("YYYY-MM-DD HH:mm");
+        const prevTime = dayjs(prev.time).format("YYYY-MM-DD HH:mm");
+        const sameTime = currentTime === prevTime;
+
+        //같은 사람이고 같은 분에 보냈으면 생략
         return !(sameSender && sameTime);
     }, []);
 
@@ -293,10 +465,11 @@ export default function GroupChat() {
         return !(sameSender && sameTime);
     }, []);
 
-    //effect
+    // 기존 connectWebSocket 함수 수정
     const connectWebSocket = useCallback(() => {
-        if(wsConnected.current) return;
+        if (wsConnected.current) return;
         wsConnected.current = true;
+
         const socket = new SockJS("http://localhost:8080/ws");
         const stompClient = new Client({
             webSocketFactory: () => socket,
@@ -308,24 +481,73 @@ export default function GroupChat() {
                     const chat = JSON.parse(message.body);
                     setMessages(prev => [...prev, chat]);
 
+                    // ✅ 서버에 읽음 처리
                     axios.post(`/rooms/${roomNo}/read`, null, {
                         headers: { Authorization: `Bearer ${token}` }
                     });
-                }, {
-                    accessToken: token
+
+                    // ✅ 클라이언트에게 뱃지 갱신하도록 알림
+                    window.dispatchEvent(new Event("refreshRoomList"));
                 });
 
-                stompClient.subscribe(`/topic/room-users/${roomNo}`, ()=>{
+                stompClient.subscribe(`/topic/room-users/${roomNo}`, () => {
                     loadContacts();
                     loadRoomMembers();
+                    fetchRoomTitle();
                 });
             },
         });
 
-        setClient(stompClient);
         stompClient.activate();
+        setClient(stompClient);
+        stompClientRef.current = stompClient; // 저장
     }, [roomNo]);
 
+
+    const fetchRoomTitle = useCallback(async () => {
+        try {
+            const { data: users } = await axios.get(`/rooms/${roomNo}/users`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const { data: roomData } = await axios.get(`/rooms/${roomNo}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (users.length === 1) {
+                // 혼자만 남았을 때
+                setRoomTitle("빈 채팅방");
+            }
+            else if (users.length === 2 && !roomData.roomTitle) {
+                // 개인 채팅일 때
+                const opponent = users.find(user => user.memberNo !== memberNo);
+                if (opponent) setRoomTitle(opponent.memberName);
+            } else {
+                // 그룹 채팅이거나 방제목이 있는 경우
+                setRoomTitle(roomData.roomTitle);
+            }
+        } catch (error) {
+            console.error("방 제목 갱신 실패", error);
+        }
+    }, [roomNo, memberNo, token]);
+
+    const handleBackToRoomList = useCallback(async () => {
+        try {
+            await axios.post(`/rooms/${roomNo}/read`, null, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            // ✅ read 완료 후에 이벤트를 전송하고 이동
+            window.dispatchEvent(new Event("refreshRoomList"));
+            navigate("/chat/room");
+        }
+        catch (error) {
+            console.error("읽음 처리 후 뒤로가기 실패", error);
+            navigate("/chat/room");
+        }
+    }, [roomNo, token, navigate]);
+
+    //effect
     useEffect(() => {
         const fetchRoomInfo = async () => {
             try {
@@ -336,13 +558,13 @@ export default function GroupChat() {
                 if (Array.isArray(chatData?.messages)) {
                     setMessages(chatData.messages);
                 }
-    
+
                 // 2. 참여자 목록
                 const { data: users } = await axios.get(`/rooms/${roomNo}/users`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setMembers(users);
-    
+
                 // 3. 제목 설정
                 if (users.length === 2) {
                     const opponent = users.find(user => user.memberNo !== memberNo);
@@ -351,17 +573,17 @@ export default function GroupChat() {
                     // 그룹 채팅인 경우
                     if (chatData?.roomTitle) setRoomTitle(chatData.roomTitle);
                 }
-    
+
                 // 4. WebSocket 연결
                 connectWebSocket();
             } catch (err) {
                 console.error("채팅방 정보 불러오기 실패", err);
             }
         };
-    
+
         fetchRoomInfo();
     }, [roomNo, memberNo, token, connectWebSocket]);
-    
+
 
     //메세지 읽음 처리(입장, 퇴장)
     useEffect(() => {
@@ -377,6 +599,38 @@ export default function GroupChat() {
             });
         };
     }, [roomNo]);
+
+    // GroupChat.jsx 내부에 useEffect 추가
+    useEffect(() => {
+        const loadMissingProfileImages = async () => {
+            const missingSenderNos = messages
+                .map(msg => msg.senderNo)
+                .filter(senderNo =>
+                    senderNo && !profileImages.hasOwnProperty(String(senderNo))
+                );
+
+            const uniqueSenderNos = [...new Set(missingSenderNos)];
+
+            if (uniqueSenderNos.length === 0) return;
+
+            const newMap = {};
+            for (const senderNo of uniqueSenderNos) {
+                const attachmentNo = await getProfileAttachmentNo(senderNo);
+                if (attachmentNo !== null) {
+                    newMap[String(senderNo)] = attachmentNo;
+                }
+            }
+
+            setProfileImages(prev => ({
+                ...prev,
+                ...newMap
+            }));
+        };
+
+        if (messages.length > 0) {
+            loadMissingProfileImages();
+        }
+    }, [messages]);
 
     const handleKeyPress = (e) => {
         if (e.key === "Enter") handleSendMessage();
@@ -400,6 +654,34 @@ export default function GroupChat() {
         }
     }, [messages]);
 
+    useEffect(() => {
+        return () => {
+            //컴포넌트 언마운트 시 WebSocket 구독 해제
+            if (stompClientRef.current) {
+                stompClientRef.current.deactivate();
+                stompClientRef.current = null;
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        const modalEl = document.getElementById("fileUploadModal");
+
+        if (!modalEl) return;
+
+        const onModalHidden = () => {
+            setSelectedFiles([]);
+        };
+
+        // Bootstrap 5의 모달 이벤트 감지
+        modalEl.addEventListener("hidden.bs.modal", onModalHidden);
+
+        // 컴포넌트 언마운트 시 이벤트 제거
+        return () => {
+            modalEl.removeEventListener("hidden.bs.modal", onModalHidden);
+        };
+    }, []);
+
     //연락처
     useEffect(() => {
         loadContacts();
@@ -421,10 +703,12 @@ export default function GroupChat() {
             <div className="col">
                 <div className="d-flex align-items-center justify-content-between">
                     <div className="d-flex align-items-center">
-                        <Link to="/chat/room" className="btn p-0 me-2">
+                        <button className="btn p-0 me-2" onClick={handleBackToRoomList}>
                             <IoArrowBack className="fs-3" />
-                        </Link>
-                        <h5 className="mb-0 text-nowrap">{roomTitle}</h5>
+                        </button>
+                        <h5 className="mb-0 text-nowrap text-truncate" style={{ maxWidth: "200px" }}>
+                            {roomTitle}
+                        </h5>
                     </div>
                     {/* 채팅 참여자 목록 */}
                     <button className="btn btn-sm me-2">
@@ -442,7 +726,6 @@ export default function GroupChat() {
                     if (!msg) return null;
 
                     const isSystem = msg.type === "SYSTEM";
-                    // if(msg.type === "CHAT" && !msg.content?.trim()) return null;
                     if (!msg || typeof msg.content !== "string" || !msg.content.trim()) return null;
                     const isMine = String(msg.senderNo) === String(memberNo);
                     const showSender = isSenderVisible(messages, index, memberNo);
@@ -472,22 +755,162 @@ export default function GroupChat() {
                                     </div>
                                 </div>
                             ) : (
-                            <div className={`d-flex flex-column ${isMine ? "align-items-end" : "align-items-start"} mb-2`}>
-                                {!isMine && showSender && msg.senderName && (
-                                    <div className="small fw-bold ps-1 mb-1">{msg.senderName}</div>
-                                )}
-
-                                <div className={`d-flex ${isMine ? "flex-row-reverse" : "flex-row"} align-items-end`}>
-                                    <div className={isMine ? "message-bubble-me" : "message-bubble"}>
-                                        {msg.content}
-                                    </div>
-                                    {showTime && (
-                                        <div className={`message-time-corner ${isMine ? "me" : "other"}`}>
-                                            {time}
+                                <div className={`d-flex flex-column ${isMine ? "align-items-end" : "align-items-start"} mb-2`}>
+                                    {!isMine && showSender && msg.senderName && (
+                                        <div className="d-flex align-items-center mb-1 ps-1">
+                                            <img
+                                                src={
+                                                    profileImages[String(msg.senderNo)]
+                                                        ? `http://localhost:8080/api/mypage/attachment/${profileImages[String(msg.senderNo)]}`
+                                                        : "/images/profile_basic.png"
+                                                }
+                                                className="rounded-circle me-2"
+                                                style={{ width: "30px", height: "30px", objectFit: "cover" }}
+                                            />
+                                            <span className="fw-bold">{msg.senderName}</span>
                                         </div>
                                     )}
+
+                                    <div className={`d-flex ${isMine ? "flex-row-reverse" : "flex-row"} align-items-end`}>
+
+                                        {/* 이미지만 있을 경우: 말풍선 없이 출력 */}
+                                        {msg.attachments?.length > 0 &&
+                                            msg.attachments.every(file => file.attachmentType?.startsWith("image/")) &&
+                                            (!msg.content || msg.content.startsWith("[파일]")) ? (
+                                            <div>
+                                                {msg.attachments.map((file, i) => {
+                                                    const isImage = file.attachmentType?.startsWith("image/");
+                                                    const fileUrl = `http://localhost:8080/attachment/download/${file.attachmentNo}`;
+
+                                                    if (!isImage) return null;
+
+                                                    return (
+                                                        <img
+                                                            key={i}
+                                                            src={fileUrl}
+                                                            alt={file.attachmentName}
+                                                            className="img-fluid rounded"
+                                                            style={{
+                                                                maxWidth: "200px",
+                                                                maxHeight: "200px",
+                                                                objectFit: "contain",
+                                                                borderRadius: "10px",
+                                                                cursor: "pointer"
+                                                            }}
+                                                            onClick={() => {
+                                                                const image = document.getElementById("previewImage");
+                                                                const link = document.getElementById("downloadImageLink");
+
+                                                                if (image && link) {
+                                                                    image.src = fileUrl;
+                                                                    link.href = fileUrl;
+                                                                    link.download = file.attachmentName;
+
+                                                                    //이미지 정보 저장(삭제용)
+                                                                    setSelectedImageInfo({
+                                                                        attachmentNo: file.attachmentNo,
+                                                                        fileName: file.attachmentName,
+                                                                        fileUrl: fileUrl,
+                                                                    });
+
+                                                                    const modalElement = document.getElementById("imagePreviewModal");
+                                                                    if (modalElement) {
+                                                                        const bsModal = Modal.getOrCreateInstance(modalElement);
+                                                                        bsModal.show();
+                                                                    } else {
+                                                                        console.error("모달 요소를 찾을 수 없음");
+                                                                    }
+                                                                }
+                                                            }}
+                                                        />
+                                                    );
+                                                })}
+
+                                            </div>
+                                        ) : (
+                                            // 그 외에는 말풍선 유지
+                                            <div className={isMine ? "message-bubble-me" : "message-bubble"}>
+                                                {/* 텍스트가 있는 경우만 출력 */}
+                                                <div>
+                                                    {/* 이미지가 모두 삭제된 메시지에 대해 표시 */}
+                                                    {msg.content?.startsWith("[파일]") &&
+                                                        (!msg.attachments || msg.attachments.length === 0) ? (
+                                                        <span className="text-muted">삭제된 이미지입니다.</span>
+                                                    ) : (
+                                                        // 기본 메시지 렌더링
+                                                        msg.content &&
+                                                        !(msg.attachments?.length > 0 &&
+                                                            msg.attachments.every(file => !file.attachmentType?.startsWith("image/")) &&
+                                                            msg.content.startsWith("[파일]")) && (
+                                                            <div>{msg.content}</div>
+                                                        )
+                                                    )}
+                                                </div>
+
+
+                                                {/* 첨부파일이 있는 경우 */}
+                                                {msg.attachments?.length > 0 && (
+                                                    <div className="">
+                                                        {msg.attachments.map((file, i) => {
+                                                            const isImage = file.attachmentType?.startsWith("image/");
+                                                            if (isImage) return null; // 이미지는 위에서 출력됨
+
+                                                            const fileUrl = `http://localhost:8080/attachment/download/${file.attachmentNo}`;
+                                                            const ext = file.attachmentName.split(".").pop().toLowerCase();
+
+                                                            // 확장자별 아이콘 경로 설정
+                                                            const iconMap = {
+                                                                pdf: "/icons/pdf.png",
+                                                                txt: "/icons/txt.png",
+                                                                doc: "/icons/doc.png",
+                                                                docx: "/icons/doc.png",
+                                                                xls: "/icons/xls.png",
+                                                                xlsx: "/icons/xls.png",
+                                                                ppt: "/icons/ppt.png",
+                                                                pptx: "/icons/ppt.png",
+                                                                zip: "/icons/zip.png",
+                                                                '7z': "/icons/zip.png",
+                                                            };
+                                                            const iconSrc = iconMap[ext] || iconMap.default;
+
+                                                            return (
+                                                                <div key={i}>
+                                                                    <a
+                                                                        href={fileUrl}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        download
+                                                                        className={`d-flex align-items-center gap-2 ${isMine ? "text-light" : "text-primary"}`}
+                                                                    >
+                                                                        <img
+                                                                            src={iconSrc}
+                                                                            alt={ext}
+                                                                            style={{
+                                                                                width: "28px",
+                                                                                height: "28px",
+                                                                                objectFit: "contain"
+                                                                            }}
+                                                                        />
+                                                                        <span className="ms-1">{file.attachmentName}</span>
+                                                                    </a>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+
+                                            </div>
+                                        )}
+
+                                        {/* 시간표시 */}
+                                        {showTime && (
+                                            <div className={`message-time-corner ${isMine ? "me" : "other"}`}>
+                                                {time}
+                                            </div>
+                                        )}
+                                    </div>
+
                                 </div>
-                            </div>
                             )}
                         </div>
                     );
@@ -498,10 +921,13 @@ export default function GroupChat() {
 
             <div className="mt-auto mb-3 m-3">
                 <div className="d-flex align-items-center">
-                    <button className="btn btn-secondary me-2 d-flex align-items-center justify-content-center px-2">
+                    <button
+                        className="btn btn-secondary me-2 d-flex align-items-center justify-content-center px-2"
+                        data-bs-toggle="modal"
+                        data-bs-target="#fileUploadModal"
+                    >
                         <FaPlus />
                     </button>
-
                     <input
                         type="text"
                         className="form-control"
@@ -510,7 +936,6 @@ export default function GroupChat() {
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={handleKeyPress}
                     />
-
                     <button className="btn btn-primary ms-2 text-nowrap" onClick={handleSendMessage}>
                         <FaArrowTurnUp />
                     </button>
@@ -533,22 +958,28 @@ export default function GroupChat() {
                     </div>
                     <div className="modal-body">
                         <ul className="list-group">
-                            {/* 멤버 초대하기 */}
-                            <li className="list-group-item d-flex align-items-center text-primary fw-bold"
-                                style={{ cursor: "pointer" }}
-                                onClick={openInviteModal}>
-                                <div className="rounded-circle bg-light border d-flex justify-content-center align-items-center me-3"
-                                    style={{ width: "40px", height: "40px" }}>
-                                    <FaPlus className="text-primary" />
-                                </div>
-                                <div className="fw-bold text-primary">초대하기</div>
-                            </li>
+                            {/* 멤버 초대하기 (그룹 채팅방일 때만 노출) */}
+                            {roomTitle !== "빈 채팅방" && members.length > 2 && (
+                                <li className="list-group-item d-flex align-items-center text-primary fw-bold"
+                                    style={{ cursor: "pointer" }}
+                                    onClick={openInviteModal}>
+                                    <div className="rounded-circle bg-light border d-flex justify-content-center align-items-center me-3"
+                                        style={{ width: "40px", height: "40px" }}>
+                                        <FaPlus className="text-primary" />
+                                    </div>
+                                    <div className="fw-bold text-primary">초대하기</div>
+                                </li>
+                            )}
 
                             {/* 채팅방에 속해 있는 멤버 목록 영역 */}
                             {members.map(member => (
                                 <li key={member.memberNo} className="list-group-item d-flex align-items-center">
                                     <img
-                                        src="/images/profile_basic.png"
+                                        src={
+                                            profileImages[member.memberNo]
+                                                ? `http://localhost:8080/api/mypage/attachment/${profileImages[member.memberNo]}`
+                                                : "/images/profile_basic.png"
+                                        }
                                         className="rounded-circle me-3"
                                         width="40"
                                         height="40"
@@ -622,7 +1053,11 @@ export default function GroupChat() {
                                                 style={{ fontSize: '0.875rem' }}
                                             >
                                                 <img
-                                                    src="/images/profile_basic.png"
+                                                    src={
+                                                        profileImages[member.memberNo]
+                                                            ? `http://localhost:8080/api/mypage/attachment/${profileImages[member.memberNo]}`
+                                                            : "/images/profile_basic.png"
+                                                    }
                                                     className="rounded-circle me-2"
                                                     style={{ width: "30px", height: "30px", objectFit: "cover" }}
                                                 />
@@ -660,7 +1095,11 @@ export default function GroupChat() {
                                                 />
                                                 {/* 프로필 이미지 */}
                                                 <img
-                                                    src="/images/profile_basic.png"
+                                                    src={
+                                                        profileImages[contact.memberNo]
+                                                            ? `http://localhost:8080/api/mypage/attachment/${profileImages[contact.memberNo]}`
+                                                            : "/images/profile_basic.png"
+                                                    }
                                                     className="rounded-circle me-2"
                                                     style={{ width: "40px", height: "40px", objectFit: "cover" }}
                                                 />
@@ -699,6 +1138,145 @@ export default function GroupChat() {
                         </button>
                         <button type="button" className="btn btn-secondary" onClick={closeInviteModal}>
                             취소
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* 파일 첨부 모달 */}
+        <div className="modal fade" id="fileUploadModal" tabIndex="-1" aria-hidden="true">
+            <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h5 className="modal-title">파일 첨부</h5>
+                        <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div className="modal-body">
+                        {/* 이미지 미리보기 */}
+                        <div className="border rounded p-3 mb-3" style={{ minHeight: "160px", backgroundColor: "#fafafa" }}>
+                            <div className="fw-bold mb-2" style={{ fontSize: "0.9rem" }}>이미지 미리보기</div>
+                            {selectedFiles.some(f => f.type.startsWith("image/")) ? (
+                                <div style={{ overflowX: "auto", whiteSpace: "nowrap" }}>
+                                    {selectedFiles
+                                        .filter(f => f.type.startsWith("image/"))
+                                        .map((file, idx) => (
+                                            <div key={idx} className="d-inline-block border rounded p-2 text-center me-2 position-relative" style={{ width: "100px" }}>
+                                                {/* 삭제 버튼 */}
+                                                <button
+                                                    type="button"
+                                                    className="btn-close position-absolute top-0 end-0 m-1"
+                                                    aria-label="Remove"
+                                                    onClick={() => handleRemoveFile(selectedFiles.indexOf(file))}>
+                                                </button>
+
+                                                <img
+                                                    src={URL.createObjectURL(file)}
+                                                    alt={file.name}
+                                                    className="img-fluid rounded mb-1"
+                                                    style={{ height: "90px", objectFit: "cover" }}
+                                                />
+                                                <div className="small text-truncate">{file.name}</div>
+                                            </div>
+                                        ))}
+                                </div>
+                            ) : (
+                                <div className="text-muted small">첨부된 이미지 파일이 없습니다.</div>
+                            )}
+
+                        </div>
+
+                        {/* 일반 파일 미리보기 */}
+                        <div className="border rounded p-3 mb-3" style={{ minHeight: "160px", backgroundColor: "#fafafa" }}>
+                            <div className="fw-bold mb-2" style={{ fontSize: "0.9rem" }}>파일 미리보기</div>
+                            {selectedFiles.some(f => !f.type.startsWith("image/")) ? (
+                                <div style={{ overflowX: "auto", whiteSpace: "nowrap" }}>
+                                    {selectedFiles
+                                        .filter(f => !f.type.startsWith("image/"))
+                                        .map((file, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="d-inline-block border rounded p-2 text-center me-2 position-relative"
+                                                style={{ width: "100px" }}
+                                            >
+                                                <div
+                                                    className="position-absolute top-0 end-0 m-1"
+                                                    style={{ zIndex: 2 }}
+                                                >
+                                                    <button
+                                                        type="button"
+                                                        className="btn-close btn-sm"
+                                                        aria-label="Remove"
+                                                        onClick={() => handleRemoveFile(selectedFiles.indexOf(file))}
+                                                        style={{ width: "0.75rem", height: "0.75rem", opacity: 0.6 }}
+                                                    />
+                                                </div>
+                                                <div className="mb-1" style={{ fontSize: "2rem" }}>📄</div>
+                                                <div className="small text-truncate">{file.name}</div>
+                                            </div>
+                                        ))}
+                                </div>
+                            ) : (
+                                <div className="text-muted small">첨부된 문서 파일이 없습니다.</div>
+                            )}
+                        </div>
+
+                        {/* 파일 선택 버튼 */}
+                        <div className="mb-3">
+                            <label className="btn btn-outline-dark w-100 mb-2">
+                                파일 선택
+                                <input
+                                    type="file"
+                                    className="d-none"
+                                    accept=".png,.jpg,.jpeg,.txt,.pdf,.doc,.docx,.hwp,.ppt,.pptx,.xls,.xlsx,.zip,.7z"
+                                    multiple
+                                    onChange={handleFileChange}
+                                />
+                            </label>
+                        </div>
+
+                        {/* 안내 문구 */}
+                        <div className="text-muted" style={{ fontSize: "0.8rem" }}>
+                            <div>* 파일 용량은 최대 30MB(개별 10MB)까지 업로드 가능합니다.</div>
+                            <div>* 업로드 가능한 파일 확장자</div>
+                            <div>- 이미지 : .png, .jpg, .jpeg</div>
+                            <div>- 문서 : .txt, .pdf, .doc, .docx, .hwp, .ppt, .pptx, .xls, .xlsx</div>
+                            <div>- 압축파일 : .zip, .7z</div>
+                        </div>
+                    </div>
+
+                    <div className="modal-footer">
+                        <button type="button" className="btn btn-primary"
+                            onClick={handleSendMessage}>
+                            첨부
+                        </button>
+                        <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* 이미지 확대 모달 */}
+        <div className="modal fade" id="imagePreviewModal" tabIndex="-1" aria-hidden="true">
+            <div className="modal-dialog modal-dialog-centered modal-lg">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h5 className="modal-title">이미지 정보</h5>
+                        <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div className="modal-body text-center">
+                        <img id="previewImage" src="" alt="preview" className="img-fluid" style={{ maxHeight: "80vh" }} />
+                    </div>
+                    <div className="modal-footer">
+                        <a
+                            id="downloadImageLink"
+                            className="btn btn-primary"
+                            download
+                        >
+                            저장
+                        </a>
+                        <button type="button" className="btn btn-danger" onClick={handleDeleteImage}>
+                            삭제
                         </button>
                     </div>
                 </div>

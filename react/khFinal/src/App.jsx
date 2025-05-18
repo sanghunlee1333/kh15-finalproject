@@ -1,4 +1,4 @@
-import { Link, Route, Routes } from 'react-router'
+import { Link, Route, Routes } from 'react-router-dom'
 import './App.css'
 
 import Menu from './components/template/Menu'
