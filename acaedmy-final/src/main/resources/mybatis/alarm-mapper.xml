@@ -90,6 +90,14 @@
 		and alarm_read = 'N'
 	</select>
 	
+	<!--  -->
+	<select id="existsByTypeAndPlanAndReceiver" resultType="boolean">
+	    select case when count(*) > 0 then 1 else 0 end from alarm
+		where alarm_type = #{alarmType}
+		and alarm_plan_no = #{planNo}
+		and alarm_receiver_no = #{receiverNo}
+	</select>
+	
 	<!-- 알림 조회(무한 스크롤) -->
 	<select id="listByReceiverWithPaging" resultType="AlarmResponseVO">
 		select * from (
