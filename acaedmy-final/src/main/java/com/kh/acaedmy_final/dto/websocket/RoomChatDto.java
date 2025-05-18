@@ -1,6 +1,9 @@
 package com.kh.acaedmy_final.dto.websocket;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.web.multipart.MultipartFile;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,4 +18,5 @@ public class RoomChatDto {
 	private String roomChatType;//채팅 종류(CHAT / SYSTEM)
 	private String roomChatContent;//채팅 내용
 	private LocalDateTime roomChatTime;//전송 시간
+	private List<MultipartFile> attachments;
 }

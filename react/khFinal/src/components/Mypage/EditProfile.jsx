@@ -182,25 +182,33 @@ export default function EditProfile(){
     },[memberPwValid, pwCheckValid])
 
 
-    const changeInfo = useCallback(async ()=>{
+    const changeInfo = useCallback(async () => {
+      console.log(member);
     
-      if(newAttach){
-     
-      const formData = new FormData();
-      formData.append("newAttach", newAttach);
-     
-     
-        const resp = await axios.post("/mypage/profile", formData);
-      
+      try {
+        // 1. 이미지가 바뀐 경우 + newAttach가 있는 경우
+        if (memberImg !== preview && newAttach !== null) {
+          const formData = new FormData();
+          formData.append("newAttach", inputImage.current.files[0]);
+    
+          // 프로필 이미지 변경 요청
+          await axios.post("/mypage/profile", formData, {
+            headers: { "Content-Type": "multipart/form-data" }
+          });
+    
+          // 프로필 이미지 변경 이벤트 발생
+          window.dispatchEvent(new Event("profileImageUpdated"));
+        }
+    
+        // 2. 회원 정보 변경 요청
+        const resp = await axios.patch("/mypage/edit", member);
+    
+        closeChangeInfo();
+      } catch (error) {
+        console.error("정보 변경 실패", error);
+        alert("정보 변경 중 오류가 발생했습니다.");
       }
-
-      const resp = await axios.patch("/mypage/edit", member);
-     
-      // console.log("email valid = " + emailValid );
-      // console.log("contact valid = " + contactValid );
-      // console.log("address valid = " + addressValid );
-      closeChangeInfo();
-    },[memberImg, preview, newAttach, member, emailValid, contactValid, addressValid])
+    }, [memberImg, preview, newAttach, member, emailValid, contactValid, addressValid]);    
 
     const blockButton = useMemo(()=>{
         return addressValid === true && contactValid === true && emailValid === true;
