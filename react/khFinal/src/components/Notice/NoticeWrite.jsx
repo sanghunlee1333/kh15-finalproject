@@ -259,8 +259,8 @@ export default function NoticeWrite() {
         <div className="row mt-2">
             <div className="col">
                 {attach.map((file, i) => (
-                <span key={i} className="d-flex align-items-center mt-1">
-                    <span className="btn btn-outline-success btn-sm">{file.name}</span>
+                <span key={i} className="d-flex align-items-center text-responsive mt-1">
+                    <span className="btn btn-outline-success btn-sm text-start">{file.name}</span>
                     <FaRegCircleXmark className="text-danger ms-1" onClick={()=>deleteAttach(i)} role="button" style={{ cursor: "pointer" }}/>
                 </span>
                 ))}
@@ -270,11 +270,11 @@ export default function NoticeWrite() {
         <div className="row mt-3">
             <div className="col d-flex align-items-center justify-content-end">
                 <button type="submit" className="btn btn-success text-responsive d-flex align-items-center" onClick={submitNotice}>
-                    <FaCheck className="icon-responsive" />
+                    <FaCheck />
                     <span className="ms-1">제출</span>
                 </button>
                 <button type="button" className="btn btn-danger text-responsive d-flex align-items-center ms-2" onClick={cancelWrite}>
-                    <RiArrowGoBackFill className="icon-responsive" />
+                    <RiArrowGoBackFill />
                     <span className="ms-1">취소</span>
                 </button>
             </div>

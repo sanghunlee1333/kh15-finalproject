@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router";
 import { CiLogin } from "react-icons/ci";
 import { CiLogout } from "react-icons/ci";
-import { FaUserCircle } from "react-icons/fa";
+import { FaBell, FaUserCircle } from "react-icons/fa";
 import { FaLightbulb } from "react-icons/fa6";
 import { useCallback, useRef } from "react";
 import { Modal } from "bootstrap";
@@ -50,11 +50,22 @@ export default function Menu() {
                 {/* 좌측 로고 */}
                 <Link to="/" className="navbar-brand">KHG</Link>
 
-                {/* 메뉴 펼침 버튼(폭이 작을 때만 나옴) */}
-                <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-menu" 
-                    aria-controls="main-menu" aria-expanded="false" aria-label="Toggle navigation">
-                    <span className="navbar-toggler-icon"></span>
-                </button>
+                {/* 모바일 화면용 햄버거 + 전구 (같이 묶음) */}
+                <div className="d-flex align-items-center d-lg-none">
+                    <Link to="/alarm" className="position-relative me-3">
+                        <FaBell className="fs-1 text-warning" />
+                        {unReadAlarmCount > 0 && (
+                        <span className="badge bg-danger rounded-pill position-absolute"
+                                style={{ top: 0, right: 0, transform: "translate(20%, -20%)", fontSize: "0.65rem", padding: "4px 6px" }}>
+                            {unReadAlarmCount}
+                        </span>
+                        )}
+                    </Link>
+                    <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-menu"
+                        aria-controls="main-menu" aria-expanded="false" aria-label="Toggle navigation">
+                        <span className="navbar-toggler-icon"></span>
+                    </button>
+                </div>
 
                 {/* 메뉴 영역(폭에 따라 보이는 형태 다름) */}
                 <div className="collapse navbar-collapse" id="main-menu">
@@ -93,47 +104,35 @@ export default function Menu() {
                         </li>
                     </ul>
 
-                    {/* 우측 메뉴 */}
-                    <ul className="navbar-nav">
+                    {/* 우측 메뉴: PC에서 전구 + 로그아웃 + 유저 아이콘 순서로 배치 */}
+                    <ul className="navbar-nav align-items-center">
 
-                        {/* 전체 알림 */}
-                        <li className="nav-item">   
+                        {/* 전구 아이콘 (PC 전용) */}
+                        <li className="nav-item d-none d-lg-block">
                             <Link to="/alarm" className="nav-link position-relative">
-                                <FaLightbulb className="fs-5 text-warning" />
+                                <FaBell className="fs-5 text-warning" />
                                 {unReadAlarmCount > 0 && (
-                                    <span className="badge bg-danger rounded-pill small position-absolute"
-                                    style={{
-                                        bottom: 0,
-                                        right: 0,
-                                        transform: "translate(35%, 35%)",
-                                        zIndex: 10,
-                                        padding: "5px 8px",
-                                        fontSize: "0.8rem"
-                                    }}
-                                    >
+                                <span className="badge bg-danger rounded-pill position-absolute"
+                                        style={{ top: 0, right: 0, transform: "translate(30%, 0%)", fontSize: "0.65rem", padding: "4px 6px" }}>
                                     {unReadAlarmCount}
-                                    </span>
+                                </span>
                                 )}
                             </Link>
                         </li>
 
-                        {/* 로그인, 로그아웃 Link */}
-                        <li className="nav-item">
-                            {/* 로그아웃 */}
-                             <Link onClick={gotoLogout} className="nav-link active">
-                                <i className="fa-solid fa-right-to-bracket"></i>
-                                <CiLogout className="fs-4"/>
-                            </Link> 
-                        </li>
-
-                        {/* 마이페이지 Link, 회원가입 Link */}
-                        <li className="nav-item">
-                            <Link to="#" className="nav-link active">
-                                <i className="fa-solid fa-right-to-bracket"></i>
-                                <FaUserCircle className="fs-4"/>
+                        {/* 로그아웃 */}
+                        <li className="nav-item w-100">
+                            <Link onClick={gotoLogout} className="nav-link text-start ms-2 active">
+                                <CiLogout className="fs-4" />
                             </Link>
                         </li>
 
+                        {/* 마이페이지 */}
+                        <li className="nav-item w-100">
+                            <Link to="#" className="nav-link text-start ms-2 active">
+                                <FaUserCircle className="fs-4" />
+                            </Link>
+                        </li>
                     </ul>
                 </div>
             </div>

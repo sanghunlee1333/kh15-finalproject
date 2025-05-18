@@ -66,32 +66,6 @@ export default function TodoList({ allEvents = [], fetchAllEvents, groupContacts
         if (!startTime || !endTime) return false; // 둘 다 존재할 때만 비교
         return endTime < startTime;
     }, [startTime, endTime]);
-    
-    // const todayEvents = useMemo(() => {
-    //     const today = new Date();
-    //     today.setHours(0, 0, 0, 0);
-
-    //     return allEvents.filter(event => {
-    //         const planType = event.extendedProps?.planType;
-    //         const matchesType =
-    //             viewType === "전체" ||
-    //             (viewType === "개인" && planType === "개인") ||
-    //             (viewType === "팀" && planType === "팀");
-    //         return matchesType;
-    //     }).map(event => {
-    //         const isAllDay = event.allDay || event.extendedProps?.planIsAllDay === "Y";
-          
-    //         const start = new Date(event.start);
-    //         const end = new Date(event.end);
-          
-    //         return {
-    //             ...event,
-    //             start: isAllDay ? dayjs(start).format("YYYY-MM-DD") : start,
-    //             end: isAllDay ? dayjs(end).add(1, "day").format("YYYY-MM-DD") : end,
-    //             allDay: isAllDay,
-    //         };
-    //     });
-    // }, [allEvents, viewType]);
 
     const todayEvents = useMemo(() => {
         return allEvents
@@ -275,7 +249,23 @@ export default function TodoList({ allEvents = [], fetchAllEvents, groupContacts
     return(<>
         <div className="row">
             <div className="col">
-                <div className="d-flex align-items-center justify-content-end">
+                <div className="d-flex align-items-center justify-content-between">
+                    {/* 전체 / 개인 / 팀 토글 */}
+                    <div className="btn-group btn-group-sm toggle-button-group" role="group" style={{ flexWrap: 'nowrap' }}>
+                        <input type="radio" className="btn-check" name="todoTypeToggle" id="todoAll" autoComplete="off"
+                            checked={viewType === "전체"} onChange={() => setViewType("전체")}
+                        />
+                        <label className="btn btn-outline-dark toggle-text-responsive" htmlFor="todoAll">전체</label>
+                        <input type="radio" className="btn-check" name="todoTypeToggle" id="todoTeam" autoComplete="off"
+                            checked={viewType === "팀"} onChange={() => setViewType("팀")}
+                        />
+                        <label className="btn btn-outline-dark toggle-text-responsive" htmlFor="todoTeam">공유</label>
+                        <input type="radio" className="btn-check" name="todoTypeToggle" id="todoPersonal" autoComplete="off"
+                            checked={viewType === "개인"} onChange={() => setViewType("개인")}
+                        />
+                        <label className="btn btn-outline-dark toggle-text-responsive" htmlFor="todoPersonal">개인</label>
+                    </div>
+                    {/* 일정 등록 아이콘 */}
                     <button className="btn" onClick={()=>openMakeModal()}>
                         <FaRegCalendarPlus className="text-success fs-4" />
                     </button>
@@ -285,23 +275,7 @@ export default function TodoList({ allEvents = [], fetchAllEvents, groupContacts
 
         <div className="row mt-2">
             <div className="col">
-                <div className="d-flex align-items-center justify-content-between">
-                    {/* 전체 / 개인 / 팀 토글 */}
-                    <div className="btn-group" role="group">
-                        <input type="radio" className="btn-check" name="todoTypeToggle" id="todoAll" autoComplete="off"
-                            checked={viewType === "전체"} onChange={() => setViewType("전체")}
-                        />
-                        <label className="btn btn-outline-primary text-responsive" htmlFor="todoAll">전체</label>
-                        <input type="radio" className="btn-check" name="todoTypeToggle" id="todoTeam" autoComplete="off"
-                            checked={viewType === "팀"} onChange={() => setViewType("팀")}
-                        />
-                        <label className="btn btn-outline-primary text-responsive" htmlFor="todoTeam">공유</label>
-                        <input type="radio" className="btn-check" name="todoTypeToggle" id="todoPersonal" autoComplete="off"
-                            checked={viewType === "개인"} onChange={() => setViewType("개인")}
-                        />
-                        <label className="btn btn-outline-primary text-responsive" htmlFor="todoPersonal">개인</label>
-                    </div>
-
+                <div className="d-flex align-items-center justify-content-end">
                     {/* 일간 / 주간 */}
                     <select className="form-select text-responsive w-auto" value={calendarView}
                         onChange={e => {
@@ -385,16 +359,21 @@ export default function TodoList({ allEvents = [], fetchAllEvents, groupContacts
                 };
               
                 return (
-                    <div className="d-flex justify-content-between w-100">
-                        <div>{event.title}</div>
-                        <button className={`btn btn-sm ${isCompleted ? "btn-success" : "btn-outline-secondary"} ms-2`}
-                                onClick={e=>{
-                                    e.stopPropagation();
-                                    handleToggle();
-                                }}>
-                            {isCompleted ? "달성" : "미달성"}
-                        </button>
-                    </div>
+                    <div className="d-flex justify-content-between w-100" style={{ minWidth: 0 }}>
+                        <div className="event-title-ellipsis">
+                            {event.title}
+                        </div>
+                    <button className={`btn btn-sm ms-2 flex-shrink-0 status-toggle-btn ${isCompleted ? "btn-success" : "btn-outline-secondary"}`} 
+                        onClick={e=>
+                            {
+                                e.stopPropagation();
+                                handleToggle();
+                            }
+                        }
+                    >
+                        {isCompleted ? "달성" : "미달성"}
+                    </button>
+                  </div>
                 );
             }}
         />
@@ -591,7 +570,21 @@ export default function TodoList({ allEvents = [], fetchAllEvents, groupContacts
                                 <div className="col">
                                     <div className="d-flex text-responsive">
                                         <span>{selectedEvent?.extendedProps?.planSenderName}</span>
-                                        <span className="badge bg-primary ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                        {selectedEvent?.extendedProps?.planSenderDepartment === "인사" && (
+                                            <span className="badge bg-danger ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                        )}
+                                        {selectedEvent?.extendedProps?.planSenderDepartment === "디자인" && (
+                                            <span className="badge bg-warning ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                        )}
+                                        {selectedEvent?.extendedProps?.planSenderDepartment === "영업" && (
+                                            <span className="badge bg-dark ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                        )}
+                                        {selectedEvent?.extendedProps?.planSenderDepartment === "개발" && (
+                                            <span className="badge bg-primary ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                        )}
+                                        {selectedEvent?.extendedProps?.planSenderDepartment === "기획" && (
+                                            <span className="badge bg-info ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -633,7 +626,7 @@ export default function TodoList({ allEvents = [], fetchAllEvents, groupContacts
                                                                 r => r.planReceiveReceiverNo === contact.memberNo
                                                             );
                                                             const status = matchedReceiver?.planReceiveStatus || '미달성';
-                                                            const isAccepted = matchedReceiver?.planReceiveIsAccept === 'Y';
+                                                            const isAccepted = matchedReceiver?.planReceiveIsAccept;
                                                         
                                                         return (    
                                                             <li className="list-group-item d-flex justify-content-between align-items-center" key={contact.memberNo}>
@@ -642,20 +635,20 @@ export default function TodoList({ allEvents = [], fetchAllEvents, groupContacts
                                                                         <span className="d-flex align-items-center">
                                                                             <IoPerson className="me-1" />
                                                                             <span className="fw-bold">{contact.memberName}</span>
-                                                                            {isAccepted ? 
-                                                                                <span className="text-success ms-1">수락</span>
-                                                                            :
-                                                                                <span className="text-muted ms-1">수락 전</span>
-                                                                            }
+                                                                            <span className="text-success fw-bold ms-2">수락</span>
                                                                         </span>
                                                                     ) : (
                                                                         <span>{contact.memberName}
-                                                                            <span className="text-muted">
-                                                                                {isAccepted ? 
-                                                                                    <span className="text-success ms-1">수락</span>
-                                                                                :
-                                                                                    <span className="text-muted ms-1">수락 전</span>
-                                                                                }
+                                                                            <span className="fw-bold ms-2">
+                                                                            {isAccepted === 'Y' && (
+                                                                                <span className="text-success">수락</span>
+                                                                            )}
+                                                                            {isAccepted === 'N' && (
+                                                                                <span className="text-danger">거절</span>
+                                                                            )}
+                                                                            {!isAccepted && (
+                                                                                <span className="text-muted">수락 전</span>
+                                                                            )}
                                                                             </span>
                                                                         </span>
                                                                     )}

@@ -76,17 +76,17 @@ export default function NoticeDetail() {
         <div className="row mt-4">
             <div className="col">
                 <span className="d-flex align-items-center fw-semibold ms-1" style={{ color: meta.color }}>
-                    <span className="icon-responsive">{meta.icon?.()}</span>
-                    <span className="text-responsive">{notice.noticeType}</span>
+                    <span className="d-flex align-items-center icon-responsive">{meta.icon?.()}</span>
+                    <span className="text-responsive ms-1">{notice.noticeType}</span>
                 </span>
             </div>
         </div>
 
         <div className="row mt-1">
             <div className="col">
-                <h1 className="text-responsive-title mb-0">{notice.noticeTitle}</h1>
-                <div className="d-flex justify-content-between mt-1">
-                    <span className="text-responsive text-end">{notice.noticeWriterName}</span>
+                <h1 className="text-responsive-title">{notice.noticeTitle}</h1>
+                <div className="d-flex justify-content-between mt-3">
+                    <span className="text-responsive text-end">작성자 : {notice.noticeWriterName}</span>
                     <span className="text-responsive text-secondary text-end">{moment(notice.noticeWriteDate).format("YYYY-MM-DD HH:mm")}</span>
                 </div>
             </div>
@@ -114,9 +114,9 @@ export default function NoticeDetail() {
                                 target="_blank" rel="noreferrer" className="text-responsive text-decoration-none ms-1">
                                 {file.attachmentName}
                             </Link>
-                            <Link className="btn btn-outline-info text-responsive d-inline-flex align-items-center ps-2 pe-2 pt-1 pb-1 ms-2"
+                            <Link className="btn btn-outline-success text-responsive d-inline-flex align-items-center ps-2 pe-2 pt-1 pb-1 ms-2"
                                 to={`http://localhost:8080/api/attachment/${file.attachmentNo}`}>
-                                <FaCloudDownloadAlt className="icon-responsive" />
+                                <FaCloudDownloadAlt />
                                 <span className="ms-1">{(file.attachmentSize / 1024).toFixed(2)} KB</span>
                             </Link>
                         </li>
@@ -131,16 +131,16 @@ export default function NoticeDetail() {
         <div className="row mt-4">
             <div className="col d-flex align-items-center justify-content-end">
                 <button type="button" className="btn btn-success text-responsive d-flex align-items-center" onClick={moveEdit}>
-                    <FaEdit className="icon-responsive me-1" />
-                    <span className="text-responsive text-nowrap">수정</span>
+                    <FaEdit className="me-1" />
+                    <span className="text-nowrap">수정</span>
                 </button>
                 <button type="button" className="btn btn-danger text-responsive d-flex align-items-center ms-2" onClick={openModal}>
-                    <FaTrash className="icon-responsive me-1" />
-                    <span className="text-responsive text-nowrap">삭제</span>
+                    <FaTrash className="me-1" />
+                    <span className="text-nowrap">삭제</span>
                 </button>
                 <button type="button" className="btn btn-secondary text-responsive d-flex align-items-center ms-2" onClick={moveList}>
-                    <FaListUl className="icon-responsive me-1" />
-                    <span className="text-responsive text-nowrap">목록</span>
+                    <FaListUl className="me-1" />
+                    <span className="text-nowrap">목록</span>
                 </button> 
             </div>
         </div>
