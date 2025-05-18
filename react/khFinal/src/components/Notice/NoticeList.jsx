@@ -16,6 +16,8 @@ import { FaPencil } from 'react-icons/fa6';
 import { useRecoilValue } from 'recoil';
 import { userDepartmentState } from '../utils/stroage';
 
+const noticeTypes = Object.keys(typeMap);
+
 export default function NoticeList() {
     //recoil - 인사팀인지
     const userDepartment = useRecoilValue(userDepartmentState);
@@ -30,6 +32,7 @@ export default function NoticeList() {
     const [count, setCount] = useState(0);
     const [page, setPage] = useState(1); //현재 페이지
     const [size, setSize] = useState(10); //고정된 보여줄 게시글 수
+    const [tag, setTag] = useState(""); //선택된 게시글 태그
 
     //some = 자바스크립트 배열에 내장된 메서드로, 배열 안에 하나라도 주어진 조건을 만족하는 요소가 있는지 체크해 주는 함수
     //조건을 만족하는 요소가 나오면, 즉시 true를 반환하고 더 이상 나머지 요소는 검사X
@@ -56,6 +59,7 @@ export default function NoticeList() {
         const params = {
             column: column || null,
             keyword,
+            tag: tag || null,
             page,
             size
         };
@@ -63,7 +67,7 @@ export default function NoticeList() {
         const resp = await axios.post("/notice/search", params); //서버에 데이터와 함께 요청하고 응답을 받을 때까지 기다림
         setNotices(resp.data.list); //게시글 목록
         setCount(resp.data.count);
-    }, [column, keyword, page, size]);
+    }, [column, keyword, page, size, tag]);
 
     const searchNotice = useCallback(() => {
         setPage(1); // 먼저 1페이지로 설정하고
@@ -72,7 +76,7 @@ export default function NoticeList() {
             loadNotices(); // 검색 실행
         }, 0);
 
-    }, [column, keyword, size, loadNotices]);
+    }, [column, keyword, size, tag, loadNotices]);
 
     //체크박스 개별 체크 함수
     const changeNoticeChoice = useCallback((e, target) => { //target은 파라미터 이름일 뿐
@@ -186,27 +190,41 @@ export default function NoticeList() {
         
         <div className="row mt-4">
             <div className="col">
-                <div className="d-flex justify-content-end">
-                    <div className="d-flex align-items-center">
-                        <select name="keyword" className="form-select text-responsive" value={column}
-                            onChange={e => setColumn(e.target.value)}>
-                            <option value="">선택</option>
+                <div className="d-flex flex-wrap align-items-center gap-2">
+                <div style={{ flex: "0 0 auto" }}>
+                    <select
+                        className="form-select text-responsive"
+                        value={tag}
+                        onChange={(e) => setTag(e.target.value)}
+                        style={{ minWidth: "100px", width: "auto" }}
+                    >
+                        <option value="">태그</option>
+                        {noticeTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                        ))}
+                    </select>
+                    </div>
+
+                    <div style={{ flex: "0 0 auto" }}>
+                        <select className="form-select text-responsive" value={column} onChange={(e) => setColumn(e.target.value)} style={{ minWidth: "100px", width: "auto" }}>                    <option value="">선택</option>
                             <option value="notice_title">제목</option>
                             <option value="notice_content">내용</option>
                             <option value="notice_writer_name">작성자</option>
                         </select>
-                        <input type="text" className="form-control text-responsive ms-1" placeholder="검색어"
-                            value={keyword} onChange={e => setKeyword(e.target.value)}
-                        />
-                        <button type="button" onClick={searchNotice}
-                            className="btn btn-secondary text-responsive ms-1 d-flex 
-                                align-items-center justify-content-center text-nowrap">
-                            <FaSearch className="icon-responsive" />
+                    </div>
+
+                    <div style={{ flex: "1 1 auto" }}>
+                        <input type="text" className="form-control text-responsive" placeholder="검색어" value={keyword} onChange={(e) => setKeyword(e.target.value)}/>
+                    </div>
+
+                    <div style={{ flex: "0 0 auto" }}>
+                        <button type="button" onClick={searchNotice} className="btn btn-secondary text-responsive d-flex align-items-center justify-content-center text-nowrap">
+                            <FaSearch />
                         </button>
                     </div>
                 </div>
             </div>
-        </div>
+            </div>
 
         <div className="row mt-4">
             <div className="col">
@@ -272,19 +290,28 @@ export default function NoticeList() {
         </div>
 
         <div className="row mt-4">
-            <div className="col text-start d-flex justify-content-between flex-wrap gap-2">
-                {userDepartment === "인사" && (
-                <button className="btn btn-success text-responsive d-flex align-items-center" onClick={writeNotice}>
-                    <FaPencil className="icon-responsive me-1" />
-                    <span className="text-nowrap">작성</span>
-                </button>
-                )}
-                {hasChecked && (
-                    <button className="btn btn-danger text-responsive d-flex align-items-center ms-1" onClick={openDeleteModal}>
-                        <FaTrash className="icon-responsive me-1" />
-                        <span className="text-nowrap">삭제</span>
-                    </button>
-                )}
+            <div className="col">
+                <div className="d-flex justify-content-between flex-wrap gap-2">
+                    {/* 왼쪽 (삭제 버튼) */}
+                    <div>
+                        {userDepartment === "인사" && hasChecked && (
+                        <button className="btn btn-danger text-responsive d-flex align-items-center" onClick={openDeleteModal}>
+                            <FaTrash className="me-1" />
+                            <span className="text-nowrap">삭제</span>
+                        </button>
+                        )}
+                    </div>
+
+                    {/* 오른쪽 (작성 버튼) */}
+                    <div>
+                        {userDepartment === "인사" && (
+                        <button className="btn btn-success text-responsive d-flex align-items-center" onClick={writeNotice}>
+                            <FaPencil className="me-1" />
+                            <span className="text-nowrap">작성</span>
+                        </button>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
 

@@ -55,6 +55,7 @@ export default function TeamPlan() {
     const [endTimeManuallyChanged, setEndTimeManuallyChanged] = useState(false); //종료일 수동 조정 여부
 
     const [viewType, setViewType] = useState("전체");
+    const [statusFilter, setStatusFilter] = useState("전체"); //일정 완료 여부 - 전체, 달성, 미달성
     const [title, setTitle] = useState(""); //일정 제목
     const [content, setContent] = useState(""); //일정 내용
     const [startTime, setStartTime] = useState(null); //일정 시작일
@@ -112,17 +113,29 @@ export default function TeamPlan() {
     const filteredEvents = useMemo(() => {
         return events.filter(event => {
             const planType = event.extendedProps?.planType;
-
-            // 공휴일은 무조건 포함
-            if (event.extendedProps?.isHoliday) return true;
-
-            return (
+            const isHoliday = event.extendedProps?.isHoliday;
+    
+            if (isHoliday) return true;
+    
+            const planStatus = event.extendedProps?.planStatus;
+    
+            // 1. 일정 유형 필터
+            const matchViewType =
                 viewType === "전체" ||
                 (viewType === "개인" && planType === "개인") ||
-                (viewType === "팀" && planType === "팀")
-            );
+                (viewType === "팀" && planType === "팀");
+    
+            // 2. 달성 여부 필터 (개인/팀 모두 동일하게 planStatus 기준으로 판단)
+            const isCompleted = planStatus === "완료";
+            const matchStatus =
+                statusFilter === "전체" ||
+                (statusFilter === "달성" && isCompleted) ||
+                (statusFilter === "미달성" && !isCompleted);
+    
+            return matchViewType && matchStatus;
         });
-    }, [events, viewType]);
+    }, [events, viewType, statusFilter]);
+    
 
     //effect
     useEffect(() => {
@@ -407,7 +420,18 @@ export default function TeamPlan() {
             );
         });
 
-      const sorted = [...events].sort((a, b) => new Date(a.start) - new Date(b.start));
+        const sorted = [...events].sort((a, b) => {
+            const aIsHoliday = a.extendedProps?.isHoliday ? 1 : 0;
+            const bIsHoliday = b.extendedProps?.isHoliday ? 1 : 0;
+          
+            // 공휴일이면 우선순위 높게
+            if (aIsHoliday !== bIsHoliday) {
+              return bIsHoliday - aIsHoliday;
+            }
+          
+            // 같은 유형이면 시작 시간 기준 정렬
+            return new Date(a.start).getTime() - new Date(b.start).getTime();
+        });
         setSelectedDate(sorted);
         setClickedDate(clickedDay);
 
@@ -566,8 +590,8 @@ export default function TeamPlan() {
         return (
             <div className="fc-event-title-container">
                 {isCompleted 
-                    ? <b className="text-success me-1">완료</b>
-                    : <b className="text-muted me-1">미완료</b>
+                    ? <b className="me-1">[완료]</b>
+                    : <b className="me-1">[미완료]</b>
                 }
                 <span>{eventInfo.event.title}</span>
             </div>
@@ -693,7 +717,7 @@ export default function TeamPlan() {
                     </div>
                     <div className="d-flex align-items-center">
                         <button className={`btn ${tab === 'calendar' ? 'btn-primary' : 'btn-outline-primary'} text-responsive me-2`} onClick={() => setTab('calendar')}>
-                            캘린더
+                            Calendar
                         </button>
                         <button className={`btn ${tab === 'todo' ? 'btn-primary' : 'btn-outline-primary'} text-responsive`} onClick={() => setTab('todo')}>
                             Todo
@@ -716,18 +740,25 @@ export default function TeamPlan() {
         <>
             <div className="row align-items-center mb-3">
                 <div className="col">
-                    <div className="d-flex justify-content-start align-items-center">
-                        <div className="btn-group" role="group">
+                    <div className="d-flex justify-content-between align-items-center">
+                        <div className="btn-group btn-group-sm toggle-button-group" role="group" style={{ flexWrap: 'nowrap' }}>
                             <input type="radio" className="btn-check" name="planTypeFilter" id="allPlans" autoComplete="off"
                                 checked={viewType === "전체"} onChange={() => setViewType("전체")} />
-                            <label className="btn btn-outline-primary text-responsive" htmlFor="allPlans">전체</label>
+                            <label className="btn btn-outline-dark toggle-text-responsive" htmlFor="allPlans">전체</label>
                             <input type="radio" className="btn-check" name="planTypeFilter" id="teamPlans" autoComplete="off"
                                 checked={viewType === "팀"} onChange={() => setViewType("팀")} />
-                            <label className="btn btn-outline-primary text-responsive" htmlFor="teamPlans">공유</label>
+                            <label className="btn btn-outline-dark toggle-text-responsive" htmlFor="teamPlans">공유</label>
                             <input type="radio" className="btn-check" name="planTypeFilter" id="personalPlans" autoComplete="off"
                                 checked={viewType === "개인"} onChange={() => setViewType("개인")} />
-                            <label className="btn btn-outline-primary text-responsive" htmlFor="personalPlans">개인</label>
+                            <label className="btn btn-outline-dark toggle-text-responsive" htmlFor="personalPlans">개인</label>
                         </div>
+                        <select className="form-select w-auto text-responsive" value={statusFilter}
+                            onChange={e=>setStatusFilter(e.target.value)}
+                        >
+                            <option value="전체">전체</option>
+                            <option value="달성">완료</option>
+                            <option value="미달성">미완료</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -740,15 +771,12 @@ export default function TeamPlan() {
                 eventClick={detailEvent} //달력에 등록된 일정(이벤트)를 클릭했을 때 실행되는 함수
                 eventDisplay="block" //모든 일정이 bar형태로 표시
                 displayEventTime={false} //일정 옆에 시간까지 출력할지 여부 설정. false로 하면 시간은 숨기고 제목만 표시
-                dayMaxEventRows={3} //한 셀 안에서 줄바꿈 없이 보여줄 수 있는 최대 줄 수. 초과하면 자동으로 +n mored으로 보여줌
+                dayMaxEventRows={5} //한 셀 안에서 줄바꿈 없이 보여줄 수 있는 최대 줄 수. 초과하면 자동으로 +n mored으로 보여줌
                 fixedWeekCount={false} // 6주 고정 비활성화
                 contentHeight="auto"
                 expandRows={true} //세로줄 자동 확장
                 aspectRatio={2.0}
                 height="auto"
-                headerToolbar={{
-                    // start: ''
-                }}
                 events={filteredEvents} //실제 달력에 표시할 이벤트 목록. useState로 관리 중인 events 배열이 들어가고, loadPlans()에서 서버에서 불러온 데이터를 여기로 채워 넣음
                 eventContent={renderEventContent} //이벤트 바에 표시할 내용
                 eventOrder={(a, b) => {
@@ -1116,7 +1144,7 @@ export default function TeamPlan() {
                     </div>
                     <div className="modal-footer">
                         <button type="button" className="btn btn-secondary text-responsive" onClick={closeListModal}>닫기</button>
-                        <button type="button" className="btn btn-primary text-responsive" onClick={()=>openMakeModal(clickedDate)}>등록</button>
+                        <button type="button" className="btn btn-success text-responsive" onClick={()=>openMakeModal(clickedDate)}>등록</button>
                     </div>
                 </div>
             </div>
@@ -1189,7 +1217,21 @@ export default function TeamPlan() {
                                 <div className="col">
                                     <div className="d-flex text-responsive">
                                         <span>{selectedEvent?.extendedProps?.planSenderName}</span>
-                                        <span className="badge bg-primary ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                        {selectedEvent?.extendedProps?.planSenderDepartment === "인사" && (
+                                            <span className="badge bg-danger ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                        )}
+                                        {selectedEvent?.extendedProps?.planSenderDepartment === "디자인" && (
+                                            <span className="badge bg-warning ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                        )}
+                                        {selectedEvent?.extendedProps?.planSenderDepartment === "영업" && (
+                                            <span className="badge bg-dark ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                        )}
+                                        {selectedEvent?.extendedProps?.planSenderDepartment === "개발" && (
+                                            <span className="badge bg-primary ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                        )}
+                                        {selectedEvent?.extendedProps?.planSenderDepartment === "기획" && (
+                                            <span className="badge bg-info ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -1231,10 +1273,8 @@ export default function TeamPlan() {
                                                                 r => r.planReceiveReceiverNo === contact.memberNo
                                                             );
 
-                                                            console.log(matchedReceiver);
-
                                                             const status = matchedReceiver?.planReceiveStatus || '미달성';
-                                                            const isAccepted = matchedReceiver?.planReceiveIsAccept === 'Y';
+                                                            const isAccepted = matchedReceiver?.planReceiveIsAccept;
                                                         
                                                         return (    
                                                             <li className="list-group-item d-flex justify-content-between align-items-center" key={contact.memberNo}>
@@ -1243,20 +1283,20 @@ export default function TeamPlan() {
                                                                         <span className="d-flex align-items-center">
                                                                             <IoPerson className="me-1" />
                                                                             <span className="fw-bold">{contact.memberName}</span>
-                                                                            {isAccepted ? 
-                                                                                <span className="text-success ms-1">수락</span>
-                                                                            :
-                                                                                <span className="text-muted ms-1">수락 전</span>
-                                                                            }
+                                                                            <span className="text-success fw-bold ms-2">수락</span>
                                                                         </span>
                                                                     ) : (
                                                                         <span>{contact.memberName}
-                                                                            <span className="text-muted">
-                                                                                {isAccepted ? 
-                                                                                    <span className="text-success ms-1">수락</span>
-                                                                                :
-                                                                                    <span className="text-muted ms-1">수락 전</span>
-                                                                                }
+                                                                            <span className="fw-bold ms-2">
+                                                                            {isAccepted === 'Y' && (
+                                                                                <span className="text-success">수락</span>
+                                                                            )}
+                                                                            {isAccepted === 'N' && (
+                                                                                <span className="text-danger">거절</span>
+                                                                            )}
+                                                                            {!isAccepted && (
+                                                                                <span className="text-muted">수락 전</span>
+                                                                            )}
                                                                             </span>
                                                                         </span>
                                                                     )}
