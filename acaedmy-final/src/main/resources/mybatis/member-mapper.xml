@@ -158,6 +158,9 @@
         <if test="memberEmail != null">member_email = #{memberEmail},</if>
         <if test="memberBank != null">member_bank = #{memberBank},</if>
         <if test="memberBankNo != null">member_bank_no = #{memberBankNo},</if>
+        <if test="memberPost != null">member_post = #{memberPost},</if>
+        <if test="memberAddress1 != null">member_address1 = #{memberAddress1},</if>
+        <if test="memberAddress2 != null">member_address2 = #{memberAddress2},</if>
     </set>
     where member_no = #{memberNo}
 </update>

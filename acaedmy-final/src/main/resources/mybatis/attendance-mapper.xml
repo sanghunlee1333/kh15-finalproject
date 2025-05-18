@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="attendance">
+	
+	<select id="sequence" resultType="Long">
+		select attendance_seq.nextval from dual
+	</select>
+	
+	<insert id="inTime" >
+		insert into attendance_log(attendance_log_no, attendance_log_in_time, member_no, attendance_log_day)
+		values(#{attendanceLogNo}, SYSTIMESTAMP, #{memberNo}, #{attendanceLogDay})
+	</insert>
+	
+	<insert id="outTime">
+		insert into attendance_log(attendance_log_no, attendance_log_out_time, member_no, attendance_log_day)
+		values(#{attendanceLogNo}, SYSTIMESTAMP, #{memberNo}, #{attendanceLogDay} )
+	</insert>
+	
+	<select id="getOne" resultType="AttendanceLogDto">
+		select * from attendance_log where attendance_log_no = #{attendanceLogNo}
+	</select>
+	
+	<select id = "getAllInByDay" resultType = "AttendanceLogDto">
+		select * from attendance_log where member_no = #{memberNo} and
+		attendance_log_in_time between #{startDay} and #{endDay}
+		order by attendance_log_no asc
+	</select>
+	<select id = "getAllOutByDay" resultType = "AttendanceLogDto">
+		select * from attendance_log where member_no = #{memberNo} and
+		attendance_log_out_time between #{startDay} and #{endDay}
+			order by attendance_log_no asc
+	</select>
+	<select id = "getAllByDay" resultType = "AttendanceLogDto">
+		select * from attendance_log where member_no = #{memberNo} and
+		(attendance_log_out_time between #{startDay} and #{endDay} or 
+		attendance_log_in_time between #{startDay} and #{endDay})
+			order by attendance_log_no asc
+	</select>
+
+	<select id="sequenceResult" resultType="Long">
+		select attendance_result_seq.nextval from dual
+	</select>
+	
+	
+	<insert id="addPolicy" >
+		insert into policy(policy_no, policy_in_time, policy_arrange, policy_grace_time, policy_lunch_time, policy_dinner_time, policy_work_time, policy_type)
+		values(#{policyNo},#{policyInTime}, #{policyArrange}, #{policyGraceTime}, #{policyLunchTime}, #{policyDinnerTime}, #{policyWorkTime}, #{policyType})
+	</insert>
+	<update id="updatePolicy">
+		update policy
+		<set>
+			<if test="policyInTime != null">policy_in_time = #{policyInTime},</if>
+			<if test="policyArrange != null">policy_arrange = #{policyArrange},</if>
+			<if test="policyGraceTime != null">policy_grace_time = #{policyGraceTime},</if>
+			<if test="policyWorkTime != null">policy_work_time = #{policyWorkTime},</if>
+			<if test="policyLunchTime != null">policy_lunch_time = #{policyLunchTime},</if>
+			<if test="policyDinnerTime != null">policy_dinner_time = #{policyDinnerTime},</if>
+			<if test="policyType != null"> policy_type = #{policyType}</if>
+		</set>
+		where policy_no = #{policyNo}
+	</update>
+	<select id="getPolicy" resultType="PolicyDto">
+		select * from policy where policy_no = #{policyNo}
+	</select>
+	
+	<insert id="addResult">
+		insert into attendance_result(
+		attendance_result_no, attendance_result_in_time, attendance_result_out_time, attendance_result_late_minute,
+		attendance_result_early_leave, attendance_result_work_time, attendance_result_over_time, attendance_result_day,
+		attendance_result_state, member_no
+		)
+		values(#{attendanceResultNo},#{attendanceResultInTime},#{attendanceResultOutTime},#{attendanceResultLateMinute},
+		#{attendanceResultEarlyLeave},#{attendanceResultWorkTime},#{attendanceResultOverTime},
+		#{attendanceResultDay}, #{attendanceResultState}, #{memberNo})
+	</insert>
+	
+	<update id="updateResult">
+		update attendance_result
+		<set>
+		<if test="attendanceResultOutTime != null"> attendance_result_out_time = #{attendanceResultOutTime},</if>
+		<if test="attendanceResultWorkTime != null"> attendance_result_work_time = #{attendanceResultWorkTime},</if>
+		<if test="attendanceResultEarlyLeave != null"> attendance_result_early_leave = #{attendanceResultEarlyLeave},</if>
+		<if test="attendanceResultOverTime != null"> attendance_result_over_time = #{attendanceResultOverTime},</if>
+		<if test="attendanceResultState != null"> attendance_result_state = #{attendanceResultState}</if>
+		</set>
+		where member_no = #{memberNo} and attendance_result_day = #{attendanceResultDay}
+	</update>
+	
+	<select id="findResult" resultType="AttendanceResultDto">
+		select * from attendance_result where attendance_result_day = #{attendanceResultDay} and
+		member_no = #{memberNo}
+	</select>
+	
+	
+	<select id="selectAllByMember" resultType="AttendanceResultDto">
+		select * from attendance_result where member_no = #{memberNo}
+	</select>
+	
+	
+	<select id="selectAllByMonth" resultType="AttendanceResultDto">
+		select * from attendance_result where member_no = #{memberNo} and 
+		attendance_result_day between #{startDay} and #{endDay}
+	</select>
+	
+	<select id = "selectToday" resultType="AttendanceResultDto">
+		select * from attendance_result where member_no = #{memberNo} and 
+		attendance_result_day = #{attendanceResultDay}
+	</select>
+	
+	<select id="sequenceReason" resultType="Long">
+		select attendance_reason_seq.nextval from dual
+	</select>
+	
+	
+	<select id="findReason">
+		select * from attendance_reason where attendance_reason_no = #{attendanceReasonNo}
+	</select>
+	
+
+	<delete id="deleteReason" >
+		delete attendance_reason where attendance_reason_no = #{attendanceReasonNo}
+	</delete>
+	
+	<update id="updateReason">
+		update attendance_reason 
+		<set>
+			<if test="attendanceReasonState != null">attendance_reason_state = #{attendanceReasonState},</if>
+			<if test="attendanceReasonContent != null">attendance_reason_content = #{attendanceReasonContent},</if>
+			<if test="attendanceReasonStart != null">attendance_reason_start = #{attendanceReasonStart},</if>
+			<if test="attendanceReasonEnd != null">attendance_reason_end = #{attendanceReasonEnd},</if>
+		</set>
+		where attendance_no = attendanceNo;
+	</update>
+	
+	<insert id="addReason">
+		insert into attendance_reason (attendance_reason_no, attendance_reason_state, attendance_reason_start,
+		attendance_reason_end,  attendance_reason_content, attendance_reason_date, member_no)
+		values(
+		#{attendanceReasonNo}, #{attendanceReasonState}, #{attendanceReasonStart} ,#{attendanceReasonEnd},
+		 #{attendanceReasonContent}, #{attendanceReasonDate}, #{memberNo}
+		)
+	
+	</insert>
+	
+	
+	<select id = "findImages" resultType="Int">
+		select attachment_no from attendance_images where attendance_reason_no = #{attendanceReasonNo}
+	</select>
+	<insert id="connect" >
+		insert into attendance_images(attendance_reason_no, attachment_no) 
+		values(#{attendanceReasonNo}, #{attachmentNo})
+	</insert>
+	
+	<delete id="deleteAttendanceImage" >
+		delete attendance_images where attendance_reason_no = #{attendanceReasonNo}
+	</delete> 
+	
+	<!-- 
+		select * from attendance_reason where member_no = #{memberNo} and attendance_reason_date = #{attendanceReasonDate} -->
+	<select id="selectAllReasonByMember" resultType="AttendanceReasonDto">
+		select * from ATTENDANCE_REASON where member_no = #{memberNo}
+	</select>
+	
+	<select id="selectReasonByMonth" resultType="AttendanceReasonDto">
+		select * from ATTENDANCE_REASON where member_no = #{memberNo} and attendance_reason_date Like #{attendanceReasonDate}
+		order by attendance_reason_date asc
+	</select>
+<!-- 		select * from ATTENDANCE_REASON where attendance_reason_date =  #{attendanceReasonDate}; -->
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -19,16 +19,13 @@ export default function EditProfile(){
 
     const [memberImg, setMemberImg] = useState({attachmentNo:"", url:""})
     
-    const [newAttach,setNewAttach] = useState({
-      attachmentName:"", attachmentType:"", attachmentSize:"",
-    });
+    const [newAttach,setNewAttach] = useState("");
     const zoomModal = useRef();
     const inputImage = useRef();
     
-    const [addressValid, setAddressValid] = useState(false);
-
-    const [contactValid, setContactValid] = useState(false);
-    const [emailValid, setEmailValid] = useState(false);
+    const [addressValid, setAddressValid] = useState(true);
+    const [contactValid, setContactValid] = useState(true);
+    const [emailValid, setEmailValid] = useState(true);
 
     const checkContact = useCallback(()=>{
         const regex = /^010[0-9]{8}$/;
@@ -128,7 +125,8 @@ export default function EditProfile(){
     const closeChangeInfo = useCallback(()=>{
         const target = Modal.getInstance(infoEdit.current);
         target.hide();
-        //setMemberInfo("");
+        // setMemberInfo("");
+        loadOne();
     },[]);
    
 
@@ -183,29 +181,34 @@ export default function EditProfile(){
         return memberPwValid === true && pwCheckValid === true;
     },[memberPwValid, pwCheckValid])
 
-   // useEffect(()=>{console.log(newAttach)},[newAttach])
-    const changeInfo = useCallback(async ()=>{
+
+    const changeInfo = useCallback(async () => {
       console.log(member);
-      if (memberImg !== preview && newAttach !== null) {
-        const formData = new FormData();
-        formData.append("newAttach", inputImage.current.files[0]);
     
-        // 프로필 이미지 변경 API 요청
-        await axios.post("/mypage/profile", formData, {
-          headers: { "Content-Type": "multipart/form-data" }
-        });
+      try {
+        // 1. 이미지가 바뀐 경우 + newAttach가 있는 경우
+        if (memberImg !== preview && newAttach !== null) {
+          const formData = new FormData();
+          formData.append("newAttach", inputImage.current.files[0]);
     
-        // ✅ 여기가 핵심!
-        window.dispatchEvent(new Event("profileImageUpdated"));
+          // 프로필 이미지 변경 요청
+          await axios.post("/mypage/profile", formData, {
+            headers: { "Content-Type": "multipart/form-data" }
+          });
+    
+          // 프로필 이미지 변경 이벤트 발생
+          window.dispatchEvent(new Event("profileImageUpdated"));
+        }
+    
+        // 2. 회원 정보 변경 요청
+        const resp = await axios.patch("/mypage/edit", member);
+    
+        closeChangeInfo();
+      } catch (error) {
+        console.error("정보 변경 실패", error);
+        alert("정보 변경 중 오류가 발생했습니다.");
       }
-
-      const resp = await axios.patch("/mypage", member);
-
-      closeChangeInfo();
-      console.log("email valid = " + emailValid );
-      console.log("contact valid = " + contactValid );
-      console.log("address valid = " + addressValid );
-    },[memberImg, preview, newAttach, member, emailValid, contactValid, addressValid])
+    }, [memberImg, preview, newAttach, member, emailValid, contactValid, addressValid]);    
 
     const blockButton = useMemo(()=>{
         return addressValid === true && contactValid === true && emailValid === true;
@@ -224,11 +227,7 @@ export default function EditProfile(){
     const changeProfile = useCallback((e)=>{
       const file = e.target.files[0];
       if (!file) return;
-      setNewAttach({
-        attachmentName:file.name,
-        attachmentType:file.type,
-        attachmentSize:file.size
-      })
+      setNewAttach(file);
       const url = URL.createObjectURL(file);
       // console.log(file.name);
       // console.log(file.type);
@@ -312,7 +311,7 @@ export default function EditProfile(){
   <div className="d-flex flex-column gap-3">
     <button className="btn btn-outline-primary" onClick={openChangePw}>비밀번호 변경</button>
     <button className="btn btn-outline-secondary" onClick={openChangeInfo}>정보 수정</button>
-    <button className="btn btn-outline-danger">계정 비활성화</button>
+
   </div>
 
 </div>

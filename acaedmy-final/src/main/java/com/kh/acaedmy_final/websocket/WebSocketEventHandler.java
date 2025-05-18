@@ -38,7 +38,7 @@ public class WebSocketEventHandler {
     @EventListener
     public void whenUserEnter(SessionConnectEvent event) {
         String sessionId = StompHeaderAccessor.wrap(event.getMessage()).getSessionId();
-        log.info("SessionConnectEvent 발생 - 세션 ID: {}", sessionId);
+//        log.info("SessionConnectEvent 발생 - 세션 ID: {}", sessionId);
     }
 
     // 구독 시 방번호 & 사용자 등록만 처리 (입장 메시지는 제거)
@@ -54,7 +54,7 @@ public class WebSocketEventHandler {
             ClaimVO claimVO = getUserFromAccessToken(accessToken);
 
             if (claimVO == null) {
-                log.error("토큰 파싱 실패: {}", accessToken);
+//                log.error("토큰 파싱 실패: {}", accessToken);
                 return;
             }
 
@@ -62,7 +62,7 @@ public class WebSocketEventHandler {
             roomUsers.put(sessionId, claimVO.getMemberNo());
             userNames.put(claimVO.getMemberNo(), claimVO.getMemberDepartment());
 
-            log.info("사용자 {}가 방 {}를 구독", claimVO.getMemberNo(), roomNo);
+//            log.info("사용자 {}가 방 {}를 구독", claimVO.getMemberNo(), roomNo);
         }
     }
 
@@ -83,7 +83,7 @@ public class WebSocketEventHandler {
         messagingTemplate.convertAndSend("/public/chat/" + roomNo,
                 new ActionVO("LEAVE", userId, userName));
 
-        log.info("사용자 {}가 방 {}에서 퇴장", userId, roomNo);
+//        log.info("사용자 {}가 방 {}에서 퇴장", userId, roomNo);
     }
 
     // JWT에서 사용자 정보 추출
@@ -91,7 +91,7 @@ public class WebSocketEventHandler {
         try {
             return tokenService.parseBearerToken("Bearer " + accessToken);
         } catch (Exception e) {
-            log.error("WebSocket 토큰 파싱 실패", e);
+//            log.error("WebSocket 토큰 파싱 실패", e);
             return null;
         }
     }
