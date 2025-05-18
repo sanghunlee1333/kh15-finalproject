@@ -14,9 +14,9 @@
 	
 	<!-- 채팅방 생성 -->
 	<insert id="insert">
-		insert into room(room_no, room_title, room_owner)
+		insert into room(room_no, room_title, room_owner, room_profile_no)
 		values(
-			#{roomNo}, #{roomTitle}, #{roomOwner}
+			#{roomNo}, #{roomTitle}, #{roomOwner}, #{roomProfileNo}
 		)
 	</insert>
 	
@@ -24,29 +24,57 @@
 	<select id="listByMember" resultType="RoomListVO">
     select
         r.room_no as roomNo,
-
-        <!-- [수정된 부분] 개인 채팅일 경우 상대방 이름으로 설정 -->
-        case 
+        
+        case
             when r.room_title is not null then r.room_title
+            when (
+                select count(*) 
+                from room_user ru2 
+                where ru2.room_no = r.room_no
+            ) = 1 then '빈 채팅방'
             else (
                 select m.member_name
+                from room_user ru3
+                join member m on m.member_no = ru3.member_no
+                where ru3.room_no = r.room_no
+                  and ru3.member_no != #{memberNo}
+                  and rownum = 1
+            )
+        end as roomTitle,
+        
+        r.room_owner as roomOwner,
+        r.room_profile_no as roomProfileNo,
+        
+        -- 상대방 번호 (개인 채팅일 때만 의미 있음)
+        (
+            select ru2.member_no
+            from room_user ru2
+            where ru2.room_no = r.room_no
+              and ru2.member_no != #{memberNo}
+              and rownum = 1
+        ) as partnerNo,
+        
+        (
+            select mp.attachment_no
+            from member_profile mp
+            where mp.member_no = (
+                select ru2.member_no
                 from room_user ru2
-                join member m on m.member_no = ru2.member_no
                 where ru2.room_no = r.room_no
                   and ru2.member_no != #{memberNo}
                   and rownum = 1
             )
-        end as roomTitle,
-
-        r.room_owner as roomOwner,
+        ) as partnerProfileNo,
+        
         rc.room_chat_content as lastMessage,
         rc.room_chat_time as lastMessageTime,
-
+        
         (
             select count(*)
             from room_chat rc2
             where rc2.room_chat_origin = r.room_no
               and rc2.room_chat_type = 'CHAT'
+              and rc2.room_chat_sender != #{memberNo}
               and rc2.room_chat_time > nvl((
                   select ru2.last_read_time
                   from room_user ru2
@@ -54,10 +82,10 @@
                     and ru2.member_no = #{memberNo}
               ), to_timestamp('1900-01-01 00:00:00', 'yyyy-mm-dd hh24:mi:ss'))
         ) as unread_count
-
+        
     from room r
     join room_user ru on ru.room_no = r.room_no
-
+    
     left join (
         select *
         from (
@@ -73,11 +101,10 @@
              and rc.room_chat_time = latest.max_time
         )
     ) rc on rc.room_chat_origin = r.room_no
-
+    
     where ru.member_no = #{memberNo}
     order by lastMessageTime desc nulls last
 </select>
-
 
 	<!-- 특정 채팅방 조회 -->
 	<select id="find" resultType="RoomDto">
@@ -182,5 +209,19 @@
 	    )
 	</select>
 
+	<!-- 채팅방 참여자 조회 -->
+	<select id="findRoomMembers" resultType="MemberDto">
+		select m.*
+		from room_user ru
+		join member m on ru.member_no = m.member_no
+		where ru.room_no = #{roomNo}
+	</select>
+	
+	<!-- 개인채팅방에서 초대 시 제목 갱신 -->
+	<update id="updateRoomTitle">
+		update room
+		set room_title = #{roomTitle}
+		where room_no = #{roomNo}
+	</update>
 	
 </mapper>

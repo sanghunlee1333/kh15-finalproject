@@ -9,6 +9,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import com.kh.acaedmy_final.dto.MemberDto;
 import com.kh.acaedmy_final.dto.websocket.RoomDto;
 import com.kh.acaedmy_final.vo.websocket.RoomListVO;
 import com.kh.acaedmy_final.vo.websocket.UserVO;
@@ -121,5 +122,18 @@ public class RoomDao {
 		params.put("ownerNo", ownerNo);
 		params.put("targetNo", targetNo);
 		return sqlSession.selectOne("room.findDirectRoom", params);
+	}
+	
+	//채팅방에 참여해있는 사용자 조회
+	public List<MemberDto> findRoomMembers(long roomNo) {
+		return sqlSession.selectList("room.findRoomMembers", roomNo);
+	}
+	
+	//채팅방 초대에 따른 제목 업데이트
+	public void updateRoomTitle(long roomNo, String roomTitle) {
+		sqlSession.update("room.updateRoomTitle", Map.of(
+					"roomNo", roomNo,
+					"roomTitle", roomTitle
+				));
 	}
 }

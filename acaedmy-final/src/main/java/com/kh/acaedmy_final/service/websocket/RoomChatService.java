@@ -7,14 +7,17 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.kh.acaedmy_final.dao.MemberDao;
 import com.kh.acaedmy_final.dao.websocket.RoomChatDao;
 import com.kh.acaedmy_final.dao.websocket.RoomDao;
+import com.kh.acaedmy_final.dto.AttachmentDto;
 import com.kh.acaedmy_final.dto.MemberDto;
 import com.kh.acaedmy_final.dto.websocket.RoomChatDto;
 import com.kh.acaedmy_final.dto.websocket.RoomDto;
 import com.kh.acaedmy_final.error.TargetNotFoundException;
+import com.kh.acaedmy_final.service.AttachmentService;
 import com.kh.acaedmy_final.vo.ClaimVO;
 import com.kh.acaedmy_final.vo.websocket.ChatResponseVO;
 import com.kh.acaedmy_final.vo.websocket.ChatRoomResponseVO;
@@ -30,6 +33,15 @@ public class RoomChatService {
 	
 	@Autowired
 	private MemberDao memberDao;
+	
+	@Autowired
+	private AttachmentService attachmentService;
+	
+	@Autowired
+	private RoomChatAttachmentService roomChatAttachmentService;
+	
+	@Autowired
+	private RoomChatAttachmentQueryService roomChatAttachmentQueryService;
 	
 	@Autowired
 	private SimpMessagingTemplate messagingTemplate;
@@ -50,6 +62,14 @@ public class RoomChatService {
 		roomChatDto.setRoomChatSender(senderNo);
 		roomChatDto.setRoomChatTime(LocalDateTime.now());
 		
+		if(roomChatDto.getRoomChatType() == null || roomChatDto.getRoomChatType().trim().isEmpty()) {
+			roomChatDto.setRoomChatType("CHAT");
+		}
+		if (roomChatDto.getRoomChatContent() == null || roomChatDto.getRoomChatContent().isBlank()) {
+			roomChatDto.setRoomChatContent("");
+		}
+
+		
 		//DB에 저장
 		roomChatDao.insert(roomChatDto);
 		
@@ -59,6 +79,21 @@ public class RoomChatService {
 		List<Long> participantNos = roomDao.findParticipantNos(roomNo);
 		for(Long participantNo : participantNos) {
 			messagingTemplate.convertAndSend("/topic/room-list/" + participantNo, "REFRESH");
+		}
+		
+		//첨부 파일 저장 및 연결 처리
+		if(roomChatDto.getAttachments() != null && !roomChatDto.getAttachments().isEmpty()) {
+			for (MultipartFile file : roomChatDto.getAttachments())
+				try {
+					//파일 저장
+					AttachmentDto saved = attachmentService.save(file);
+					
+					//메세지와 첨부파일 연결
+					roomChatAttachmentService.connect(roomChatDto.getRoomChatNo(), saved.getAttachmentNo());
+				}
+				catch(Exception e) {
+					throw new RuntimeException("첨부파일 처리 중 오류 발생", e);
+				}
 		}
 		
 		//채팅방에 구독된 사용자들에게 실시간 메세지 전송
@@ -74,14 +109,22 @@ public class RoomChatService {
 
 	    RoomDto roomDto = roomDao.selectOne(roomNo);
 	    String roomTitle = roomDto.getRoomTitle();
+
 	    if (roomTitle == null || roomTitle.trim().isEmpty()) {
 	        List<Long> participants = roomDao.findParticipantNos(roomNo);
-	        for (Long participant : participants) {
-	            if (!participant.equals(memberNo)) {
-	                MemberDto other = memberDao.selectOne(participant);
-	                if (other != null) {
-	                    roomTitle = other.getMemberName();
-	                    break;
+	        
+	        // 참여자가 1명뿐이면
+	        if (participants.size() == 1 && participants.contains(memberNo)) {
+	            roomTitle = "빈 채팅방";
+	        }
+	        else {
+	            for (Long participant : participants) {
+	                if (!participant.equals(memberNo)) {
+	                    MemberDto other = memberDao.selectOne(participant);
+	                    if (other != null) {
+	                        roomTitle = other.getMemberName();
+	                        break;
+	                    }
 	                }
 	            }
 	        }
@@ -98,6 +141,9 @@ public class RoomChatService {
 	                senderName = sender.getMemberName();
 	            }
 	        }
+	        
+	        List<Integer> attachmentNos = roomChatAttachmentService.findAttachmentNos(dto.getRoomChatNo());
+	        List<AttachmentDto> attachments = roomChatAttachmentQueryService.findByNos(attachmentNos);
 
 	        messages.add(ChatResponseVO.builder()
 	            .roomNo(dto.getRoomChatOrigin())
@@ -106,6 +152,7 @@ public class RoomChatService {
 	            .content(dto.getRoomChatContent())
 	            .time(dto.getRoomChatTime())
 	            .type(dto.getRoomChatType())
+	            .attachments(attachments)
 	            .build());
 	    }
 
@@ -127,6 +174,9 @@ public class RoomChatService {
 			}
 		}
 		
+		List<Integer> attachmentNos = roomChatAttachmentService.findAttachmentNos(roomChatDto.getRoomChatNo());
+		List<AttachmentDto> attachments = roomChatAttachmentQueryService.findByNos(attachmentNos);
+		
 		ChatResponseVO chat = ChatResponseVO.builder()
 					.roomNo(roomChatDto.getRoomChatOrigin())
 					.senderNo(roomChatDto.getRoomChatSender())
@@ -134,6 +184,7 @@ public class RoomChatService {
 					.content(roomChatDto.getRoomChatContent())
 					.time(roomChatDto.getRoomChatTime())
 					.type(roomChatDto.getRoomChatType())
+					.attachments(attachments)
 				.build();
 		
 		messagingTemplate.convertAndSend(destination, chat);

@@ -28,7 +28,6 @@
 		member_document_type = #{memberDocumentType}
 	</delete>
 	
-	
 	<!-- 회원 프로필 -->
 	<insert id="connectProfile">
 		insert into member_profile (member_no , attachment_no) values(#{memberNo}, #{attachmentNo})
@@ -42,14 +41,15 @@
 	 <select id="selectProfile" resultType="Int">
 	 	select attachment_no from member_profile where member_no = #{memberNo}
 	 </select>
-	
-	
-	
-	
+	 
 	<!-- 순서보장 -->
 	<update id="updateWithOrder">
 	
 	</update>
+	
+	<select id="selectOne" resultType="Int">
+		select attachment_no from member_profile where member_no = #{memberNo}
+	</select>
 	
 
 </mapper>

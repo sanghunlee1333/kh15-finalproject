@@ -43,29 +43,38 @@ public class RoomService {
 	//채팅방 생성
 	//@param member 방장 번호(토큰에서 추출)
 	//@param request 채팅방 제목, 초대할 멤버 목록 포함
-	public void createRoom(long memberNo, RoomCreateRequestDto request) {
+	public long createRoom(long memberNo, RoomCreateRequestDto request) {
 		//방 제목 검증
 		if(request.getRoomTitle() == null || request.getRoomTitle().trim().isEmpty()) {
 			throw new TargetNotFoundException("방 제목이 없습니다");
 		}
-		
-		//방 정보 생성 및 저장
-		RoomDto roomDto = RoomDto.builder()
-					.roomTitle(request.getRoomTitle())
-					.roomOwner(memberNo)
-				.build();
-		
-		//방 생성
-		roomDao.insert(roomDto);
-		long roomNo = roomDto.getRoomNo();
 		
 		//초대할 멤버 리스트 준비
 		List<Long> invitees = request.getMemberNos() == null ? new ArrayList<>() : request.getMemberNos();
 		List<Long> allMembers = new ArrayList<>(invitees);
 		allMembers.add(memberNo);//방장은 항상 포함
 		
+		//그룹 채팅은 최소 3명 이상 참여해야  생성 가능
+		if(allMembers.size() < 3) {
+			throw new TargetNotFoundException("그룹 채팅방은 최소 3명 이상이어야 합니다");
+		}
+		
+		//방 정보 생성 및 저장
+		Long roomNo = roomDao.getSequence();
+		RoomDto roomDto = RoomDto.builder()
+					.roomNo(roomNo)
+					.roomTitle(request.getRoomTitle())
+					.roomOwner(memberNo)
+					.roomProfileNo(request.getRoomProfileNo())
+				.build();
+		
+		//방 생성
+		roomDao.insert(roomDto);
+		
 		//멤버 DB 등록
 		roomDao.insertMembers(roomNo, allMembers);
+		
+		return roomNo;
 	}
 	
 	//사용자 참여 채팅방 목록 조회
@@ -144,6 +153,7 @@ public class RoomService {
 			messagingTemplate.convertAndSend("/topic/room-list/" + target, "REFRESH");
 			messagingTemplate.convertAndSend("/topic/room-users/" + roomNo, "REFRESH");
 		}
+
 	}
 	
 	//채팅방 나가기
@@ -152,22 +162,34 @@ public class RoomService {
 		if (count == 0) {
 			throw new TargetNotFoundException("해당 채팅방 참여자를 찾을 수 없습니다");
 		}
-		
+
 		MemberDto member = memberDao.selectOne(memberNo);
 		if(member == null) return;
-		
+
 		String content = member.getMemberName() + "님이 채팅방을 나갔습니다.";
-		
+
 		RoomChatDto message = RoomChatDto.builder()
 					.roomChatSender(memberNo)
 					.roomChatOrigin(roomNo)
 					.roomChatType("SYSTEM")
 					.roomChatContent(content)
 				.build();
-		
+
 		roomChatService.sendSystemMessage(message);
+
+		List<MemberDto> remaining = roomDao.findRoomMembers(roomNo);
+		if (remaining.size() == 1) {
+			// 1명만 남은 경우
+			roomDao.updateRoomTitle(roomNo, "빈 채팅방");
+		} 
+		else if (remaining.size() == 2) {
+		    // 그룹채팅방이면 제목 그대로 유지, 목록 갱신만 전송
+		    for (MemberDto target : remaining) {
+		        messagingTemplate.convertAndSend("/topic/room-list/" + target.getMemberNo(), "REFRESH");
+		    }
+		}
 	}
-	
+
 	//1:1 채팅방 생성
 	public Long startDirectChat(Long ownerNo, Long targetNo) {
 		//이미 존재하는 1:1 채팅방 확인
