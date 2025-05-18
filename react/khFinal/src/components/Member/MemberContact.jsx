@@ -17,25 +17,42 @@ export default function MemberContact() {
     const [filterContacts, setFilterContacts] = useState({});
     const [noResults, setNoResults] = useState(false); // 검색 결과가 없을 때의 상태
     const [myInfo, setMyInfo] = useState(null);
+    //프로필 이미지
+    const [profileImages, setProfileImages] = useState({});
+    const [isMyProfileReady, setMyProfileReady] = useState(false);
+
 
     //callback
     // 내 정보 불러오기
     const loadMyInfo = useCallback(async () => {
         const { data } = await axios.get("/member/contact/me");
         setMyInfo(data);
+
+        //내 프로필 이미지 attachment 번호 가져오기
+        const attachmentNo = await getProfileAttachmentNo(data.memberNo);
+        //console.log("내 프로필 이미지 attachmentNo:", attachmentNo);
+        if(attachmentNo !== null) {
+            setProfileImages((prev)=> ({
+                ...prev,
+                [data.memberNo]: attachmentNo,
+            }));
+        }
+
+        // 프로필 정보와 이미지가 모두 준비됐다고 표시
+        setMyProfileReady(true);
     }, []);
 
     //연락처 불러오기
-    const loadContacts = useCallback(async () => {
-        const token = axios.defaults.headers.common['Authorization']//저장된 토큰 가져오기
-        const { data } = await axios.get("/member/contact", {
-            headers: {
-                Authorization: token,
-            }
-        });
-        setGroupContacts(data);
-        setFilterContacts(data);//검색하지 않았을 경우에도 목록을 불러와야하니까
-    }, [groupContacts, filterContacts, loadMyInfo]);
+    // const loadContacts = useCallback(async () => {
+    //     const token = axios.defaults.headers.common['Authorization']//저장된 토큰 가져오기
+    //     const { data } = await axios.get("/member/contact", {
+    //         headers: {
+    //             Authorization: token,
+    //         }
+    //     });
+    //     setGroupContacts(data);
+    //     setFilterContacts(data);//검색하지 않았을 경우에도 목록을 불러와야하니까
+    // }, [groupContacts, filterContacts, loadMyInfo]);
 
     //연락처 검색
     const searchContact = useCallback(() => {
@@ -80,6 +97,54 @@ export default function MemberContact() {
 
         setSearchContacts("");//검색 후 입력창 초기화
     }, [searchContacts, groupContacts]);
+    
+    //프로필 이미지
+    const getProfileAttachmentNo = async (memberNo) => {
+        try {
+            const { data } = await axios.get(`/mypage/profile/${memberNo}`);
+            return data !== -1 ? data : null;
+        }
+        catch {
+            return null;
+        }
+    };
+
+    // useEffect(()=>{
+    //    loadMyInfo();
+    //   //  console.log(profileImages);
+    // },[profileImages]);
+
+
+    const loadProfileImages = async (contacts) => {
+        const map = {};
+        for (const dept of Object.keys(contacts)) {
+            for (const member of contacts[dept]) {
+                const attachmentNo = await getProfileAttachmentNo(member.memberNo);
+                if (attachmentNo !== null) {
+                    map[member.memberNo] = attachmentNo;
+                }
+            }
+        }
+    
+        // 덮어쓰기 말고 기존 것 유지하면서 병합
+        setProfileImages((prev) => ({
+            ...prev,
+            ...map,
+        }));
+    };
+    
+
+    const fetchContactsAndProfiles = useCallback(async () => {
+        await loadMyInfo();
+        const token = axios.defaults.headers.common['Authorization'];
+        const response = await axios.get("/member/contact", {
+            headers: { Authorization: token },
+        });
+        const data = response.data;
+        setGroupContacts(data);
+        setFilterContacts(data);
+        await loadProfileImages(data);
+    }, [profileImages]);    
 
     //키보드 enter 누르면 검색되게
     const handleKeyPress = (e) => {
@@ -88,15 +153,15 @@ export default function MemberContact() {
         }
     };
 
-    const startDirectChat = async(targetNo) => {
+    const startDirectChat = async (targetNo) => {
         const token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
         const response = await axios.post(`/rooms/direct/${targetNo}`, null, {
-            headers: {Authorization: `Bearer ${token}`}
+            headers: { Authorization: `Bearer ${token}` }
         });
         return response.data;
     };
 
-    const handleChatClick = async(memberNo) => {
+    const handleChatClick = async (memberNo) => {
         try {
             const roomNo = await startDirectChat(memberNo);
             navigate(`/chat/group/${roomNo}`);
@@ -106,12 +171,28 @@ export default function MemberContact() {
             alert("채팅방을 챙성하거나 찾는 데 실패했습니다.");
         }
     };
-
+    
+    useEffect(()=> {
+        const handleProfileImageUpdate = () => {
+            //프로필 이미지가 변경된 경우 연락처와 이미지 다시 로드
+            fetchContactsAndProfiles();
+        };
+        
+        window.addEventListener("profileImageUpdated", handleProfileImageUpdate);
+        return() => {
+            window.removeEventListener(
+                "profileImageUpdated", handleProfileImageUpdate
+            );
+        };
+    }, []);
     //effect
     useEffect(() => {
-        loadContacts();
-        loadMyInfo();
-    }, []);
+        fetchContactsAndProfiles();
+        // loadMyInfo();
+    }, [loadMyInfo]);
+    
+    // useEffect(()=>{
+    // }, [profileImages]);
 
     //view
     return (<>
@@ -149,7 +230,7 @@ export default function MemberContact() {
 
         {/* 연락처 리스트 */}
         <div className="list-group">
-            {myInfo && (
+            {isMyProfileReady && myInfo && (
                 <div className="mb-4">
                     {/* 부서명 표시 */}
                     <div className="bg-light px-3 py-2 border-top fw-semibold text-secondary">
@@ -159,8 +240,14 @@ export default function MemberContact() {
                     {/* 본인 연락처 스타일 동일하게 표시 */}
                     <div className="list-group-item d-flex align-items-center">
                         <img
-                            src="/images/profile_basic.png"
-                            alt="Default Profile"
+                            src={
+                                profileImages[myInfo.memberNo]
+                                    // ? `/mypage/attachment/${profileImages[myInfo.memberNo]}`
+                                    // : "/images/profile_basic.png"
+                                    ? `http://localhost:8080/api/mypage/attachment/${profileImages[myInfo.memberNo]}`
+                                    : "/images/profile_basic.png"
+                            }
+                            alt="Profile"
                             className="rounded-circle me-2"
                             style={{ width: "40px", height: "40px", objectFit: "cover" }}
                         />
@@ -210,7 +297,11 @@ export default function MemberContact() {
                             key={contact.memberNo}>
                             {/* 프로필 이미지 */}
                             <img
-                                src="/images/profile_basic.png"
+                                src={
+                                    profileImages[contact.memberNo]
+                                        ? `http://localhost:8080/api/mypage/attachment/${profileImages[contact.memberNo]}`
+                                        : "/images/profile_basic.png"
+                                }
                                 alt="Default Profile"
                                 className="rounded-circle me-2"
                                 style={{ width: "40px", height: "40px", objectFit: "cover" }}
@@ -241,7 +332,7 @@ export default function MemberContact() {
                                 {/* 개인 채팅하기 버튼 */}
                                 <div className="d-flex align-items-center gap-2 mt-2 mt-sm-0 justify-content-end">
                                     <button className="btn btn-outline-primary btn-sm ms-auto"
-                                        onClick={()=> handleChatClick(contact.memberNo)}>
+                                        onClick={() => handleChatClick(contact.memberNo)}>
                                         채팅
                                     </button>
                                 </div>
