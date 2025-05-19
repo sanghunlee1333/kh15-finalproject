@@ -19,7 +19,7 @@ GlobalWorkerOptions.workerSrc = workerSrc;
 
 export default function MemberList(){
    // const [files, setFiles] = useState("");
-
+    
     let [imageIndex,setImageIndex] = useState((0));
     const [attachList, setAttachList] = useState([]);
 
@@ -611,9 +611,9 @@ export default function MemberList(){
                             <div className="row mt-1">
                                 <div className="col d-flex">
                                     <h5 className="text-muted">주민등록증 혹은 주민등록등본</h5>
-                                    <div className="d-flex flex-column ms-auto" style={{minHeight:"5em"}}>
+                                    {/* <div className="d-flex flex-column ms-auto" style={{minHeight:"5em"}}> */}
                                         
-                                        
+{/*                                         
                                     {attachList.map((item, index) => (
                                         <div key={index}>
                                             {item.type === "ID" && (  
@@ -623,9 +623,9 @@ export default function MemberList(){
                                                 </span>
                                             )}
                                         </div>
-                                    ))}
+                                    ))} */}
                                         
-                                    </div>
+                                    {/* </div> */}
                                 </div>
                                 <div className="row">
                                     <div className="col">
@@ -681,7 +681,7 @@ export default function MemberList(){
                             <div className="row mt-1">
                                 <div className="col d-flex">
                                     <h5 className="text-muted">통장 사본</h5>
-                                    <div className="d-flex flex-column ms-auto" style={{minHeight:"5em"}}>
+                                    {/* <div className="d-flex flex-column ms-auto" style={{minHeight:"5em"}}>
                                     {attachList.map((item, index) => (
                                         <div key={index}>
                                             {item.type === "bank" && (  
@@ -693,7 +693,7 @@ export default function MemberList(){
                                         </div>
                                     ))}
                                         
-                                    </div>
+                                    </div> */}
                                 </div>
                                 <div className="row">
                                     <div className="col">
@@ -752,7 +752,7 @@ export default function MemberList(){
                             <div className="row mt-1">
                                 <div className="col d-flex">
                                     <h5 className="text-muted">근로 계약서</h5>
-                                    <div className="d-flex flex-column ms-auto" style={{minHeight:"5em"}}>
+                                    {/* <div className="d-flex flex-column ms-auto" style={{minHeight:"5em"}}>
                                         
                                     {attachList.map((item, index) => (
                                         <div key={index}>
@@ -765,7 +765,7 @@ export default function MemberList(){
                                         </div>
                                     ))}
                                         
-                                    </div>
+                                    </div> */}
                                 </div>
                                 <div className="row">
                                     <div className="col">
@@ -812,7 +812,7 @@ export default function MemberList(){
                             <div className="row mt-1">
                                 <div className="col d-flex">
                                     <h5 className="text-muted">이력서</h5>
-                                    <div className="d-flex flex-column ms-auto" style={{minHeight:"5em"}}>
+                                    {/* <div className="d-flex flex-column ms-auto" style={{minHeight:"5em"}}>
                                         
                                             {attachList.map((item, index) => (
                                                 <div key={index}>
@@ -825,7 +825,7 @@ export default function MemberList(){
                                                 </div>
                                             ))}
                                         
-                                    </div>
+                                    </div> */}
                                 </div>
                                 <div className="row">
                                     <div className="col">
@@ -872,7 +872,7 @@ export default function MemberList(){
                             <div className="row mt-1">
                                 <div className="col d-flex">
                                     <h5 className="text-muted">기타 서류</h5>
-                                    <div className="d-flex flex-column ms-auto" style={{minHeight:"5em"}}>
+                                    {/* <div className="d-flex flex-column ms-auto" style={{minHeight:"5em"}}>
                                         
                                         {attachList.map((item, index) => (
                                             <div key={index}>
@@ -885,7 +885,7 @@ export default function MemberList(){
                                             </div>
                                         ))}
                                         
-                                    </div>
+                                    </div> */}
                                 </div>
                                 <div className="row">
                                     <div className="col">
