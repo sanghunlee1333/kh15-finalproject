@@ -21,6 +21,14 @@
     height: 100%;
 }
 
+/* TeamPlan.css 또는 global 스타일에 추가 */
+.fc-event-title-container {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
 /* div에 valid feedback 효과 */
 div.is-valid {
     border: 1px solid #18B779 !important; /* Bootstrap success 색상 */
