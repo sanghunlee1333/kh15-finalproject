@@ -201,6 +201,13 @@
 			attendance_result_day between #{startDay} and #{endDay} and
 		attendance_result_state like #{attendanceResultState}
 	</select>
+	
+	<select id="checkAttendance" resultType="Int">
+		select count(*) from attendance_log where member_no = #{memberNo} and
+		attendance_log_day = #{attendanceLogDay}
+		
+	</select>
+	
 </mapper>
 
 
