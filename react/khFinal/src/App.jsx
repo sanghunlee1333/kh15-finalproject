@@ -39,6 +39,7 @@ import AllAlarm from './components/template/AllAlarm';
 import AlarmInitializer from './AlarmInitializer'
 import MainTeamPlan from './components/Plan/MainTeamPlan'
 import MainNotice from './components/Notice/MainNotice'
+import AdminHome from './components/Admin/AdminHome'
  
 function App() {
   const [userNo, setUserNo] = useRecoilState(userNoState);
@@ -190,6 +191,7 @@ function App() {
           <Route path="/mypage" element={<EditProfile/>}></Route>
 
           {/* Admin */}
+          <Route path="/admin/home" element={<Admin><AdminHome/></Admin>}></Route>
           <Route path="/admin/member/list" element={<Admin><MemberList/></Admin>}></Route>
           <Route path="/admin/member/:number" element={<Admin><MemberManage/></Admin>}></Route>
           <Route path="/admin/date" element={<Admin><DateMange/></Admin>}></Route>

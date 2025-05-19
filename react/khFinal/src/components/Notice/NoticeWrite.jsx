@@ -10,10 +10,15 @@ import { RiArrowGoBackFill } from "react-icons/ri";
 
 import axios from "axios";
 import $ from 'jquery';
+import { userDepartmentState } from '../utils/stroage';
+import { useRecoilValue } from 'recoil';
 window.$ = $;
 window.jQuery = $;
 
 export default function NoticeWrite() {
+
+    //recoil
+    const userDepartment = useRecoilValue(userDepartmentState);
 
     //ref
     const editor = useRef(null);
@@ -44,6 +49,14 @@ export default function NoticeWrite() {
     }, []);
 
     //effect
+    //글쓰기 페이지 진입 자체를 막기
+    useEffect(() => {
+        if (userDepartment !== "인사") {
+            toast.error("인사팀만 작성이 가능합니다");
+            navigate("/notice/list");
+        }
+    }, [userDepartment, navigate]);
+
     useEffect(()=>{
         if(editor.current) {
             $(editor.current).summernote({

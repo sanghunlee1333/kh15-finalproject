@@ -73,9 +73,9 @@ public class AttendanceRestController {
 	@PostMapping("/status/{memberNo}")
 	public Map<String, Object> status(@PathVariable long memberNo, 
 			@RequestBody RequestResultByMonthVO vo){
-		System.out.println("STATUS CONTROLLER");
-		System.out.println(memberNo);
-		System.out.println(vo);
+//		System.out.println("STATUS CONTROLLER");
+//		System.out.println(memberNo);
+//		System.out.println(vo);
 		
 		List<AttendanceResultDto> resultList =  attendanceReasonDao.selectResultByMonth(memberNo, vo);
 		
@@ -266,6 +266,9 @@ public class AttendanceRestController {
 	
 	@PostMapping("/resultlist/{memberNo}")
 	public Map<String, Object> selectResultList(@PathVariable long memberNo, @RequestBody RequestResultByMonthVO vo){
+		System.err.println("SELECTRESULTLIST");
+		System.out.println(memberNo);
+		System.out.println(vo);
 		Map<String, Object> map = new HashMap<>();
 		List<AttendanceResultDto>list =  attendanceReasonDao.selectResultByMonth(memberNo, vo);
 		map.put("attendanceResultList", list);

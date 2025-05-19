@@ -36,6 +36,9 @@ export default function MemberManage(){
     const [memberBankValid, setMemberBankValid] = useState(null);
     const [memberBankNoValid, setMemberBankNoValid] = useState(null);
 
+   
+
+
     const checkMemberName = useCallback((e)=>{
         const regex = /^[가-힣]{0,20}$/;
         const isValid = regex.test(e.target.value);
@@ -130,16 +133,31 @@ export default function MemberManage(){
         return memberBankNoValid === true ? "is-valid" : "is-invalid";
     },[memberBankNoValid]);
 
+    const [profileUrl, setProfileUrl] = useState("");
+
     const loadOne = useCallback(async ()=>{
         const rest = await axios.get("/admin/member/"+number);
         setMember(rest.data.vo);
         setBackup(rest.data.vo);
+       
+        const imageResp = await axios.get(`/mypage/attachment/${rest.data.profileNo}`, {
+                responseType: "blob",
+              });
+
+              const imageBlob = imageResp.data;
+              const imageUrl = URL.createObjectURL(imageBlob);
+
+              setProfileUrl(imageUrl);
+
     },[]);
     
+   
+
     useEffect(()=>{
         loadOne();
     },[])
 
+    
 
 
     const pwModal = useRef();
@@ -176,16 +194,15 @@ export default function MemberManage(){
 
     const [newPw, setNewPw] = useState(false);
     const yesPw = useCallback(async()=>{
-        //console.log("hello");
+      
         const resp = await axios.post("/admin/member/resetPw/"+number);
         if(resp){
-            // console.log(resp.data);
+
             setNewPw(true);
         }
         closePwModal();
         
-        //else console.log("erageradg");
-        //console.log(axios.defaults.headers.common['Authorization']);
+        
     },[]);
 
 
@@ -202,9 +219,7 @@ export default function MemberManage(){
         console.log("check edited");
         console.log(updatedInfo);
         const rest = await axios.patch(`/admin/member/update/${number}`, updatedInfo);
-        // const rest = await axios.patch("/admin/member/update", updatedInfo);
-        //const rest = await axios.put("/admin/member/update2", updatedInfo);
-        // const rest = await axios.post("/admin/member/update");
+     
         if(rest === true){
            console.log("sueeccceesss");
             loadOne();
@@ -349,7 +364,8 @@ export default function MemberManage(){
         <div className="row mt-4">
   <div className="col d-flex align-items-start">
     <img
-      src={userImg}
+     
+      src={profileUrl}
       alt="기본 사용자 이미지"
       className="rounded shadow w-100"
       style={{ maxWidth: 350 }}

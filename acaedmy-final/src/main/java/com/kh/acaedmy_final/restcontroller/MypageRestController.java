@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.kh.acaedmy_final.dao.AttachmentDao;
+import com.kh.acaedmy_final.dao.AttendanceDao;
 import com.kh.acaedmy_final.dao.MemberDao;
 import com.kh.acaedmy_final.dao.MemberDocumentDao;
 import com.kh.acaedmy_final.dto.AttachmentDto;
@@ -47,6 +48,8 @@ public class MypageRestController {
 	private AttachmentService attachmentService;
 	@Autowired
 	private AttachmentDao attachmentDao;
+	@Autowired
+	private AttendanceDao attendanceDao;
 	
 	@GetMapping("/")
 	public Map<String, Object> selectOne(@RequestHeader ("Authorization") String bearerToken ) {
@@ -134,12 +137,22 @@ public class MypageRestController {
 	}
 	
 
+
+	@GetMapping("/")
+	public boolean checkAttendance(@RequestHeader ("Authorization") String bearerToken) {
+		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+		attendanceDao.countAttendance(claimVO.getMemberNo());
+		
+		return false;
+		
+	}
+
 	@GetMapping("/profile/{memberNo}")
 	public int getProfileImageNo(@PathVariable int memberNo) {
 		Integer attachmentNo = memberDocumentDao.selectOne(memberNo);
 		return attachmentNo != null ? attachmentNo : -1;
 	}
-	
+
 	@PostMapping("/profile-batch")
 	public Map<Integer, Integer> getProfileImageMap(@RequestBody List<Integer> memberNos) {
 	    Map<Integer, Integer> result = new HashMap<>();

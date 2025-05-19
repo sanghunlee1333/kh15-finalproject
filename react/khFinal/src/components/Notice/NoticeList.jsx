@@ -14,13 +14,14 @@ import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { Modal } from "bootstrap";
 import { FaPencil } from 'react-icons/fa6';
 import { useRecoilValue } from 'recoil';
-import { userDepartmentState } from '../utils/stroage';
+import { userDepartmentState, userNoState } from '../utils/stroage';
 
 const noticeTypes = Object.keys(typeMap);
 
 export default function NoticeList() {
     //recoil - 인사팀인지
     const userDepartment = useRecoilValue(userDepartmentState);
+    const loginUserNo = useRecoilValue(userNoState);
 
     //navigate
     const navigate = useNavigate();
@@ -144,7 +145,9 @@ export default function NoticeList() {
     //게시글 삭제 함수
     const deleteNotice = useCallback(async () => {
         //notices 배열을 순회하며 notice.choice === true 인 공지 객체들만 따로 모아 checkedList라는 새로운 배열을 만듦 
-        const checkedList = notices.filter(notice => notice.choice);
+        const checkedList = notices.filter(
+            notice => notice.choice && notice.noticeWriterNo === loginUserNo
+        );
 
         //Promise.all -> 여러 개의 Promise를 하나의 큰 Promise로 묶어 주는 빌트인 함수
         //- 작동 방식 : 배열 안 모든 Promise가 성공해야 Promise.all이 성공으로 끝나고
@@ -303,11 +306,11 @@ export default function NoticeList() {
                 <div className="d-flex justify-content-between flex-wrap gap-2">
                     {/* 왼쪽 (삭제 버튼) */}
                     <div>
-                        {userDepartment === "인사" && hasChecked && (
-                            <button className="btn btn-danger text-responsive d-flex align-items-center" onClick={openDeleteModal}>
-                                <FaTrash className="me-1" />
-                                <span className="text-nowrap">삭제</span>
-                            </button>
+                        {userDepartment === "인사" && notices.some(n => n.choice && n.noticeWriterNo === loginUserNo) && (
+                        <button className="btn btn-danger text-responsive d-flex align-items-center" onClick={openDeleteModal}>
+                            <FaTrash className="me-1" />
+                            <span className="text-nowrap">삭제</span>
+                        </button>
                         )}
                     </div>
 

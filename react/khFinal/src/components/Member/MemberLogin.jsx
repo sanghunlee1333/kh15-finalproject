@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { loginState, userDepartmentState, userNoState } from "../utils/stroage";
 import { useNavigate } from "react-router";
+import { Modal } from "bootstrap";
 export default function MemberLogin(){
     const navigate = useNavigate();
     //recoil
@@ -16,14 +17,16 @@ export default function MemberLogin(){
     });
 
     const [click,setClick] = useState(false);
+    const [status, setStatus] = useState({
+      idStatus:false, pwStatus:false
+    });
 
-
-    useEffect(()=>{
-        console.log(userNo + " nono");
-        console.log(userDepartment );
-        console.log(login);
-        console.log(axios.defaults.headers.common['Authorization']);
-    },[axios.defaults.headers.common['Authorization']])
+    // useEffect(()=>{
+    //     console.log(userNo + " nono");
+    //     console.log(userDepartment );
+    //     console.log(login);
+    //     console.log(axios.defaults.headers.common['Authorization']);
+    // },[axios.defaults.headers.common['Authorization']])
     
 
     //callback
@@ -32,12 +35,43 @@ export default function MemberLogin(){
             ...prev,
             [e.target.name] : e.target.value
         }));
+      if(members.memberId){
+         setStatus(prev => ({
+      ...prev,
+      idStatus: true
+    }));
+      }    
+      if(members.memberPw){
+          setStatus(prev => ({
+      ...prev,
+      pwStatus: true
+    }));
+      }    
+    },[members])
+
+    const checkStatus = useMemo(()=>{
+      return status.idStatus && status.pwStatus
+    },[status])
+    
+
+    const failLogin = useRef();
+    const openFailLogin = useCallback(()=>{
+      const target = Modal.getOrCreateInstance(failLogin.current);
+      target.show();
+    },[])
+
+    const closeFailLogin = useCallback(()=>{
+      const target = Modal.getInstance(failLogin.current);
+      target.hide();
     },[])
 
     const gotoLogin = useCallback(async()=>{
         //console.log(members);
-        const resp = await axios.post("/member/login", members);
+        if(!checkStatus) return;
+        
+        
         try{
+          const resp = await axios.post("/member/login", members);
 
           setUserNo(resp.data.memberNo);
           setUserDepartment(resp.data.memberDepartment);
@@ -56,7 +90,8 @@ export default function MemberLogin(){
           navigate("/");
         }
         catch(err){
-          console.log("LoGINXXXX");
+         // console.log("LoGINXXXX");
+          openFailLogin();
         }
     },[members]);
 
@@ -66,25 +101,7 @@ export default function MemberLogin(){
         setClick(e.target.checked);
     },[click])
 
-    // const gotoLogout = useCallback(async ()=>{
-    //   await axios.delete("/member/logout");
-    //   window.localStorage.removeItem('refreshToken');
-    //   window.sessionStorage.removeItem('refreshToken');
-    //   setUserNo("");
-    //   setUserDepartment("");
-      
-    // },[])
-
-    // const refreshLog = useCallback(async ()=>{
-    //   const rest = await axios.get("/member/refresh");
-    //   console.log("new refreshtoken");
-    //   console.log(rest.data.refreshToken);
-    // },[])
-
-   
-
-    // style={{ minHeight: 'calc(70vh)' }}
-    // view
+ 
     return (<>
     {/* <div className="container"> */}
     <div className="d-flex justify-content-center align-items-center" >
@@ -142,31 +159,44 @@ export default function MemberLogin(){
         </button>
       </div>
     </div>
-    <span>userNo = {userNo}</span>
-    <span>userDepartment = {userDepartment}</span>
+  
 
-      {/* 로그아웃 버튼
-    <div className="row mt-3">
-      <div className="col">
-        <button className="btn btn-secandary" onClick={gotoLogout}>
-          로그아웃
-        </button>
-      </div>
-    </div>
-
-      {/* 리프레쉬 
-      <div className="row mt-3">
-      <div className="col">
-         <button className="btn btn-secandary" onClick={refreshLog}>
-          리프레시
-        </button>
-        <span>userNo = {userNo}</span>
-        <span>userDepartment = {userDepartment}</span> 
-      </div>
-    </div> */}
 
   </div>
 </div>
-        {/* </div> */}
+      
+
+      <div className="modal fade" tabIndex="-1" role="dialog" ref={failLogin} data-bs-backdrop="static">
+            <div className="modal-dialog " role="document">
+                <div className="modal-content">
+                    <div className="modal-header">
+                    <h2> 로그인 실패</h2>
+                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"  >
+                    </button>
+                    </div>
+                    <div className="modal-body" >
+                        
+                      <div style={{minHeight:'250px'}}>
+
+                       <span>로그인 정보가 일치하지 않습니다</span>
+                      </div>
+                     
+                    <div className="modal-footer">
+                    
+                        <button onClick={closeFailLogin} className="btn btn-danger"> 닫기</button>
+                                        
+                       
+                   
+                    </div>
+                </div>
+                </div>
+            </div> 
+            </div>
+            
+        
+        
+
+
+
     </>);
 }

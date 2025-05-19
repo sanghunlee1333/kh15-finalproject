@@ -11,8 +11,15 @@ import moment from "moment";
 import { Modal } from "bootstrap";
 import { FaTrash } from "react-icons/fa";
 import { FaListUl } from "react-icons/fa6";
+import { userDepartmentState, userNoState } from "../utils/stroage";
+import { useRecoilValue } from "recoil";
 
 export default function NoticeDetail() {
+
+    //recoil
+    const loginUserNo = useRecoilValue(userNoState);
+    const userDepartment = useRecoilValue(userDepartmentState);
+
     //param
     const { noticeNo } = useParams();
 
@@ -157,7 +164,6 @@ export default function NoticeDetail() {
                         <span>목록</span>
                     </button>
                 </div>
-
             </div>
         </div>
 
