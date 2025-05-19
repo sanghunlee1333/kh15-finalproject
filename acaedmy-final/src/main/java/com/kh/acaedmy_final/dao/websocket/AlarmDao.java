@@ -67,6 +67,16 @@ public class AlarmDao {
 		return sqlSession.selectOne("alarm.find", alarmNo);
 	}
 	
+	//알림 중복 여부 확인 (알림 유형 + 일정 번호 + 수신자 번호 기준)
+	public boolean existsByTypeAndPlanAndReceiver(String alarmType, long planNo, long receiverNo) {
+	    Map<String, Object> params = new HashMap<>();
+	    params.put("alarmType", alarmType);
+	    params.put("planNo", planNo);
+	    params.put("receiverNo", receiverNo);
+
+	    return sqlSession.selectOne("alarm.existsByTypeAndPlanAndReceiver", params);
+	}
+	
 	//알림 조회(무한 스크롤)
 	public List<AlarmResponseVO> selectListByReceiverWithPaging(long receiverNo, int offset, int size) {
 		Map<String, Object> params = new HashMap<>();

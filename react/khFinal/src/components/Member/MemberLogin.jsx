@@ -37,22 +37,27 @@ export default function MemberLogin(){
     const gotoLogin = useCallback(async()=>{
         //console.log(members);
         const resp = await axios.post("/member/login", members);
-        
-        setUserNo(resp.data.memberNo);
-        setUserDepartment(resp.data.memberDepartment);
+        try{
 
-        axios.defaults.headers.common['Authorization'] = `Bearer ${resp.data.accessToken}`;
-
-        
-        if(click === true){
+          setUserNo(resp.data.memberNo);
+          setUserDepartment(resp.data.memberDepartment);
+          
+          axios.defaults.headers.common['Authorization'] = `Bearer ${resp.data.accessToken}`;
+          
+          
+          if(click === true){
             window.sessionStorage.removeItem('refreshToken');
             window.localStorage.setItem('refreshToken', resp.data.refreshToken);
-        }
-        else{
+          }
+          else{
             window.localStorage.removeItem('refreshToken');
             window.sessionStorage.setItem('refreshToken', resp.data.refreshToken);
+          }
+          navigate("/");
         }
-        navigate("/");
+        catch(err){
+          console.log("LoGINXXXX");
+        }
     },[members]);
 
    

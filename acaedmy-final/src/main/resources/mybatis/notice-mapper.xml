@@ -39,15 +39,21 @@
 	    from notice n
 	    left outer join member m on n.notice_writer_no = m.member_no
 	    <where>
+		    <if test="tag != null and tag != ''">
+	            n.notice_type = #{tag}
+	        </if>
 	        <if test="column != null and keyword != null">
 	            <choose>
 	                <when test="column == 'notice_writer_name'">
+	                 	<if test="tag != null and tag != ''">and</if>
 	                    instr(nvl(m.member_name, '인사팀'), #{keyword}) > 0
 	                </when>
 	                <when test="column == 'notice_title'">
+	                 	<if test="tag != null and tag != ''">and</if>
 	                    instr(n.notice_title, #{keyword}) > 0
 	                </when>
 	                <when test="column == 'notice_content'">
+	                 	<if test="tag != null and tag != ''">and</if>
 	                    instr(n.notice_content, #{keyword}) > 0
 	                </when>
 	            </choose>
@@ -69,15 +75,21 @@
 				from notice n
 				left outer join member m on n.notice_writer_no = m.member_no
 				<where>
+					<if test="tag != null and tag != ''">
+                    	n.notice_type = #{tag}
+                	</if>
 	                <if test="column != null and keyword != null">
 	                    <choose>
 	                        <when test="column == 'notice_writer_name'">
+	                        	<if test="tag != null and tag != ''">and</if>
 	                            instr(nvl(m.member_name, '인사팀'), #{keyword}) > 0
 	                        </when>
 	                        <when test="column == 'notice_title'">
+	                        	<if test="tag != null and tag != ''">and</if>
 	                            instr(n.notice_title, #{keyword}) > 0
 	                        </when>
 	                        <when test="column == 'notice_content'">
+	                        	<if test="tag != null and tag != ''">and</if>
 	                            instr(n.notice_content, #{keyword}) > 0
 	                        </when>
 	                    </choose>
