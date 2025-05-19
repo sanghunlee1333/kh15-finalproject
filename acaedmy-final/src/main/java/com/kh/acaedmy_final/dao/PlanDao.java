@@ -33,7 +33,7 @@ public class PlanDao {
 		return sqlSession.delete("plan.delete", planNo) > 0;
 	}
 	
-	//전체 조회(개인 + 팀)
+	//전체 조회(개인 + 팀 + 전체)
 	public List<PlanDto> selectAllList(long memberNo) {
 		return sqlSession.selectList("plan.allList", memberNo);
 	}
