@@ -24,7 +24,7 @@ export default function MainNotice() {
         <div className="row">
             <div className="col">
                 <ul className="list-group list-group-flush">
-                    {/* ✅ 헤더 출력 */}
+                    {/* 헤더 출력 */}
                     <li className="list-group-item d-flex text-center fw-bold text-nowrap notice-row">
                         <div className="notice-cell" style={{ width: '10%' }}>번호</div>
                         <div className="notice-cell" style={{ width: '55%' }}>제목</div>
@@ -32,7 +32,7 @@ export default function MainNotice() {
                         <div className="notice-cell" style={{ width: '20%' }}>날짜</div>
                     </li>
 
-                    {/* ✅ 공지 목록 */}
+                    {/* 공지 목록 */}
                     {notices.length > 0 ? (
                         notices.map(notice => (
                             <li className="list-group-item d-flex text-center notice-row" key={notice.noticeNo}>
