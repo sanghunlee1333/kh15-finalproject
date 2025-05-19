@@ -77,7 +77,7 @@ export default function Menu() {
                         <li className="nav-item">
                             <Link to="/notice/list" className="nav-link">
                                 <i className="fa-solid fa-list-ul"></i>
-                                공지게시판
+                                공지사항
                             </Link>
                         </li>
 
@@ -103,9 +103,9 @@ export default function Menu() {
                     <ul className="navbar-nav align-items-center">
 
                         {/* 전구 아이콘 (PC 전용) */}
-                        <li className="nav-item d-none d-lg-block">
+                        <li className="nav-item d-none d-lg-block me-3">
                             <Link to="/alarm" className="nav-link position-relative">
-                                <FaBell className="fs-5 text-warning" />
+                                <FaBell className="fs-4 text-warning" />
                                 {unReadAlarmCount > 0 && (
                                 <span className="badge bg-danger rounded-pill position-absolute"
                                         style={{ top: 0, right: 0, transform: "translate(30%, 0%)", fontSize: "0.65rem", padding: "4px 6px" }}>

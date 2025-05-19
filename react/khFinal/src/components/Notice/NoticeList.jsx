@@ -186,7 +186,7 @@ export default function NoticeList() {
     //view
     return (<>
 
-        <Jumbotron subject="공지 게시판" />
+        <Jumbotron subject="공지사항" />
         
         <div className="row mt-4">
             <div className="col">
@@ -200,7 +200,7 @@ export default function NoticeList() {
                     >
                         <option value="">태그</option>
                         {noticeTypes.map(type => (
-                        <option key={type} value={type}>{type}</option>
+                            <option key={type} value={type}>{type}</option>
                         ))}
                     </select>
                     </div>

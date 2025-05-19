@@ -249,9 +249,9 @@ export default function MemberContact() {
                                 </div>
                             </div>
 
-                            <div className="d-flex align-items-center gap-2 mt-2 mt-sm-0 justify-content-end text-sm">
+                            <div className="d-flex align-items-center gap-2 me-1 mt-2 mt-sm-0 justify-content-end text-sm">
                                 <span className="text-white bg-info border border-info rounded-pill px-2 py-1">
-                                    내 연락처
+                                    나
                                 </span>
                             </div>
 
