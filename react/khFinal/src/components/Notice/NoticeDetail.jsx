@@ -12,8 +12,15 @@ import moment from "moment";
 import { Modal } from "bootstrap";
 import { FaTrash } from "react-icons/fa";
 import { FaListUl } from "react-icons/fa6";
+import { userDepartmentState, userNoState } from "../utils/stroage";
+import { useRecoilValue } from "recoil";
 
 export default function NoticeDetail() {
+
+    //recoil
+    const loginUserNo = useRecoilValue(userNoState);
+    const userDepartment = useRecoilValue(userDepartmentState);
+
     //param
     const {noticeNo} = useParams();
 
@@ -128,20 +135,25 @@ export default function NoticeDetail() {
             </div>
         </div>
 
+
         <div className="row mt-4">
             <div className="col d-flex align-items-center justify-content-end">
-                <button type="button" className="btn btn-success text-responsive d-flex align-items-center" onClick={moveEdit}>
-                    <FaEdit className="me-1" />
-                    <span className="text-nowrap">수정</span>
-                </button>
-                <button type="button" className="btn btn-danger text-responsive d-flex align-items-center ms-2" onClick={openModal}>
-                    <FaTrash className="me-1" />
-                    <span className="text-nowrap">삭제</span>
-                </button>
-                <button type="button" className="btn btn-secondary text-responsive d-flex align-items-center ms-2" onClick={moveList}>
-                    <FaListUl className="me-1" />
-                    <span className="text-nowrap">목록</span>
-                </button> 
+            {userDepartment === "인사" && loginUserNo === notice.noticeWriterNo && (
+                <>
+                    <button type="button" className="btn btn-success text-responsive d-flex align-items-center" onClick={moveEdit}>
+                        <FaEdit className="me-1" />
+                        <span className="text-nowrap">수정</span>
+                    </button>
+                    <button type="button" className="btn btn-danger text-responsive d-flex align-items-center ms-2" onClick={openModal}>
+                        <FaTrash className="me-1" />
+                        <span className="text-nowrap">삭제</span>
+                    </button>
+                </>
+            )}
+            <button type="button" className="btn btn-secondary text-responsive d-flex align-items-center ms-2" onClick={moveList}>
+                <FaListUl className="me-1" />
+                <span className="text-nowrap">목록</span>
+            </button> 
             </div>
         </div>
 
