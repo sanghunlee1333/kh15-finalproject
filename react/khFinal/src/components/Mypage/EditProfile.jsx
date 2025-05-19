@@ -57,9 +57,8 @@ export default function EditProfile(){
       if (viewDate.year && viewDate.month ) {
         requestReasonList();
         requestStatus();
-       // setViewReason(viewDate);
-        console.log("viewReason");
-        console.log(viewReason);
+ 
+      
       }
       
      
@@ -67,9 +66,7 @@ export default function EditProfile(){
 
      const requestStatus = useCallback(async()=>{
       const memberNo = member.memberNo;
-      console.log("requestStatus");
-      console.log(viewDate);
-      console.log(memberNo);
+     
       const resp = await axios.post(`/attendance/status/${member.memberNo}`, viewDate);
      // console.log("requestStatus");
       setStatus(resp.data);
@@ -79,9 +76,9 @@ export default function EditProfile(){
 
       const requestResultList = useCallback(async()=>{
        // console.log("requestResul,tList");
-        console.log(viewDate);
+       
         const requestResp = await axios.post(`/attendance/resultlist/${member.memberNo}`, viewDate);
-        console.log("requestResultList");
+       
         setResultList(requestResp.data.attendanceResultList);
       },[viewDate, member]);
 
