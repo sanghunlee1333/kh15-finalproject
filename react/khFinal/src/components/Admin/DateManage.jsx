@@ -114,19 +114,16 @@ useEffect(() => {
       <Jumbotron subject="휴일 관리 "></Jumbotron>
       <div className="row">
         <div className="col">
-          <hr/>
+         
          {dateLoading === false && (
             <div className="d-flex">
-              <h2>
-                {checkDate.year}년 {checkDate.month}월 총 근무일: {totalDays}일
-              </h2>
+             
               <button className="btn btn-danger ms-auto" onClick={openDeleteEvent}>
                 휴일 삭제하기
               </button>
             </div>
           )}
  
-          <hr/>
         </div>
       </div>
           
