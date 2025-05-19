@@ -139,12 +139,6 @@ function App() {
     return () => client.deactivate();
   }, [userNo]);
 
-  useEffect(()=>{
-    console.log("loadingSTATE");
-    console.log(loading);
-
-  },[loading])
-
   //연락처 정보 미리 초기화
   useEffect(() => {
     const token = sessionStorage.getItem("refreshToken") || localStorage.getItem("refreshToken");

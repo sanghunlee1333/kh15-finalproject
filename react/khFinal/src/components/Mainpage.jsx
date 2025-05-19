@@ -8,7 +8,7 @@ import MainNotice from "./Notice/MainNotice";
 
 export default function Mainpage() {
     const navigate = useNavigate();
-
+  
     const inTime = useCallback(async ()=>{
         const resp = await axios.post("/attendance/inTime");
         console.log(resp);

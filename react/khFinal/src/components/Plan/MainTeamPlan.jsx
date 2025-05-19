@@ -10,6 +10,7 @@ import { fetchHolidays } from '../utils/holiday';
 import './MainTeamPlan.css';
 
 export default function MainTeamPlan() {
+
     const calendarRef = useRef();
 
     const [events, setEvents] = useState([]);
