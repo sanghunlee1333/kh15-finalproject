@@ -608,7 +608,7 @@ export default function EditProfile() {
           </div>
           <div className="modal-body">
             <div className="row">
-              <label className="col-sm-3 col-form-label"> 바꿀 비밀번호</label>
+              <label className="col-sm-3 col-form-label">새 비밀번호</label>
               <div className="col-sm-9">
                 <input type="text" className="form-control" onChange={changeNewPw} value={memberPw}
                   placeholder="영어 소문자, 대문자, 숫자, 특수기호 모두 1개이상씩 포함되어야 하고 8자~16자 사이여야합니다"
@@ -616,10 +616,10 @@ export default function EditProfile() {
               </div>
             </div>
             <div className="row mt-2">
-              <label className="col-sm-3 col-form-label"> 비밀번호 확인</label>
+              <label className="col-sm-3 col-form-label">비밀번호 확인</label>
               <div className="col-sm-9">
                 <input type="text" className="form-control" onChange={changePwCheck} value={pwCheck}
-                  placeholder="바꿀 비밀번호와 일치해야 합니다" onBlur={checkPwCheck} />
+                  placeholder="새 비밀번호와 일치해야 합니다" onBlur={checkPwCheck} />
               </div>
             </div>
 
@@ -630,7 +630,7 @@ export default function EditProfile() {
 
               <button className="btn btn-secondary" onClick={changePw} disabled={!blockPwButton}>변경하기
               </button>
-              <button className="btn btn-danger" >닫기</button>
+              <button className="btn btn-danger ms-2">닫기</button>
             </div>
 
           </div>
