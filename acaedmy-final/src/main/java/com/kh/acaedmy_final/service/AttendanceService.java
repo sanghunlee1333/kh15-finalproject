@@ -14,8 +14,11 @@ import org.springframework.stereotype.Service;
 import com.kh.acaedmy_final.dao.AttendanceDao;
 import com.kh.acaedmy_final.dao.PolicyDao;
 import com.kh.acaedmy_final.dto.AttendanceLogDto;
+import com.kh.acaedmy_final.dto.AttendanceOutingDto;
+import com.kh.acaedmy_final.dto.AttendanceReasonDto;
 import com.kh.acaedmy_final.dto.AttendanceResultDto;
 import com.kh.acaedmy_final.dto.PolicyDto;
+import com.kh.acaedmy_final.vo.RequestResultByMonthVO;
 
 @Service
 public class AttendanceService {
@@ -249,6 +252,42 @@ public class AttendanceService {
 		}
 		
 		return null;
+	}
+	
+	public Map<String, Object> getStatus(List<AttendanceResultDto> resultList, 
+			List<AttendanceReasonDto> reasonList, List<AttendanceOutingDto> outingList,
+			long memberNo, RequestResultByMonthVO vo){
+		Map<String, Object> map = new HashMap<>();
+		
+		map.put("realWorkDays", resultList.size());
+		map.put("reasonDays", reasonList.size());
+		map.put("outingDays", outingList.size());
+		
+		int year = Integer.parseInt(vo.getYear());
+		int month = Integer.parseInt(vo.getMonth());
+
+		LocalDate startDay = LocalDate.of(year, month, 1);
+		LocalDate endDay = LocalDate.of(year, month, startDay.lengthOfMonth());
+		Map<String, Object> params = new HashMap<>();
+		params.put("memberNo", memberNo);
+		params.put("startDay", startDay);
+		params.put("endDay", endDay);
+		int lateCount = attendanceDao.countLate(params);
+		int earlyCount = attendanceDao.countEarly(params);
+
+		
+		
+		
+//		System.err.println("SERVICESERVICE");
+//		
+//		System.err.println("lateCount : "+lateCount);
+//		System.err.println("earlyCount : "+earlyCount);
+		map.put("lateCount", lateCount);
+		map.put("earlyCount", earlyCount);
+		int absentCount = (lateCount + earlyCount + outingList.size()) / 3;
+		map.put("absentCount", absentCount);
+		System.err.println(map);
+		return map;
 	}
 
 }

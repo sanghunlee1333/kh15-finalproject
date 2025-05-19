@@ -102,7 +102,8 @@
 	
 	<select id="selectAllByMonth" resultType="AttendanceResultDto">
 		select * from attendance_result where member_no = #{memberNo} and 
-		attendance_result_day between #{startDay} and #{endDay}
+		attendance_result_day between #{startDay} and #{endDay} 
+		order by attendance_result_day asc
 	</select>
 	
 	<select id = "selectToday" resultType="AttendanceResultDto">
@@ -170,6 +171,36 @@
 	</select>
 <!-- 		select * from ATTENDANCE_REASON where attendance_reason_date =  #{attendanceReasonDate}; -->
 	
+	<select id="selectOuting" resultType = "AttendanceOutingDto">
+		select * from outing where outing_no = #{outingNo}
+	</select>
+	<select id="sequenceOuting" resultType="Long">
+		select outing_seq.nextval from dual
+	</select> 
+	<insert id="addOuting" >
+		insert into outing(outing_no, outing_reason, outing_day, outing_start, outing_end, member_no)
+		values(#{outingNo},#{outingReason},#{outingDay},#{outingStart},#{outingEnd}, #{memberNo})
+	</insert>
+	<delete id="deleteOuting">
+		delete outing where outing_no = #{outingNo}
+	</delete>
+	
+	<select id="selectListOuting" resultType = "AttendanceOutingDto">
+		select * from outing where member_no = #{memberNo} and 
+		outing_day between #{startDay} and #{endDay}
+	</select>
+	
+	<select id="selectResultByLate" resultType = "Int">
+		select count(*) from attendance_result where member_no = #{memberNo} and
+		attendance_result_day between #{startDay} and #{endDay} and
+		attendance_result_state like #{attendanceResultState} 
+	</select>
+	
+		<select id="selectResultByEarly" resultType = "Int">
+		select count(*) from attendance_result where member_no = #{memberNo} and
+			attendance_result_day between #{startDay} and #{endDay} and
+		attendance_result_state like #{attendanceResultState}
+	</select>
 </mapper>
 
 
