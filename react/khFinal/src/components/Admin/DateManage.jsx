@@ -112,7 +112,7 @@ useEffect(() => {
   return (
     <>
       <Jumbotron subject="휴일 관리 "></Jumbotron>
-      <div className="row">
+      <div className="row mt-4 mb-4">
         <div className="col">
          
          {dateLoading === false && (

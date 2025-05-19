@@ -156,9 +156,9 @@ export default function MainMypage(){
     return (<>
 
     {attendanceBtn ? (
-        <button className="btn btn-success"  onClick={inTime}>출근</button>
+        <button className="btn btn-success"  onClick={outTime}>퇴근</button>
     ):(
-        <button className="btn btn-danger" onClick={outTime}>퇴근</button>
+        <button className="btn btn-danger" onClick={inTime}>출근</button>
     )}
 
 
