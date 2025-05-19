@@ -106,6 +106,7 @@ export default function AdminCalendar({ param, onNotify, currentDate,sendDate })
           ref={calendarRef}
           initialView="dayGridMonth"
           plugins={[dayGridPlugin, interactionPlugin]}
+          eventDisplay="block"
           displayEventTime={false}
           events={events}
           dateClick={openAddEventModal} 

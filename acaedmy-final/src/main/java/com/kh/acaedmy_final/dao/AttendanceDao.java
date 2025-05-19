@@ -122,8 +122,27 @@ public class AttendanceDao {
 		return sqlSession.selectList("attendance.getAllOutByDay" , params);
 	}
 	
-
+	public int countLate(Map<String, Object> map) {
+		String attendanceResultState = "%지각%";
+		map.put("attendanceResultState", attendanceResultState);
+		return sqlSession.selectOne("attendance.selectResultByLate", map);
+	}
  	
+	public int countEarly(Map<String, Object> map) {
+		String attendanceResultState = "%조퇴%";
+		map.put("attendanceResultState", attendanceResultState);
+		return sqlSession.selectOne("attendance.selectResultByEarly", map);
+	}
+	
+	public int countAttendance(long memberNo) {
+		LocalDate now = LocalDate.now();
+		Map<String, Object> map = new HashMap<>();
+		map.put("attendanceLogDay", now);
+		map.put("memberNo", memberNo);
+		sqlSession.selectOne("attendance.checkAttendance",map);
+		return 0;
+		
+	}
 	
 }
 

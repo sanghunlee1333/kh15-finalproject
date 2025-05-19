@@ -13,7 +13,6 @@
   /* 전역 body 디자인 수정 */
   body {
     overflow-y: auto;
-    /* 세로 스크롤 허용 */
   }
 
   /* 점보트론 */
@@ -27,7 +26,13 @@
   /* 막대기 */
   .hr-stick {
     height: 4px;
-    background-color: #444;
+    background-color: #272727;
+    border: none;
+    border-radius: 3px;
+  }
+  .hr-side-stick {
+    height: 2px;
+    background-color: #616161;
     border: none;
     border-radius: 3px;
   }
@@ -46,14 +51,13 @@
 
   /* Sidebar 기본 스타일 */
   .sidebar {
-    width: 4.5rem;
+    width: 4.2rem;
     height: calc(100vh - 56px);
     position: fixed;
     top: 57px;
     left: 0;
     z-index: 1000;
-    background-color: #a7a7a7;
-    /* bg-secondary */
+    background-color: #323941;
   }
 
   /* 채팅방 목록 스타일 */
@@ -61,7 +65,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 1rem;
+    padding-top: 0.4rem;
   }
 
   /* 채팅방 개별 아이템 스타일 */
@@ -69,12 +73,9 @@
     margin-bottom: 1rem;
     position: relative;
     width: 48px;
-    /* 약간 키우기 */
     height: 48px;
     border-radius: 12px;
-    /* 더 둥글게 */
     background-color: #fff;
-    /* 선택적으로 배경색 */
     transition: background-color 0.2s ease;
     overflow: visible;
     cursor: pointer;
@@ -82,13 +83,15 @@
     justify-content: center;
     align-items: center;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    /* 약한 그림자 */
+    transition: all 0.2s ease;
   }
 
+  /* 사이드바 채팅방 호버 */
   .sidebar-room:hover {
     background-color: #e4e4e4;
+    transform: translateY(-2px); /* 위로 2px 튀어나오는 효과 */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* 그림자 효과로 입체감 부여 */
   }
-
 
   /* 채팅방 이미지 스타일 */
   .room-img {
@@ -153,7 +156,7 @@
   }
 
   .message-bubble-me {
-    background-color: #4f7fff;
+    background-color: #5984fc;
     color: white;
   }
 
@@ -203,3 +206,10 @@
     white-space: pre-wrap;
     /* ← 공백 유지 추가 */
   }
+
+  .logo-small {
+    width: 100px;
+    height: 40px;
+  }
+
+  

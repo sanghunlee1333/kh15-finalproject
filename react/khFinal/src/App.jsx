@@ -37,6 +37,9 @@ import AdminAttendanceDetail from './components/Admin/AdminAttendanceDetail'
 
 import AllAlarm from './components/template/AllAlarm';
 import AlarmInitializer from './AlarmInitializer'
+import MainTeamPlan from './components/Plan/MainTeamPlan'
+import MainNotice from './components/Notice/MainNotice'
+import AdminHome from './components/Admin/AdminHome'
  
 function App() {
   const [userNo, setUserNo] = useRecoilState(userNoState);
@@ -137,12 +140,6 @@ function App() {
     return () => client.deactivate();
   }, [userNo]);
 
-  useEffect(()=>{
-    console.log("loadingSTATE");
-    console.log(loading);
-
-  },[loading])
-
   //연락처 정보 미리 초기화
   useEffect(() => {
     const token = sessionStorage.getItem("refreshToken") || localStorage.getItem("refreshToken");
@@ -194,6 +191,7 @@ function App() {
           <Route path="/mypage" element={<EditProfile/>}></Route>
 
           {/* Admin */}
+          <Route path="/admin/home" element={<Admin><AdminHome/></Admin>}></Route>
           <Route path="/admin/member/list" element={<Admin><MemberList/></Admin>}></Route>
           <Route path="/admin/member/:number" element={<Admin><MemberManage/></Admin>}></Route>
           <Route path="/admin/date" element={<Admin><DateMange/></Admin>}></Route>
@@ -205,10 +203,12 @@ function App() {
           <Route path="/notice/write" element={<NoticeWrite/>}></Route>
           <Route path="/notice/detail/:noticeNo" element={<NoticeDetail/>}></Route>
           <Route path="/notice/edit/:noticeNo" element={<NoticeEdit/>}></Route>
+          <Route path="/notice/mainNotice" element={<MainNotice/>}></Route>
           
           {/* Plan */}
           <Route path="/plan/team" element={<TeamPlan/>}></Route>
-          <Route path="/plan/todo" element={<TodoList/>}></Route>
+          <Route path="/plan/todo" element={<TeamPlan />}></Route>
+          <Route path="/plan/mainTeamPlan" element={<MainTeamPlan />}></Route>
 
           {/* Contact */}
           <Route path="/member/contact" element={<MemberContact/>}></Route>

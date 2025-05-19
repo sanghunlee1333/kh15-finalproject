@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,6 +34,7 @@ import com.kh.acaedmy_final.error.TargetNotFoundException;
 import com.kh.acaedmy_final.service.AttachmentService;
 import com.kh.acaedmy_final.service.PasswordService;
 import com.kh.acaedmy_final.vo.AdminMemberListVO;
+import com.kh.acaedmy_final.vo.ClaimVO;
 import com.kh.acaedmy_final.vo.MemberDetailResponseVO;
 @CrossOrigin
 @RestController
@@ -59,6 +61,9 @@ public class AdminMemberRestController {
 		Map<String, Object> ret = new HashMap<>();
 		MemberDetailResponseVO vo =  memberDao.selectOneDetail(memberNo);
 		ret.put("vo", vo);
+		int profileNo = memberDocumentDao.selectOne(memberNo);
+		ret.put("profileNo", profileNo);
+		//		System.out.println("상세페이지");
 		return ret;
 	}
 	
@@ -159,6 +164,8 @@ public class AdminMemberRestController {
 	public boolean deleteAttach(@PathVariable int attachmentNo) {
 		return attachmentDao.delete(attachmentNo);
 	}
+	
+	
 	
 }
 

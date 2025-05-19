@@ -1,8 +1,6 @@
 import { Link, useNavigate } from "react-router";
-import { CiLogin } from "react-icons/ci";
-import { CiLogout } from "react-icons/ci";
-import { FaBell, FaUserCircle } from "react-icons/fa";
-import { FaLightbulb } from "react-icons/fa6";
+
+import { FaBell } from "react-icons/fa";
 import { useCallback, useRef } from "react";
 import { Modal } from "bootstrap";
 import axios from "axios";
@@ -48,7 +46,9 @@ export default function Menu() {
             <div className="container-fluid">
 
                 {/* 좌측 로고 */}
-                <Link to="/" className="navbar-brand">KHG</Link>
+                <Link to="/" className="navbar-brand">
+                    <img src="/images/LINKO.png" className="logo-small"/>
+                </Link>
 
                 {/* 모바일 화면용 햄버거 + 전구 (같이 묶음) */}
                 <div className="d-flex align-items-center d-lg-none">
@@ -77,7 +77,7 @@ export default function Menu() {
                         <li className="nav-item">
                             <Link to="/notice/list" className="nav-link">
                                 <i className="fa-solid fa-list-ul"></i>
-                                공지게시판
+                                공지사항
                             </Link>
                         </li>
 
@@ -89,48 +89,29 @@ export default function Menu() {
                             </Link>
                         </li>
 
-                        {/* 전자관리 Link */}
-                        <li className="nav-item dropdown">
-                            <a className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button"
-                                aria-haspopup="true" aria-expanded="false">
-                                <i className="fa-solid fa-database"></i>
-                                결재
-                            </a>
-                            <div className="dropdown-menu">
-                                <Link to="" className="dropdown-item">1</Link>
-                                <Link to="" className="dropdown-item">2</Link>
-                                <Link to="" className="dropdown-item">3</Link>
-                            </div>
+                        {/* 연락처 Link */}
+                        <li className="nav-item">
+                            <Link to="/member/contact" className="nav-link">
+                                <i className="fa-solid fa-list-ul"></i>
+                                연락처
+                            </Link>
                         </li>
+
                     </ul>
 
                     {/* 우측 메뉴: PC에서 전구 + 로그아웃 + 유저 아이콘 순서로 배치 */}
                     <ul className="navbar-nav align-items-center">
 
                         {/* 전구 아이콘 (PC 전용) */}
-                        <li className="nav-item d-none d-lg-block">
+                        <li className="nav-item d-none d-lg-block me-3">
                             <Link to="/alarm" className="nav-link position-relative">
-                                <FaBell className="fs-5 text-warning" />
+                                <FaBell className="fs-4 text-warning" />
                                 {unReadAlarmCount > 0 && (
                                 <span className="badge bg-danger rounded-pill position-absolute"
                                         style={{ top: 0, right: 0, transform: "translate(30%, 0%)", fontSize: "0.65rem", padding: "4px 6px" }}>
                                     {unReadAlarmCount}
                                 </span>
                                 )}
-                            </Link>
-                        </li>
-
-                        {/* 로그아웃 */}
-                        <li className="nav-item w-100">
-                            <Link onClick={gotoLogout} className="nav-link text-start ms-2 active">
-                                <CiLogout className="fs-4" />
-                            </Link>
-                        </li>
-
-                        {/* 마이페이지 */}
-                        <li className="nav-item w-100">
-                            <Link to="#" className="nav-link text-start ms-2 active">
-                                <FaUserCircle className="fs-4" />
                             </Link>
                         </li>
                     </ul>

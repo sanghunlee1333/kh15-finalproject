@@ -10,10 +10,16 @@ import { FaCheck, FaPencil, FaRegCircleXmark } from "react-icons/fa6";
 import axios from "axios";
 import $ from 'jquery';
 import { RiArrowGoBackFill } from 'react-icons/ri';
+import { userDepartmentState, userNoState } from '../utils/stroage';
+import { useRecoilValue } from 'recoil';
 window.$ = $;
 window.jQuery = $;
 
 export default function NoticeWrite() {
+
+    //recoil
+    const userDepartment = useRecoilValue(userDepartmentState);
+    const loginUserNo = useRecoilValue(userNoState);
 
     //ref
     const editor = useRef(null);
@@ -48,10 +54,20 @@ export default function NoticeWrite() {
     }, []);
 
     //effect
-    useEffect(()=>{
-      axios.get(`/notice/${noticeNo}`).then(resp=>setNotice(resp.data));
-      axios.get(`/notice/${noticeNo}/attach`).then(resp=>setAttach(resp.data));
-    }, [noticeNo]);
+    useEffect(() => {
+        axios.get(`/notice/${noticeNo}`).then(resp => {
+            const data = resp.data;
+            setNotice(data);
+        
+            //권한 검사 (인사 + 작성자 본인)
+            if (userDepartment !== "인사" || loginUserNo !== data.noticeWriterNo) {
+                toast.error("수정 권한이 없습니다.");
+                navigate("/notice/list");
+            }
+        });
+      
+        axios.get(`/notice/${noticeNo}/attach`).then(resp => setAttach(resp.data));
+    }, [noticeNo, userDepartment, loginUserNo, navigate]);
 
     useEffect(()=>{
       if(notice.noticeContent && editor.current){

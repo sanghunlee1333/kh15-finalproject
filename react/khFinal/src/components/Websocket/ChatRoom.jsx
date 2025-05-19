@@ -5,6 +5,9 @@ import { FaMagnifyingGlass } from "react-icons/fa6";
 import { IoChatbubbles } from "react-icons/io5";
 import { RiChatNewLine } from "react-icons/ri";
 import { IoMdPhonePortrait } from "react-icons/io";
+import { MdOutlineImage, MdOutlineSubtitles } from "react-icons/md";
+import { MdGroupAdd } from "react-icons/md";
+import { FaRegImage } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import "dayjs/locale/ko"; // 한글 로케일 불러오기
@@ -150,14 +153,13 @@ export default function ChatRoom() {
                 }
             });
 
-            setRooms(data);//채팅방 목록을 상태에 저장
-            if (data) {
-
-                console.log(data);
-            }
-            else {
-                console.log("없음");
-            }
+            const sortedRooms = [...data].sort((a, b) => {
+                const timeA = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0;
+                const timeB = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
+                return timeB - timeA;
+            });
+    
+            setRooms(sortedRooms);
         }
         catch (error) {
             console.error("채팅방 목록 불러오기 실패", error);
@@ -176,8 +178,8 @@ export default function ChatRoom() {
     };
 
     const getRoomImageSrc = (room) => {
-        const isDirectChat = room.partnerProfileNo !== null && room.partnerProfileNo !== undefined;
-    
+        const isDirectChat = room.roomProfileNo === null && room.partnerProfileNo !== null;
+
         if (isDirectChat) {
             return `http://localhost:8080/api/mypage/attachment/${room.partnerProfileNo}`;
         } else {
@@ -186,7 +188,7 @@ export default function ChatRoom() {
                 : "/images/profile_basic.png";
         }
     };
-    
+
 
     const createRoom = useCallback(async () => {
         try {
@@ -276,7 +278,6 @@ export default function ChatRoom() {
             return null;
         }
     };
-
 
     //effect
     useEffect(() => {
@@ -399,68 +400,90 @@ export default function ChatRoom() {
             <div className="modal-dialog">
                 <div className="modal-content">
                     <div className="modal-header">
-                        <h4 className="modal-title">새로운 채팅</h4>
+                        <h4 className="modal-title">
+                            그룹채팅
+                        </h4>
                         <button type="button" className="btn-close" aria-label="Close"
                             onClick={closeModal}>
                         </button>
                     </div>
                     <div className="modal-body">
                         {/* 채팅방 이름 입력 */}
-                        <div className="mb-3">
-                            <label className="form-label ms-1 fw-bold">
-                                채팅방 제목
-                            </label>
-                            <input type="text" className="form-control" id="roomTitle"
+                        <div className="mb-3 w-auto">
+                            <div className="d-flex align-items-center">
+                                <MdOutlineSubtitles/>
+                                <span className="ms-1 fw-bold">
+                                    채팅방 제목
+                                </span>
+                            </div>
+                            <input type="text" className="form-control mt-1" id="roomTitle"
                                 placeholder="방 제목 입력"
                                 value={roomTitle}
                                 onChange={(e) => setRoomTitle(e.target.value)}
                             />
                         </div>
                         {/* 대표 이미지 업로드 */}
-                        <div className="mb-3">
-                            <label className="form-label ms-1 fw-bold">채팅방 이미지</label>
+                        <div className="mb-3 w-auto">
+                            <div className="d-flex align-items-center">
+                                <MdOutlineImage />
+                                <span className="ms-1 fw-bold">
+                                    대표 이미지
+                                </span>
+                            </div>
                             <input
                                 type="file"
-                                className="form-control"
+                                className="form-control mt-1"
                                 accept="image/*"
                                 onChange={handleRoomProfileChange}
                                 style={{ display: "block" }}
                             />
                             {roomProfilePreview && (
-                                <div className="mt-2 text-center">
-                                    <img
-                                        src={roomProfilePreview}
-                                        alt="미리보기"
-                                        className="rounded"
-                                        style={{ width: "100px", height: "100px", objectFit: "cover" }}
-                                    />
+                                <div className="mt-3">
+                                    <label className="form-label ms-1 fw-bold">이미지 미리보기</label>
+                                    <div className="mt-2 text-center">
+                                        <img
+                                            src={roomProfilePreview}
+                                            alt="미리보기"
+                                            className="rounded"
+                                            style={{ width: "100px", height: "100px", objectFit: "cover" }}
+                                        />
+                                    </div>
                                 </div>
                             )}
                         </div>
 
                         {/* 제목, 검색 */}
-                        <div className="row mt-2 mb-2">
-                            <label className="form-label ms-1 fw-bold">
-                                채팅 초대
-                            </label>
-                            <div className="col d-flex">
-                                <input type="text" className="form-control me-2"
-                                    placeholder="이름 및 부서 입력"
-                                    value={searchContacts}
-                                    onChange={(e) => setSearchContacts(e.target.value)}
-                                    onKeyDown={handleKeyPress}
-                                />
-                                <button type="button" className="btn btn-secondary" onClick={searchContact}>
-                                    <FaMagnifyingGlass />
-                                </button>
+                        <div className="row mb-3">
+                            <div className="col-sm-12">
+                                <div className="d-flex align-items-center ms-1">
+                                    <MdGroupAdd/>
+                                    <span className="ms-1 fw-bold">
+                                        채팅 초대
+                                    </span>
+                                </div>
+                                <div className="input-group mt-1">
+                                    <input
+                                        type="text"
+                                        className="form-control border"
+                                        placeholder="이름 및 부서 검색"
+                                        value={searchContacts}
+                                        onChange={(e) => setSearchContacts(e.target.value)}
+                                        onKeyDown={handleKeyPress}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        onClick={searchContact}
+                                    >
+                                        <FaMagnifyingGlass />
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        {/* <hr className="hr-stick" /> */}
-
                         {/* 검색 결과가 없을 때 메시지 표시 */}
                         {noResults && (
-                            <div className="row mt-3">
+                            <div className="row mt-3 ms-2">
                                 <div className="col">
                                     <small className="text-muted">"검색 결과가 없습니다, 이름 또는 부서를 검색하세요."</small>
                                 </div>
@@ -585,11 +608,11 @@ export default function ChatRoom() {
                     </div>
 
                     <div className="modal-footer">
-                        <button type="button" className="btn btn-secondary" onClick={closeModal}>
-                            취소
-                        </button>
                         <button type="button" className="btn btn-primary" onClick={createRoom}>
                             생성
+                        </button>
+                        <button type="button" className="btn btn-secondary" onClick={closeModal}>
+                            취소
                         </button>
                     </div>
                 </div>

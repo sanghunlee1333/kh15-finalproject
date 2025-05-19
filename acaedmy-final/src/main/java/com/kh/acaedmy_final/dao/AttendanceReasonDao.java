@@ -1,5 +1,6 @@
 package com.kh.acaedmy_final.dao;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.acaedmy_final.dto.AttendanceReasonDto;
+import com.kh.acaedmy_final.dto.AttendanceResultDto;
 import com.kh.acaedmy_final.vo.RequestAttendanceVO;
 import com.kh.acaedmy_final.vo.RequestResultByMonthVO;
 
@@ -58,22 +60,34 @@ public class AttendanceReasonDao {
 	public boolean deleteImage(long attendanceReasonNo) {
 		return sqlSession.delete("attendance.deleteAttendanceImage",attendanceReasonNo) > 0;
 	}
-	public List<AttendanceReasonDto> selectResultByMonth(long memberNo, RequestResultByMonthVO vo) {
-		// TODO Auto-generated method stub
+	public List<AttendanceReasonDto> selectReasonList(long memberNo, RequestResultByMonthVO vo) {
 		Map<String, Object> params = new HashMap<>();
 		params.put("memberNo", memberNo);
 		String trans = vo.getYear() + "-" + vo.getMonth() + "-%";
 		params.put("attendanceReasonDate", trans);
-		//System.err.println(trans);
-	//	System.err.println(memberNo);
-//		System.out.println(vo);
-		//System.out.println(sqlSession.selectList("attendance.selectReason", memberNo));
-	//	System.out.println("console");
-	//	System.out.println(sqlSession.selectList("attendance.selectReasonByMonth", params));
+//		System.out.println(trans);
+//		System.out.println(memberNo);
 		return sqlSession.selectList("attendance.selectReasonByMonth", params);
 	}
 	
-//	public List<att>
+	public List<AttendanceResultDto> selectResultByMonth(long memberNo, RequestResultByMonthVO vo){
+		Map<String, Object> params = new HashMap<>();
+		params.put("memberNo", memberNo);
+		int year = Integer.parseInt(vo.getYear());
+		int month = Integer.parseInt(vo.getMonth());
+		LocalDate startDay = LocalDate.of(year, month, 1);
+		LocalDate endDay = LocalDate.of(year, month, startDay.lengthOfMonth());
+		params.put("startDay", startDay);
+		params.put("endDay", endDay);
+//		System.out.println(year + " year");
+//		System.out.println(month + " month");
+//		System.out.println(startDay + " startDay");
+//		System.out.println(endDay + " endDay");
+//		System.out.println("sqlsqlsql");
+//		System.out.println(sqlSession.selectList("attendance.selectAllByMonth", params));
+		
+		return sqlSession.selectList("attendance.selectAllByMonth", params);
+	}
 	
 }
 
