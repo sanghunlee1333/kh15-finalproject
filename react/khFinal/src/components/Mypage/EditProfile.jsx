@@ -8,6 +8,7 @@ import userImg from '/public/images/profile_basic.png';
 import { Modal } from "bootstrap";
 import Postcode from "../template/Postcode";
 import { FaMagnifyingGlassPlus } from "react-icons/fa6";
+import DatePicker from "react-datepicker";
 
 export default function EditProfile(){
     // const userNo = useRecoilValue(userNoState);
@@ -26,7 +27,124 @@ export default function EditProfile(){
     const [addressValid, setAddressValid] = useState(true);
     const [contactValid, setContactValid] = useState(true);
     const [emailValid, setEmailValid] = useState(true);
+    const [totalWork, setTotalWork] = useState("");
+    const [viewDate,setViewDate] = useState("");
+    const [resultList, setResultList] = useState([]);
+    const [reasonList, setReasonList] = useState([]);
+    const [status, setStatus] = useState({
+      absentCount : "",
+      earlyCount : "",
+      lateCount : "", 
+      outingDays : "",
+      realWorkDays : "",
+      reasonDays : "",
+    })
 
+        const [outingList, setOutingList] = useState([]);
+     const [viewReason, setViewReason] = useState("");
+    useEffect(()=>{
+        const now = new Date();
+
+        setViewDate({
+           year: now.getFullYear().toString(),
+          month: (now.getMonth() + 1).toString().padStart(2, "0")
+        })  
+    },[member])
+
+    useEffect(()=>{loadOne()},[]);
+    useEffect(() => {
+      console.log(viewDate);
+      if (viewDate.year && viewDate.month ) {
+        requestReasonList();
+        requestStatus();
+       // setViewReason(viewDate);
+        console.log("viewReason");
+        console.log(viewReason);
+      }
+      
+     
+    }, [viewDate]); 
+
+     const requestStatus = useCallback(async()=>{
+      const memberNo = member.memberNo;
+      console.log("requestStatus");
+      console.log(viewDate);
+      console.log(memberNo);
+      const resp = await axios.post(`/attendance/status/${member.memberNo}`, viewDate);
+     // console.log("requestStatus");
+      setStatus(resp.data);
+
+    },[viewDate, member])
+
+
+      const requestResultList = useCallback(async()=>{
+       // console.log("requestResul,tList");
+        console.log(viewDate);
+        const requestResp = await axios.post(`/attendance/resultlist/${member.memberNo}`, viewDate);
+        console.log("requestResultList");
+        setResultList(requestResp.data.attendanceResultList);
+      },[viewDate, member]);
+
+      const requestReasonList = useCallback(async()=>{
+       //  console.log("requestReasonList");
+
+          const response = await axios.post("/admin/date2", viewDate);
+         
+          setTotalWork(response.data.totalWorkingDays);
+       // console.log(viewDate.month);
+       requestResultList();
+        const resp = await axios.post(`/attendance/view/${member.memberNo}`, viewDate);
+        
+        setReasonList(resp.data);
+        
+        requestOutingList();
+
+      },[viewDate, member]);
+
+       
+       const setView = useCallback((target)=>{
+        setViewReason(target);
+        const year = target.getFullYear().toString();
+        const month = (target.getMonth() + 1).toString().padStart(2,'0');
+        setViewDate(({
+          year: year,
+          month: month,
+        }))
+      },[]);
+
+       const requestOutingList = useCallback (async()=>{
+    const resp = await axios.post(`/outing/list/${member.memberNo}`, viewDate);
+    //console.log(resp);
+    setOutingList(resp.data);
+   },[viewDate])
+
+   const deleteOuting = useCallback(async(target)=>{
+   // console.log(target);
+    const resp = await axios.delete(`/outing/${target}`)
+    
+    // if(resp === true){
+    // }
+    requestReasonList();
+   },[])
+
+
+      
+    const attendanceRate = useMemo(() => {
+    if (totalWork === 0) return 0; 
+    const rate = ((status.realWorkDays - status.absentCount) / totalWork) * 100;
+    return parseFloat(rate.toFixed(2)); 
+     }, [totalWork, status]);
+
+     function formatTime(isoString) {
+        const date = new Date(isoString);
+        return (
+          String(date.getHours()).padStart(2, '0') + ':' +
+          String(date.getMinutes()).padStart(2, '0') + ':' +
+            String(date.getSeconds()).padStart(2, '0')
+        );
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
     const checkContact = useCallback(()=>{
         const regex = /^010[0-9]{8}$/;
         const isValid = regex.test(member.memberContact);
@@ -108,7 +226,7 @@ export default function EditProfile(){
           }
     },[]);
     
-    useEffect(()=>{loadOne()},[]);
+    
     
     const pwEdit = useRef();
     const infoEdit = useRef();
@@ -315,6 +433,92 @@ export default function EditProfile(){
   </div>
 
 </div>
+
+
+
+    <hr className="mt-4 mb-4" />
+      <div className="row">
+        <div className="col text-end">
+            <DatePicker
+            selected={viewReason}
+            onChange={setView}
+          
+            // onChange={date => setSelectedDate(date)}
+            dateFormat="yyyy-MM"        // 출력 형식: 2025-05
+            showMonthYearPicker         // 월/연도 선택 모드
+            showFullMonthYearPicker     // (선택 사항) 전체 연도와 월 보기
+            className="form-control"
+            placeholderText="연도와 월을 선택하세요"
+          />
+        {/* <button className="btn btn-light" onClick={requestReasonList}><FaMagnifyingGlass/></button> */}
+        </div>
+      </div>
+
+              <h3>{viewDate.year} 년 {viewDate.month}월 출석률{attendanceRate}%</h3>
+        <table className="table table-striped table-hover table-bordered mt-4">
+
+         <thead>
+      <tr>
+        <th>근무일</th>
+        <th>실 근무일</th>
+        <th>결석</th>
+        <th>지각</th>
+        <th>조퇴</th>
+        <th>외출</th>
+        <th>사유</th>
+      </tr>
+
+  </thead>
+  <tbody>
+    <tr>
+      <th>{totalWork}일</th>
+      <th>{status.realWorkDays}일</th>
+      <th>{totalWork - status.realWorkDays}번</th>
+      <th>{status.lateCount}번</th>
+      <th>{status.earlyCount}번</th>
+      <th>{status.outingDays}번</th>
+      <th>{status.reasonDays}개</th>
+    </tr>
+  </tbody>
+
+  </table>
+
+
+      <h3> {viewDate.month}월 결과 기록</h3>
+        <table className="table table-striped table-hover table-bordered">
+  <thead>
+    <tr>
+      <th>날짜</th>
+      <th>출근 시간</th>
+      <th>퇴근 시간</th>
+      <th>지각 시간(분)</th>
+      <th>조퇴 여부</th>
+      <th>정상 근무 시간(분)</th>
+      <th>연장 근무(분)</th>
+      <th>상태</th>
+    </tr>
+  </thead>
+  <tbody>
+    {resultList.map((item) => (
+      <tr key={item.attendanceResultNo}>
+        <td>{item.attendanceResultDay}</td>
+        <td>{formatTime(item.attendanceResultInTime)}</td>
+        <td>{formatTime(item.attendanceResultOutTime)}</td>
+        <td>{item.attendanceResultLateMinute > 0 ? item.attendanceResultLateMinute + "분" : "X"}</td>
+       <td>{item.attendanceResultEarlyLeave > 0 ? item.attendanceResultEarlyLeave + "분" : "X"}</td>
+        <td>{item.attendanceResultWorkTime}분</td>
+        <td>{item.attendanceResultOverTime}분</td>
+        <td>{item.attendanceResultState}</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+
+
+
+
+
 
   <div className="modal fade" tabIndex="-1" role="dialog" ref={infoEdit} data-bs-backdrop="static">
                 <div className="modal-dialog modal-lg" role="document">
