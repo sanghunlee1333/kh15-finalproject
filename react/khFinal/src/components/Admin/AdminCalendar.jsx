@@ -38,6 +38,7 @@ export default function AdminCalendar({ param, onNotify, currentDate,sendDate })
         //  console.log(date);
         const target = Modal.getOrCreateInstance(addEvent.current);
         target.show();
+        closeAddEventModal();
       },[clickedDate]);
 
       const closeAddEventModal = useCallback(()=>{
