@@ -1,4 +1,4 @@
-import { Link, Route, Routes } from 'react-router'
+import { Link, Route, Routes } from 'react-router-dom'
 import './App.css'
 
 import Menu from './components/template/Menu'
@@ -37,6 +37,8 @@ import AdminAttendanceDetail from './components/Admin/AdminAttendanceDetail'
 
 import AllAlarm from './components/template/AllAlarm';
 import AlarmInitializer from './AlarmInitializer'
+import MainTeamPlan from './components/Plan/MainTeamPlan'
+import MainNotice from './components/Notice/MainNotice'
  
 function App() {
   const [userNo, setUserNo] = useRecoilState(userNoState);
@@ -205,10 +207,12 @@ function App() {
           <Route path="/notice/write" element={<NoticeWrite/>}></Route>
           <Route path="/notice/detail/:noticeNo" element={<NoticeDetail/>}></Route>
           <Route path="/notice/edit/:noticeNo" element={<NoticeEdit/>}></Route>
+          <Route path="/notice/mainNotice" element={<MainNotice/>}></Route>
           
           {/* Plan */}
           <Route path="/plan/team" element={<TeamPlan/>}></Route>
-          <Route path="/plan/todo" element={<TodoList/>}></Route>
+          <Route path="/plan/todo" element={<TeamPlan />}></Route>
+          <Route path="/plan/mainTeamPlan" element={<MainTeamPlan />}></Route>
 
           {/* Contact */}
           <Route path="/member/contact" element={<MemberContact/>}></Route>

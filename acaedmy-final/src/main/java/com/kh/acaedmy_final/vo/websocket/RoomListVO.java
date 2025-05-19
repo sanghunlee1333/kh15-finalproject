@@ -15,4 +15,8 @@ public class RoomListVO {
 	private String lastMessage;
 	private Timestamp lastMessageTime;
 	private int unreadCount;
+	private Long roomProfileNo;
+	
+	private Long partnerNo;           // 1:1 채팅 상대방 번호
+	private Integer partnerProfileNo; // 1:1 채팅 상대방 프로필 이미지 attachment 번호
 }

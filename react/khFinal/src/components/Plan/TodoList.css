@@ -1,9 +1,51 @@
-/* .fc .fc-list-day-cushion {
-  display: none !important;
-} */
-
 /* 날짜 숫자 */
 .list-day-number {
     font-size: clamp(1rem, 2.5vw, 1.5rem); /* 최소 1rem, 최대 1.5rem, 화면 크기 따라 조절 */
     font-weight: bold;
+}
+
+/* 반응형 텍스트(토글) */
+.toggle-text-responsive {
+    font-size: 0.8rem;
+    padding: 0.8rem 0.3rem;
+    white-space: nowrap;
+}
+
+.toggle-button-group .btn {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    padding-left: 0.60rem !important;
+    padding-right: 0.60rem !important;
+    font-size: 0.8rem !important;
+}
+
+/* 기본: PC용 - 줄바꿈 없음 */
+.fc .fc-list-event-time {
+    white-space: nowrap;
+    word-break: keep-all;
+    font-size: 0.8rem;
+    text-align: left;
+}
+
+/* 모바일 화면에서 이벤트 날짜 줄바꿈 */
+@media (max-width: 576px) {
+	/* 날짜 영역을 줄바꿈 가능하게 하고 너비 제한 */
+	.fc .fc-list-event-time {
+		flex: 0 0 80px !important;
+		max-width: 80px;
+		white-space: pre-line !important; /* \n 줄바꿈 허용 */
+		word-break: keep-all !important; /* 한글 단어 단위 유지 */
+		text-align: center;
+		font-size: 0.75rem;
+		line-height: 1.2;
+	}
+	  
+	/* 제목 영역 넓히기 */
+	.fc .fc-list-event-title {
+		flex: 1 1 auto !important;         /* 너비를 자동으로 확장 */
+		white-space: normal !important;   /* 줄바꿈 허용 */
+		overflow-wrap: break-word !important; /* 단어 기준 줄바꿈 */
+		word-break: break-word !important;
+		font-size: 0.85rem;
+	}
 }

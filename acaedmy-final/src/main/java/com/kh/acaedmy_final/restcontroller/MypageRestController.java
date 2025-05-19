@@ -2,6 +2,7 @@ package com.kh.acaedmy_final.restcontroller;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,6 +120,7 @@ public class MypageRestController {
 //		System.err.println(data);
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Content-Type", attachmentDto.getAttachmentType());
+		
 		return new ResponseEntity<>(data, headers, HttpStatus.OK);
 	}
 	
@@ -131,10 +133,31 @@ public class MypageRestController {
 		return false;
 	}
 	
+
+	@GetMapping("/profile/{memberNo}")
+	public int getProfileImageNo(@PathVariable int memberNo) {
+		Integer attachmentNo = memberDocumentDao.selectOne(memberNo);
+		return attachmentNo != null ? attachmentNo : -1;
+	}
 	
+	@PostMapping("/profile-batch")
+	public Map<Integer, Integer> getProfileImageMap(@RequestBody List<Integer> memberNos) {
+	    Map<Integer, Integer> result = new HashMap<>();
+	    for (Integer memberNo : memberNos) {
+	        Integer attachmentNo = memberDocumentDao.selectOne(memberNo);
+	        result.put(memberNo, attachmentNo != null ? attachmentNo : -1);
+	    }
+	    return result;
+	}
 	
-	
-	
+	@PostMapping("/upload")
+	public Map<String, Object> uploadOnly(@RequestParam MultipartFile attach) throws TargetNotFoundException, IOException {
+	    AttachmentDto attachmentDto = attachmentService.save(attach);
+	    Map<String, Object> result = new HashMap<>();
+	    result.put("attachmentNo", attachmentDto.getAttachmentNo()); 
+	    return result;
+	}
+
 }
 
 

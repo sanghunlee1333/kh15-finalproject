@@ -8,4 +8,5 @@ import lombok.Data;
 public class RoomCreateRequestDto {
 	private String roomTitle;
 	private List<Long> memberNos;
+	private Long roomProfileNo;
 }
