@@ -133,6 +133,17 @@ public class AttendanceDao {
 		map.put("attendanceResultState", attendanceResultState);
 		return sqlSession.selectOne("attendance.selectResultByEarly", map);
 	}
+	
+	public int countAttendance(long memberNo) {
+		LocalDate now = LocalDate.now();
+		Map<String, Object> map = new HashMap<>();
+		map.put("attendanceLogDay", now);
+		map.put("memberNo", memberNo);
+		sqlSession.selectOne("attendance.checkAttendance",map);
+		return 0;
+		
+	}
+	
 }
 
 

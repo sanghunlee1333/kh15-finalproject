@@ -66,6 +66,9 @@ public class MemberRestController {
 	@PostMapping("/login")
 	public LoginResponseVO login(@RequestBody LoginVO loginVO){
 	//	System.out.println(loginVO);
+		if(loginVO == null) {
+			return null;
+		}
 		String memberId = loginVO.getMemberId();
 		MemberDto targetDto = memberDao.selectOne(memberId);
 		if(memberDao.selectOne(memberId) == null) {

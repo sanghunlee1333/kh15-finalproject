@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.kh.acaedmy_final.dao.AttachmentDao;
+import com.kh.acaedmy_final.dao.AttendanceDao;
 import com.kh.acaedmy_final.dao.MemberDao;
 import com.kh.acaedmy_final.dao.MemberDocumentDao;
 import com.kh.acaedmy_final.dto.AttachmentDto;
@@ -46,6 +47,8 @@ public class MypageRestController {
 	private AttachmentService attachmentService;
 	@Autowired
 	private AttachmentDao attachmentDao;
+	@Autowired
+	private AttendanceDao attendanceDao;
 	
 	@GetMapping("/")
 	public Map<String, Object> selectOne(@RequestHeader ("Authorization") String bearerToken ) {
@@ -129,6 +132,16 @@ public class MypageRestController {
 		MemberDto originDto = memberDao.selectOne(claimVO.getMemberNo());
 		System.out.println(memberDto);
 		return false;
+	}
+	
+
+	@GetMapping("/")
+	public boolean checkAttendance(@RequestHeader ("Authorization") String bearerToken) {
+		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+		attendanceDao.countAttendance(claimVO.getMemberNo());
+		
+		return false;
+		
 	}
 	
 	
