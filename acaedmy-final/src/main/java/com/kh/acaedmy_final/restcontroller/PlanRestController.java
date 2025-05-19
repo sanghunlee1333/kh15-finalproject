@@ -144,7 +144,7 @@ public class PlanRestController {
 	}
 	
 	//전체 조회(개인 + 팀)
-	@GetMapping("all")
+	@GetMapping("/all")
 	public List<PlanDto> getAllPlans(@RequestHeader("Authorization") String bearerToken) {
 		long memberNo = tokenService.parseBearerToken(bearerToken).getMemberNo();
         List<PlanDto> allPlans = planDao.selectAllList(memberNo); 
