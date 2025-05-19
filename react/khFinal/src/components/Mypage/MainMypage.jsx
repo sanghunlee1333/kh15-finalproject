@@ -196,9 +196,9 @@ export default function MainMypage(){
 
     <div className="row">
       <div className="col-md-6">
-        <span ><strong>아이디:</strong> {member.memberId}</span> <br/>
-        <span ><strong>연락처:</strong> {member.memberContact}</span><br/>
-        <span ><strong>이메일:</strong> {member.memberEmail}</span><br/>
+        <span><strong>아이디:</strong> {member.memberId}</span> <br/>
+        <span><strong>연락처:</strong> {member.memberContact}</span><br/>
+        <span><strong>이메일:</strong> {member.memberEmail}</span><br/>
         <hr></hr>
         <strong>{viewDate.year} 년 {viewDate.month}월 출석률{attendanceRate}%</strong>
         <table className="table table-striped table-hover table-bordered mt-4">

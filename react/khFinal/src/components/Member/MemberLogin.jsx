@@ -170,7 +170,7 @@ export default function MemberLogin(){
             <div className="modal-dialog " role="document">
                 <div className="modal-content">
                     <div className="modal-header">
-                    <h2> 로그인 실패</h2>
+                      <h2> 로그인 실패</h2>
                     <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"  >
                     </button>
                     </div>

@@ -97,6 +97,16 @@ export default function Menu() {
                             </Link>
                         </li>
 
+                        {/* 관리자 */}
+                        {userDepartment === "인사" && (
+                        <li className="nav-item">
+                            <Link to="/admin/home" className="nav-link">
+                                <i className="fa-solid fa-list-ul"></i>
+                                관리자
+                            </Link>
+                        </li>
+                        )}
+
                     </ul>
 
                     {/* 우측 메뉴: PC에서 전구 + 로그아웃 + 유저 아이콘 순서로 배치 */}
