@@ -90,4 +90,41 @@ public class PlanDao {
 		return sqlSession.selectList("plan.findPlansEndingAt", param);
 	}
 	
+	// 관리자 휴일등록
+	public boolean insertByAdmin(PlanDto dto) {
+		return sqlSession.insert("plan.makeByAdmin", dto) > 0;
+	}
+	
+	
+	
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
