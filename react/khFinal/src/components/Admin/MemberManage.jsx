@@ -159,7 +159,7 @@ export default function MemberManage(){
         target.hide();
        
 
-    },[pwModal, member])
+    },[pwModal])
     const closeEditModal = useCallback(()=>{
         const target = Modal.getInstance(editModal.current);
         target.hide();
@@ -182,6 +182,8 @@ export default function MemberManage(){
             // console.log(resp.data);
             setNewPw(true);
         }
+        closePwModal();
+        
         //else console.log("erageradg");
         //console.log(axios.defaults.headers.common['Authorization']);
     },[]);
@@ -269,14 +271,14 @@ export default function MemberManage(){
     const loadAttachList = useCallback(async ()=>{
         console.log("type");
         console.log(type);
-        try {
+        // try {
         const resp = await axios.get(`/admin/member/attachment/${number}/${type}`);
         console.log(resp.data);
             // 필요한 상태 업데이트 등
-        } catch (err) {
-            console.error("첨부파일 조회 실패", err);
-            return;
-        }
+        // } catch (err) {
+        //     console.error("첨부파일 조회 실패", err);
+        //     return;
+        // }
         
         const response = await Promise.all(// 비동기 상태에서 map 으로 쌓는거라 순서 보장해줄수 있는 키워드
             resp.data.attachList.map(no =>

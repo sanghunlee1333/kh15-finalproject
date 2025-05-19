@@ -33,7 +33,7 @@ public class PlanDao {
 		return sqlSession.delete("plan.delete", planNo) > 0;
 	}
 	
-	//전체 조회(개인 + 팀)
+	//전체 조회(개인 + 팀 + 전체)
 	public List<PlanDto> selectAllList(long memberNo) {
 		return sqlSession.selectList("plan.allList", memberNo);
 	}
@@ -90,4 +90,41 @@ public class PlanDao {
 		return sqlSession.selectList("plan.findPlansEndingAt", param);
 	}
 	
+	// 관리자 휴일등록
+	public boolean insertByAdmin(PlanDto dto) {
+		return sqlSession.insert("plan.makeByAdmin", dto) > 0;
+	}
+	
+	
+	
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,7 @@ import com.kh.acaedmy_final.configuration.TokenProperties;
 import com.kh.acaedmy_final.dao.MemberDao;
 import com.kh.acaedmy_final.dao.TokenDao;
 import com.kh.acaedmy_final.dto.MemberDto;
+import com.kh.acaedmy_final.error.TargetNotFoundException;
 import com.kh.acaedmy_final.service.TokenService;
 import com.kh.acaedmy_final.vo.ClaimVO;
 import com.kh.acaedmy_final.vo.LoginResponseVO;
@@ -43,7 +45,8 @@ public class MemberRestController {
 	@Autowired
 	private TokenDao tokenDao;
 
-//	PasswordEncoder encoder;
+	@Autowired
+	private PasswordEncoder encoder;
 	
 	@PostMapping("/")
 	public boolean join(@RequestBody MemberDto memberDto) {
@@ -71,8 +74,12 @@ public class MemberRestController {
 		
 		// 비밀번호 검사 
 		// 아직
-//		encoder.matches(loginVO.getMemberPw(), targetDto.getMemberPw());
+		encoder.matches(loginVO.getMemberPw(), targetDto.getMemberPw());
 		// join 할때 encoder.encode(pw);
+		if(encoder.matches(loginVO.getMemberPw(), targetDto.getMemberPw()) == false){
+			throw new TargetNotFoundException("로그인 X");
+//			return null;
+		}
 		return LoginResponseVO.builder()
 			.memberNo(targetDto.getMemberNo())
 			.memberDepartment(targetDto.getMemberDepartment())

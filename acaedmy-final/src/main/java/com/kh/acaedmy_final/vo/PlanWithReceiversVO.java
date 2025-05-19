@@ -16,6 +16,7 @@ public class PlanWithReceiversVO { //일정과 그 일정에 참여하는 수신
     private Timestamp planEndTime;
     private String planIsAllDay;
     private String planStatus;
+    private String planType;
     private List<PlanReceiverStatusVO> receivers; // 상태 포함된 참여자 목록
     private String planSenderName;
     private String planSenderDepartment;
