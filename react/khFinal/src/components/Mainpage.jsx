@@ -5,28 +5,15 @@ import { FaCalendarAlt, FaClipboardList, FaRegCalendarCheck } from "react-icons/
 import MainTodo from "./Plan/MainTodo";
 import MainTeamPlan from "./Plan/MainTeamPlan";
 import MainNotice from "./Notice/MainNotice";
-
+import MainMypage from "./Mypage/MainMypage";
+import { FaUser } from "react-icons/fa6";
+// import MypageEdit from "./Mypage/EditProfile"
 export default function Mainpage() {
     const navigate = useNavigate();
-  
-    const inTime = useCallback(async ()=>{
-        const resp = await axios.post("/attendance/inTime");
-        console.log(resp);
-    },[])
-    const outTime = useCallback(async ()=>{
-        const resp = await axios.post("/attendance/outTime");
-        console.log(resp);
-    },[])
+ 
 
     return (<>
-        <div className="row mt-2">
-            <div className="col d-flex">
-                <div className="ms-auto">
-                    <button className="btn btn-success" onClick={inTime}>출근</button>
-                    <button className="btn btn-danger" onClick={outTime}>퇴근</button>
-                </div>
-            </div>
-        </div>
+  
 
         <h2 className="mb-4 mt-2">
             <FaCalendarAlt className="text-danger me-2"/>
@@ -38,16 +25,17 @@ export default function Mainpage() {
             <div className="row g-4">
                 {/* 마이페이지 */}
                 <div className="col-md-6">
-                    <div className="position-relative border rounded shadow-sm p-2" onClick={() => navigate("/notice/mainNotice")}
+                    <div className="position-relative border rounded shadow-sm p-2" 
                             style={{ overflow: "hidden", cursor: "pointer" }}
                     >
                         <div className="preview-overlay" />
                         <div className="card p-3" style={{ overflow: 'visible', minHeight: '650px' }}>
                             <h3 className="fw-bold d-flex align-items-center justify-content-center">
                                 {/* <FaClipboardList className="text-danger me-1" /> */}
-                                마이페이지 들어올 예정
+                                <FaUser className="me-2"/>마이페이지
                             </h3>
                             {/* <MainNotice /> */}
+                            <MainMypage/>
                         </div>
                     </div>
                 </div>
