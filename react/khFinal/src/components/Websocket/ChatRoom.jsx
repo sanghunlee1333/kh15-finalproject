@@ -5,6 +5,9 @@ import { FaMagnifyingGlass } from "react-icons/fa6";
 import { IoChatbubbles } from "react-icons/io5";
 import { RiChatNewLine } from "react-icons/ri";
 import { IoMdPhonePortrait } from "react-icons/io";
+import { MdOutlineSubtitles } from "react-icons/md";
+import { MdGroupAdd } from "react-icons/md";
+import { FaRegImage } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import "dayjs/locale/ko"; // 한글 로케일 불러오기
@@ -19,7 +22,7 @@ dayjs.locale("ko");         // 한글로 설정
 
 export default function ChatRoom() {
     //navigate
-    const navigate =  useNavigate();
+    const navigate = useNavigate();
 
     //recoil
     const memberNo = useRecoilValue(userNoState);
@@ -38,6 +41,13 @@ export default function ChatRoom() {
     const [selectMembers, setSelectMembers] = useState([]);
     //채팅방 목록 불러오기
     const [rooms, setRooms] = useState([]);
+    //프로필 이미지
+    const [profileImages, setProfileImages] = useState({});
+
+    //그룹채팅 프로필 이미지
+    const [roomProfileFile, setRoomProfileFile] = useState(null); // 실제 업로드할 파일
+    const [roomProfilePreview, setRoomProfilePreview] = useState(null); // 미리보기 URL
+    const [roomProfileNo, setRoomProfileNo] = useState(null); // 업로드 후 받은 attachment 번호
 
     //callback
     //모달 열기
@@ -49,7 +59,11 @@ export default function ChatRoom() {
 
     //모달 닫기
     const closeModal = useCallback(() => {
+        if (!modal.current) return;
         const target = Modal.getInstance(modal.current);
+
+        // 포커스 해제
+        document.activeElement?.blur();
         if (target) target.hide();
     }, [modal]);
 
@@ -65,6 +79,7 @@ export default function ChatRoom() {
 
         setGroupContacts(data);
         setFilterContacts(data);//검색하지 않았을 경우에도 목록을 불러와야하니까
+        //await loadProfileImages(data);
     }, [groupContacts, filterContacts]);
 
     //연락처 검색
@@ -125,9 +140,7 @@ export default function ChatRoom() {
     }, []);
 
     const loadRooms = useCallback(async () => {
-        
         try {
-
             const token = axios.defaults.headers.common['Authorization'];
             //토큰이 없다면 로그인 페이지로 리다이렉트
             if (!token) {
@@ -140,19 +153,42 @@ export default function ChatRoom() {
                 }
             });
 
-            setRooms(data);//채팅방 목록을 상태에 저장
-            if (data) {
-
-                console.log(data);
-            }
-            else {
-                console.log("없음");
-            }
+            const sortedRooms = [...data].sort((a, b) => {
+                const timeA = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0;
+                const timeB = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
+                return timeB - timeA;
+            });
+    
+            setRooms(sortedRooms);
         }
         catch (error) {
             console.error("채팅방 목록 불러오기 실패", error);
         }
     }, []);
+
+    const getProfileAttachmentNo = async (memberNo) => {
+        if (profileImages[memberNo]) return profileImages[memberNo]; // 이미 있으면 요청 안 함
+
+        try {
+            const { data } = await axios.get(`/mypage/profile/${memberNo}`);
+            return data !== -1 ? data : null;
+        } catch {
+            return null;
+        }
+    };
+
+    const getRoomImageSrc = (room) => {
+        const isDirectChat = room.roomProfileNo === null && room.partnerProfileNo !== null;
+
+        if (isDirectChat) {
+            return `http://localhost:8080/api/mypage/attachment/${room.partnerProfileNo}`;
+        } else {
+            return room.roomProfileNo
+                ? `http://localhost:8080/api/mypage/attachment/${room.roomProfileNo}`
+                : "/images/profile_basic.png";
+        }
+    };
+
 
     const createRoom = useCallback(async () => {
         try {
@@ -161,19 +197,31 @@ export default function ChatRoom() {
                 return;
             }
             if (selectMembers.length === 0) {
-                alert("참여할 멤버를 선택해주세요");
+                alert("참여할 멤버를 선택해주세요.");
+                return;
+            }
+            if (!roomProfileFile) {
+                alert("대표 이미지를 업로드 해주세요.");
                 return;
             }
 
             const token = axios.defaults.headers.common['Authorization'];
-            
+
+            //대표 이미지 먼저 업로드
+            const uploadProfileNo = await uploadRoomProfile();
+            if (!uploadProfileNo) {
+                alert("대표 이미지 업로드에 실패했습니다.");
+                return;
+            }
+
             //채팅방 생성 요청
             const response = await axios.post("/rooms", {
                 roomTitle,
-                memberNos: selectMembers
+                memberNos: selectMembers,
+                roomProfileNo: uploadProfileNo,
             }, {
                 headers: {
-                    Authorization: token
+                    Authorization: token,
                 }
             });
 
@@ -183,6 +231,9 @@ export default function ChatRoom() {
             closeModal(); // 모달 닫기
             setRoomTitle(""); // 입력 초기화
             setSelectMembers([]); // 선택 초기화
+            setRoomProfileFile(null);//이미지 초기화
+            setRoomProfilePreview(null);//미리보기 초기화
+            setRoomProfileNo(null);//상태 초기화
 
             //생성된 방으로 이동
             navigate(`/chat/group/${roomNo}`);
@@ -190,7 +241,15 @@ export default function ChatRoom() {
         } catch (error) {
             console.error("채팅방 생성 실패", error);
         }
-    }, [roomTitle, selectMembers, closeModal, navigate]);
+    }, [roomTitle, selectMembers, roomProfileFile, closeModal, navigate]);
+
+    const handleRoomProfileChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setRoomProfileFile(file);
+        setRoomProfilePreview(URL.createObjectURL(file)); // 브라우저 미리보기용
+    };
 
     //키보드 enter 누르면 검색되게
     const handleKeyPress = (e) => {
@@ -199,38 +258,58 @@ export default function ChatRoom() {
         }
     };
 
+    const uploadRoomProfile = async () => {
+        if (!roomProfileFile) return null;
+
+        const formData = new FormData();
+        formData.append("attach", roomProfileFile);
+
+        try {
+            const token = axios.defaults.headers.common['Authorization'];
+            const { data } = await axios.post("/mypage/upload", formData, {
+                headers: {
+                    Authorization: token,
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+            return data.attachmentNo; // 서버에서 반환한 attachment 번호
+        } catch (error) {
+            console.error("프로필 이미지 업로드 실패", error);
+            return null;
+        }
+    };
+
     //effect
     useEffect(() => {
         if (!memberNo) return;
-    
+
         const socket = new SockJS("http://localhost:8080/ws");
         const client = new Client({
             webSocketFactory: () => socket,
             onConnect: () => {
                 const topic = `/topic/room-list/${memberNo}`;
-            
+
                 client.subscribe(topic, () => {
                     loadRooms();
                 });
             },
-            debug: (str) => {},
+            debug: (str) => { },
         });
         client.activate();
-    
+
         return () => {
             client.deactivate();
         };
     }, [memberNo, loadRooms]);
-    
+
     useEffect(() => {
         const handleRefresh = () => {
-          console.log("🔄 전역 이벤트 수신 → 채팅방 목록 갱신");
-          loadRooms();
+            loadRooms();
         };
-      
+
         window.addEventListener("refreshRoomList", handleRefresh);
         return () => window.removeEventListener("refreshRoomList", handleRefresh);
-      }, [loadRooms]);
+    }, [loadRooms]);
 
     useEffect(() => {
         loadContacts();
@@ -244,13 +323,13 @@ export default function ChatRoom() {
         const now = dayjs();
         const msgTime = dayjs(time);
 
-        if(msgTime.isSame(now, 'day')) {
+        if (msgTime.isSame(now, 'day')) {
             return msgTime.format("A h:mm");
         }
-        else if(msgTime.isSame(now.subtract(1, 'day'), 'day')) {
+        else if (msgTime.isSame(now.subtract(1, 'day'), 'day')) {
             return "어제";
         }
-        else if(msgTime.year() === now.year()) {
+        else if (msgTime.year() === now.year()) {
             return msgTime.format("M월 D일")
         }
         else {
@@ -260,7 +339,7 @@ export default function ChatRoom() {
 
     //view
     return (<>
-        <div className="row mt-2">
+        <div className="row">
             <div className="col">
                 <div className="d-flex align-items-center justify-content-between">
                     <div className="d-flex-align-items-center">
@@ -286,7 +365,13 @@ export default function ChatRoom() {
                 <div key={room.roomNo} className="p-2 rounded">
                     <Link to={`/chat/group/${room.roomNo}`} className="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                         <div className="d-flex align-items-center">
-                            <img src="/images/profile_basic.png" className="rounded-circle me-3" width="40" height="40" />
+                            <img
+                                src={getRoomImageSrc(room)}
+                                className="rounded-circle me-3"
+                                width="40"
+                                height="40"
+                            />
+
                             <div>
                                 {/* 채팅방 제목 */}
                                 <div className="fw-bold mb-1">{room.roomTitle}</div>
@@ -315,7 +400,9 @@ export default function ChatRoom() {
             <div className="modal-dialog">
                 <div className="modal-content">
                     <div className="modal-header">
-                        <h4 className="modal-title">새로운 채팅</h4>
+                        <h4 className="modal-title">
+                            그룹채팅
+                        </h4>
                         <button type="button" className="btn-close" aria-label="Close"
                             onClick={closeModal}>
                         </button>
@@ -324,7 +411,8 @@ export default function ChatRoom() {
                         {/* 채팅방 이름 입력 */}
                         <div className="mb-3">
                             <label className="form-label ms-1 fw-bold">
-                                채팅방 제목
+                                <MdOutlineSubtitles className="me-2 align-middle"/>
+                                    채팅방 제목
                             </label>
                             <input type="text" className="form-control" id="roomTitle"
                                 placeholder="방 제목 입력"
@@ -332,29 +420,64 @@ export default function ChatRoom() {
                                 onChange={(e) => setRoomTitle(e.target.value)}
                             />
                         </div>
-                        {/* 제목, 검색 */}
-                        <div className="row mt-2 mb-2">
+                        {/* 대표 이미지 업로드 */}
+                        <div className="mb-3">
                             <label className="form-label ms-1 fw-bold">
-                                채팅 초대
+                                <FaRegImage className="me-2 align-middle text-muted"/>
+                                채팅방 이미지
                             </label>
-                            <div className="col d-flex">
-                                <input type="text" className="form-control me-2"
-                                    placeholder="이름 및 부서 입력"
-                                    value={searchContacts}
-                                    onChange={(e) => setSearchContacts(e.target.value)}
-                                    onKeyDown={handleKeyPress}
-                                />
-                                <button type="button" className="btn btn-secondary" onClick={searchContact}>
-                                    <FaMagnifyingGlass />
-                                </button>
+                            <input
+                                type="file"
+                                className="form-control"
+                                accept="image/*"
+                                onChange={handleRoomProfileChange}
+                                style={{ display: "block" }}
+                            />
+                            {roomProfilePreview && (
+                                <div className="mt-3">
+                                    <label className="form-label ms-1 fw-bold">이미지 미리보기</label>
+                                    <div className="mt-2 text-center">
+                                        <img
+                                            src={roomProfilePreview}
+                                            alt="미리보기"
+                                            className="rounded"
+                                            style={{ width: "100px", height: "100px", objectFit: "cover" }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 제목, 검색 */}
+                        <div className="row mb-3">
+                            <div className="col-sm-12">
+                                <label className="form-label ms-1 fw-bold">
+                                    <MdGroupAdd className="me-2 align-middle text-muted"/>
+                                    채팅 초대
+                                </label>
+                                <div className="input-group">
+                                    <input
+                                        type="text"
+                                        className="form-control border"
+                                        placeholder="이름 및 부서 검색"
+                                        value={searchContacts}
+                                        onChange={(e) => setSearchContacts(e.target.value)}
+                                        onKeyDown={handleKeyPress}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        onClick={searchContact}
+                                    >
+                                        <FaMagnifyingGlass />
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        {/* <hr className="hr-stick" /> */}
-
                         {/* 검색 결과가 없을 때 메시지 표시 */}
                         {noResults && (
-                            <div className="row mt-3">
+                            <div className="row mt-3 ms-2">
                                 <div className="col">
                                     <small className="text-muted">"검색 결과가 없습니다, 이름 또는 부서를 검색하세요."</small>
                                 </div>
@@ -373,10 +496,26 @@ export default function ChatRoom() {
                                                 style={{ fontSize: '0.875rem' }}
                                             >
                                                 <img
-                                                    src="/images/profile_basic.png"
+                                                    src={
+                                                        profileImages[member.memberNo]
+                                                            ? `http://localhost:8080/api/mypage/attachment/${profileImages[member.memberNo]}`
+                                                            : "/images/profile_basic.png"
+                                                    }
                                                     className="rounded-circle me-2"
                                                     style={{ width: "30px", height: "30px", objectFit: "cover" }}
+                                                    onLoad={async () => {
+                                                        if (!profileImages[member.memberNo]) {
+                                                            const attachmentNo = await getProfileAttachmentNo(member.memberNo);
+                                                            if (attachmentNo !== null) {
+                                                                setProfileImages(prev => ({
+                                                                    ...prev,
+                                                                    [member.memberNo]: attachmentNo
+                                                                }));
+                                                            }
+                                                        }
+                                                    }}
                                                 />
+
                                                 <span>{member.memberName}</span>
                                                 <button
                                                     type="button"
@@ -412,10 +551,26 @@ export default function ChatRoom() {
                                                 />
                                                 {/* 프로필 이미지 */}
                                                 <img
-                                                    src="/images/profile_basic.png"
+                                                    src={
+                                                        profileImages[contact.memberNo]
+                                                            ? `http://localhost:8080/api/mypage/attachment/${profileImages[contact.memberNo]}`
+                                                            : "/images/profile_basic.png"
+                                                    }
                                                     className="rounded-circle me-2"
                                                     style={{ width: "40px", height: "40px", objectFit: "cover" }}
+                                                    onLoad={async () => {
+                                                        if (!profileImages[contact.memberNo]) {
+                                                            const attachmentNo = await getProfileAttachmentNo(contact.memberNo);
+                                                            if (attachmentNo !== null) {
+                                                                setProfileImages(prev => ({
+                                                                    ...prev,
+                                                                    [contact.memberNo]: attachmentNo
+                                                                }));
+                                                            }
+                                                        }
+                                                    }}
                                                 />
+
 
                                                 {/* 텍스트 정보 및 버튼을 기본적으로 가로로 배치 */}
                                                 <div className="flex-grow-1 d-flex flex-column flex-sm-row justify-content-between">

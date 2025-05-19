@@ -7,7 +7,7 @@ dayjs.extend(relativeTime);
 import './AllAlarm.css';
 
 import { useCallback, useState, useEffect, useRef } from "react";
-import { FaCheck, FaCrown, FaLightbulb, FaList, FaRegCalendarCheck, FaTrash } from "react-icons/fa";
+import { FaBell, FaCheck, FaCrown, FaLightbulb, FaList, FaRegCalendarCheck, FaTrash } from "react-icons/fa";
 import { unReadAlarmCountState } from "../utils/alarm";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { refreshPlanEventsState } from "../utils/plan";
@@ -25,7 +25,7 @@ export default function AllAlarm({ groupContacts, loginUserNo, detailModal, sele
     const [alarms, setAlarms] = useState([]); //알림
     const [now, setNow] = useState(dayjs()); //현재 시간
     const [page, setPage] = useState(1); //페이지
-    const [size] = useState(5); //한번에 불러올 알림 갯수
+    const [size] = useState(10); //한번에 불러올 알림 갯수
     const [hasMore, setHasMore] = useState(true); //더보기 유무
     
     const loading = useRef(false);
@@ -228,7 +228,7 @@ export default function AllAlarm({ groupContacts, loginUserNo, detailModal, sele
                 <div className="d-flex align-items-center justify-content-between">
                     <div className="d-flex align-items-center">
                         <h2>
-                            <FaLightbulb className="text-warning me-1" />
+                            <FaBell className="text-warning me-2" />
                             <span className="align-middle">알림</span>
                         </h2>
                     </div>

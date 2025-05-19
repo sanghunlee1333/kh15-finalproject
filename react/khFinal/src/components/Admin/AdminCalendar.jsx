@@ -38,6 +38,7 @@ export default function AdminCalendar({ param, onNotify, currentDate,sendDate })
         //  console.log(date);
         const target = Modal.getOrCreateInstance(addEvent.current);
         target.show();
+        closeAddEventModal();
       },[clickedDate]);
 
       const closeAddEventModal = useCallback(()=>{
@@ -105,6 +106,7 @@ export default function AdminCalendar({ param, onNotify, currentDate,sendDate })
           ref={calendarRef}
           initialView="dayGridMonth"
           plugins={[dayGridPlugin, interactionPlugin]}
+          eventDisplay="block"
           displayEventTime={false}
           events={events}
           dateClick={openAddEventModal} 

@@ -1,8 +1,6 @@
 package com.kh.acaedmy_final.dao.websocket;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,11 +54,4 @@ public class RoomChatDao {
 		}
 	}
 	
-	//입장 시간 이후의 메세지만 조회
-	public List<RoomChatDto> selectRecentMessages(long roomNo, long memberNo) {
-		Map<String, Object> params = new HashMap<>();
-		params.put("roomNo", roomNo);
-		params.put("memberNo", memberNo);
-		return sqlSession.selectList("roomChat.selectRecentMessages", params);
-	}
 }

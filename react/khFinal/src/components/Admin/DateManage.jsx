@@ -4,8 +4,8 @@ import Jumbotron from "../template/Jumbotron";
 import AdminCalendar from "./AdminCalendar";
 import { Modal } from "bootstrap";
 import { FaTrash } from "react-icons/fa6";
-import { useRecoilState } from "recoil";
-import { userLoadingState } from "../utils/stroage";
+import { useRecoilState, useResetRecoilState } from "recoil";
+import { userLoadingState, userNoState } from "../utils/stroage";
 
 export default function DateMange(){
   const [totalDays, setTotalDays] = useState("");
@@ -17,6 +17,7 @@ export default function DateMange(){
   const deleteEvent = useRef();
   const [checkDate, setCheckDate] = useState({year:"", month:"",})
 
+  const [userNo, setUserNo] = useRecoilState(userNoState);
 
   // const [currentDate, setCurrentDate] = useState({
   //   year:year,
@@ -89,6 +90,14 @@ useEffect(() => {
     })
   };
 
+  const formatDate = (target) => {
+      const form = new Date(target);
+      const year = form.getFullYear();
+      const month = (form.getMonth() + 1).toString().padStart(2,'0');
+      const date = form.getDate().toString().padStart(2,'0');
+      const dateOnly = year + "-" + month + "-" + date;
+  return dateOnly;
+  };
 
   useEffect(() => {
     const paramList = holidays.map((holiday) => ({
@@ -103,21 +112,18 @@ useEffect(() => {
   return (
     <>
       <Jumbotron subject="휴일 관리 "></Jumbotron>
-      <div className="row">
+      <div className="row mt-4 mb-4">
         <div className="col">
-          <hr/>
+         
          {dateLoading === false && (
             <div className="d-flex">
-              <h2>
-                {checkDate.year}년 {checkDate.month}월 총 근무일: {totalDays}일
-              </h2>
+             
               <button className="btn btn-danger ms-auto" onClick={openDeleteEvent}>
                 휴일 삭제하기
               </button>
             </div>
           )}
  
-          <hr/>
         </div>
       </div>
           
@@ -154,7 +160,7 @@ useEffect(() => {
                           >
                             <div>
                               <h6 className="mb-1">{holiday.holidayName}</h6>
-                              <small className="text-muted">{holiday.holidayDate}</small>
+                              <small className="text-muted">{formatDate(holiday.holidayDate)}</small>
                             </div>
 
                             <button

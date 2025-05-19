@@ -173,6 +173,7 @@ public class PlanRestController {
 	        vo.setPlanNo(plan.getPlanNo());
 	        vo.setPlanSenderNo(plan.getPlanSenderNo());
 	        vo.setPlanStatus(plan.getPlanStatus());
+	        vo.setPlanType(plan.getPlanType());
 	        vo.setPlanTitle(plan.getPlanTitle());
 	        vo.setPlanContent(plan.getPlanContent());
 	        vo.setPlanColor(plan.getPlanColor());
