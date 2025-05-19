@@ -124,7 +124,7 @@ export default function Sidebar() {
                 new bootstrap.Tooltip(el);
             }
         });
-    }, []);
+    }, [rooms]);      
 
     return (
         <div className="sidebar d-flex flex-column" style={{ height: "calc(100vh - 56px)" }}>
@@ -146,7 +146,7 @@ export default function Sidebar() {
             {/* 채팅방 목록 */}
             <div className="sidebar-list flex-grow-1 overflow-auto">
                 {rooms.map((room) => {
-                    const isActiveRoom = location.pathname === `/chat/group/${room.roomNo}`; // ✅ 현재 보고 있는 채팅방 여부
+                    const isActiveRoom = location.pathname === `/chat/group/${room.roomNo}`;
 
                     return (
                         <div

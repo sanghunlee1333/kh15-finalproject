@@ -42,7 +42,7 @@ export default function Mainpage() {
 
                 {/* 공지 게시판 */}
                 <div className="col-md-6">
-                    <div className="position-relative border rounded shadow-sm p-2" onClick={() => navigate("/notice/mainNotice")}
+                    <div className="position-relative border rounded shadow-sm p-2" onClick={() => navigate("/notice/list")}
                             style={{ overflow: "hidden", cursor: "pointer" }}
                     >
                         <div className="preview-overlay" />
@@ -58,7 +58,7 @@ export default function Mainpage() {
 
                 {/* 캘린더 */}
                 <div className="col-md-6">
-                    <div className="position-relative border rounded shadow-sm p-2" onClick={() => navigate("/plan/mainTeamPlan")}
+                    <div className="position-relative border rounded shadow-sm p-2" onClick={() => navigate("/plan/team")}
                         style={{ overflow: "hidden", cursor: "pointer" }}
                     >
                         <div className="preview-overlay" />

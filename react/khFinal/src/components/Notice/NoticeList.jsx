@@ -51,7 +51,7 @@ export default function NoticeList() {
     useEffect(() => {
         loadNotices();
     }, [page]);
-    
+
     //callback
     //게시글 가져오기 함수(+검색 포함)
     const loadNotices = useCallback(async () => {
@@ -133,8 +133,8 @@ export default function NoticeList() {
     */
 
     //게시글 등록 페이지 이동 함수
-    const writeNotice = useCallback(()=>{
-        if(userDepartment !== "인사"){
+    const writeNotice = useCallback(() => {
+        if (userDepartment !== "인사") {
             openWriteModal();
             return;
         }
@@ -187,22 +187,22 @@ export default function NoticeList() {
     return (<>
 
         <Jumbotron subject="공지사항" />
-        
+
         <div className="row mt-4">
             <div className="col">
                 <div className="d-flex flex-wrap align-items-center gap-2">
-                <div style={{ flex: "0 0 auto" }}>
-                    <select
-                        className="form-select text-responsive"
-                        value={tag}
-                        onChange={(e) => setTag(e.target.value)}
-                        style={{ minWidth: "100px", width: "auto" }}
-                    >
-                        <option value="">태그</option>
-                        {noticeTypes.map(type => (
-                            <option key={type} value={type}>{type}</option>
-                        ))}
-                    </select>
+                    <div style={{ flex: "0 0 auto" }}>
+                        <select
+                            className="form-select text-responsive"
+                            value={tag}
+                            onChange={(e) => setTag(e.target.value)}
+                            style={{ minWidth: "100px", width: "auto" }}
+                        >
+                            <option value="">태그</option>
+                            {noticeTypes.map(type => (
+                                <option key={type} value={type}>{type}</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div style={{ flex: "0 0 auto" }}>
@@ -214,17 +214,26 @@ export default function NoticeList() {
                     </div>
 
                     <div style={{ flex: "1 1 auto" }}>
-                        <input type="text" className="form-control text-responsive" placeholder="검색어" value={keyword} onChange={(e) => setKeyword(e.target.value)}/>
-                    </div>
-
-                    <div style={{ flex: "0 0 auto" }}>
-                        <button type="button" onClick={searchNotice} className="btn btn-secondary text-responsive d-flex align-items-center justify-content-center text-nowrap">
-                            <FaSearch />
-                        </button>
+                        <div className="input-group">
+                            <input
+                                type="text"
+                                className="form-control text-responsive"
+                                placeholder="검색어"
+                                value={keyword}
+                                onChange={(e) => setKeyword(e.target.value)}
+                            />
+                            <button
+                                type="button"
+                                onClick={searchNotice}
+                                className="btn btn-secondary text-responsive d-flex align-items-center justify-content-center text-nowrap"
+                            >
+                                <FaSearch />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-            </div>
+        </div>
 
         <div className="row mt-4">
             <div className="col">
@@ -240,51 +249,51 @@ export default function NoticeList() {
                     </li>
                     {notices.length > 0 ? (
                         notices.map(notice => (
-                        <li className="list-group-item d-flex text-center notice-row" key={notice.noticeNo} style={{ width: '100%' }}>
-                            {/* 개별체크박스 */}
-                            <div className="notice-cell" style={{ width: '5%' }}>
-                                <input type="checkbox" checked={notice.choice === true} onChange={(e) => changeNoticeChoice(e, notice)}/>
-                            </div>
-                            {/* 번호 */}
-                            <div className="notice-cell" style={{ width: '10%' }}>
-                                {notice.noticeNo}
-                            </div>
-                            {/* 유형 & 제목 */}
-                            <div className="text-start d-flex align-items-center" style={{ width: '50%' }}>
-                                <Link className="text-decoration-none d-flex align-items-center w-100 text-truncate" to={`/notice/detail/${notice.noticeNo}`}>
-                                    {/* 공지 유형에 따른 색상 적용 */}
-                                    <span className="me-1 text-nowrap fw-semibold" style={{ color: typeMap[notice.noticeType]?.color }}>
+                            <li className="list-group-item d-flex text-center notice-row" key={notice.noticeNo} style={{ width: '100%' }}>
+                                {/* 개별체크박스 */}
+                                <div className="notice-cell" style={{ width: '5%' }}>
+                                    <input type="checkbox" checked={notice.choice === true} onChange={(e) => changeNoticeChoice(e, notice)} />
+                                </div>
+                                {/* 번호 */}
+                                <div className="notice-cell" style={{ width: '10%' }}>
+                                    {notice.noticeNo}
+                                </div>
+                                {/* 유형 & 제목 */}
+                                <div className="text-start d-flex align-items-center" style={{ width: '50%' }}>
+                                    <Link className="text-decoration-none d-flex align-items-center w-100 text-truncate" to={`/notice/detail/${notice.noticeNo}`}>
+                                        {/* 공지 유형에 따른 색상 적용 */}
+                                        <span className="me-1 text-nowrap fw-semibold" style={{ color: typeMap[notice.noticeType]?.color }}>
                                             {notice.noticeType}
-                                    </span>
-                                    <span className="text-truncate text-dark">{notice.noticeTitle}</span>
-                                    {moment(notice.noticeWriteDate).isAfter(moment().startOf('day')) && (
-                                        <TbCircleLetterNFilled className="ms-1 text-danger fs-6" />
-                                    )
+                                        </span>
+                                        <span className="text-truncate text-dark">{notice.noticeTitle}</span>
+                                        {moment(notice.noticeWriteDate).isAfter(moment().startOf('day')) && (
+                                            <TbCircleLetterNFilled className="ms-1 text-danger fs-6" />
+                                        )
+                                        }
+                                    </Link>
+                                </div>
+                                {/* 작성자 */}
+                                <div className="notice-cell" style={{ width: '15%' }}>
+                                    <span className="text-nowrap">{notice.noticeWriterName}</span>
+                                </div>
+                                {/* 작성시간 */}
+                                <div className="notice-cell" style={{ width: '20%' }}>
+                                    {moment(notice.noticeWriteDate).isBefore(moment().startOf('day'))
+                                        ? (
+                                            <span>{moment(notice.noticeWriteDate).format('YYYY-MM-DD')}</span>
+                                        )
+                                        : (
+                                            <span>{moment(notice.noticeWriteDate).format("HH:mm")}</span>
+                                        )
                                     }
-                                </Link>
-                            </div>
-                            {/* 작성자 */}
-                            <div className="notice-cell" style={{ width: '15%' }}>
-                                <span className="text-nowrap">{notice.noticeWriterName}</span>
-                            </div>
-                            {/* 작성시간 */}
-                            <div className="notice-cell" style={{ width: '20%' }}>
-                                {moment(notice.noticeWriteDate).isBefore(moment().startOf('day'))
-                                    ? (
-                                        <span>{moment(notice.noticeWriteDate).format('YYYY-MM-DD')}</span>
-                                    )
-                                    : (
-                                        <span>{moment(notice.noticeWriteDate).format("HH:mm")}</span>
-                                    )
-                                }
-                            </div>
-                        </li>
+                                </div>
+                            </li>
                         ))
                     ) : (
                         <li className="list-group-item text-center d-block mt-4 mb-4">
-                          검색 결과가 없습니다
+                            검색 결과가 없습니다
                         </li>
-                      )}
+                    )}
                 </ul>
             </div>
         </div>
@@ -295,20 +304,20 @@ export default function NoticeList() {
                     {/* 왼쪽 (삭제 버튼) */}
                     <div>
                         {userDepartment === "인사" && hasChecked && (
-                        <button className="btn btn-danger text-responsive d-flex align-items-center" onClick={openDeleteModal}>
-                            <FaTrash className="me-1" />
-                            <span className="text-nowrap">삭제</span>
-                        </button>
+                            <button className="btn btn-danger text-responsive d-flex align-items-center" onClick={openDeleteModal}>
+                                <FaTrash className="me-1" />
+                                <span className="text-nowrap">삭제</span>
+                            </button>
                         )}
                     </div>
 
                     {/* 오른쪽 (작성 버튼) */}
                     <div>
                         {userDepartment === "인사" && (
-                        <button className="btn btn-success text-responsive d-flex align-items-center" onClick={writeNotice}>
-                            <FaPencil className="me-1" />
-                            <span className="text-nowrap">작성</span>
-                        </button>
+                            <button className="btn btn-success text-responsive d-flex align-items-center" onClick={writeNotice}>
+                                <FaPencil className="me-1" />
+                                <span className="text-nowrap">작성</span>
+                            </button>
                         )}
                     </div>
                 </div>

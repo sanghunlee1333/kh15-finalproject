@@ -13,7 +13,6 @@
   /* 전역 body 디자인 수정 */
   body {
     overflow-y: auto;
-    /* 세로 스크롤 허용 */
   }
 
   /* 점보트론 */
@@ -52,7 +51,7 @@
 
   /* Sidebar 기본 스타일 */
   .sidebar {
-    width: 4.3rem;
+    width: 4.2rem;
     height: calc(100vh - 56px);
     position: fixed;
     top: 57px;
@@ -213,7 +212,4 @@
     height: 40px;
   }
 
-  .navbar {
-    height: 63px; /* 기본 Bootstrap 높이 */
-    overflow: hidden;
-  }
+  

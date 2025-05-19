@@ -1,8 +1,7 @@
 import typeMap from "./typeMap";
 import './NoticeDetail.css'
 
-import { Link, useNavigate, useParams } from "react-router";
-import Jumbotron from "../template/Jumbotron";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 
@@ -93,22 +92,6 @@ export default function NoticeDetail() {
         </div>
 
         <hr className="hr-stick" />
-                    <div className="row mt-4">
-                        <div className="col d-flex align-items-center justify-content-end gap-2 flex-wrap">
-                            <button type="button" className="btn btn-outline-primary d-flex align-items-center" onClick={moveEdit}>
-                                <FaEdit className="me-1" />
-                                <span>수정</span>
-                            </button>
-                            <button type="button" className="btn btn-outline-danger d-flex align-items-center" onClick={openModal}>
-                                <FaTrash className="me-1" />
-                                <span>삭제</span>
-                            </button>
-                            <button type="button" className="btn btn-outline-secondary d-flex align-items-center" onClick={moveList}>
-                                <FaListUl className="me-1" />
-                                <span>목록</span>
-                            </button>
-                        </div>
-                    </div>
 
         <div className="row mt-4 p-1">
             <div className="col">
@@ -152,7 +135,31 @@ export default function NoticeDetail() {
             </div>
         </div>
 
-        <hr className="mt-4"/>
+        <div className="row mt-4">
+            <div className="col d-flex justify-content-between align-items-center flex-wrap">
+
+                {/* 왼쪽 - 수정 & 삭제 */}
+                <div className="d-flex align-items-center gap-2">
+                    <button type="button" className="btn btn-outline-primary d-flex align-items-center" onClick={moveEdit}>
+                        <FaEdit className="me-1" />
+                        <span>수정</span>
+                    </button>
+                    <button type="button" className="btn btn-outline-danger d-flex align-items-center" onClick={openModal}>
+                        <FaTrash className="me-1" />
+                        <span>삭제</span>
+                    </button>
+                </div>
+
+                {/* 오른쪽 - 목록 */}
+                <div>
+                    <button type="button" className="btn btn-outline-dark d-flex align-items-center" onClick={moveList}>
+                        <FaListUl className="me-1" />
+                        <span>목록</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
 
 
         {/* 태그 선택을 잘 안하는 리액트에서도 모달만큼은 ref로 연결(modal.current = document.querySelector("modal")) */}

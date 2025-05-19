@@ -339,7 +339,7 @@ export default function ChatRoom() {
 
     //view
     return (<>
-        <div className="row">
+        <div className="row mt-2">
             <div className="col">
                 <div className="d-flex align-items-center justify-content-between">
                     <div className="d-flex-align-items-center">
