@@ -267,7 +267,7 @@ export default function MemberJoin(){
         const isValid = await axios.post("/member/", updatedMember);
        console.log(updatedMember);
        if(isValid)  {
-    //    navigate('/home');
+        navigate('/');
         }
         else{
             
