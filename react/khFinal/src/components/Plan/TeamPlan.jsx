@@ -77,7 +77,6 @@ export default function TeamPlan() {
     const [noResults, setNoResults] = useState(false); //검색 결과가 없을 경우 true가 되며, 사용자에게 안내 메시지를 보여주기 위해 사용
     const [selectedMembers, setSelectedMembers] = useState([]); //일정에 참여할 수신자들의 번호 목록
 
-    const [eventRefreshKey, setEventRefreshKey] = useState(0); //selectedEvent 강제 리렌더를 위한 트리거
     const [selectedDate, setSelectedDate] = useState([]); //클릭한 날짜에 해당하는 일정
     const [selectedEvent, setSelectedEvent] = useState(null); //클릭한 일정의 상세 정보
 
@@ -162,85 +161,91 @@ export default function TeamPlan() {
 
     //모든 이벤트 새로 가져오는 함수
     const fetchAllEvents = useCallback(async (year, month) => {
-        const holidays = await fetchHolidays(year, month);
-        let token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
-        const { data: teamPlans } = await axios.get("/plan/team", //팀 일정 가져오기
-            {
-                headers: { Authorization: `Bearer ${token}` } 
-            }
-        );
-        const { data: personalPlans } = await axios.get("/plan/personal", 
-            { 
-                headers: { Authorization: `Bearer ${token}` } 
-            }
-        );
-
-        const holidayEvents = holidays.flatMap(holiday => { //공휴일 
-            const dateStr = `${holiday.locdate}`; // 'YYYYMMDD'
-            const dateObj = new Date(
-                `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`
+        try {
+            const holidays = await fetchHolidays(year, month);
+            let token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
+            const { data: teamPlans } = await axios.get("/plan/team", //팀 일정 가져오기
+                {
+                    headers: { Authorization: `Bearer ${token}` } 
+                }
             );
-            return {
-                id: `holiday-${holiday.locdate}-${holiday.dateName}`,
-                title: holiday.dateName,
-                start: dateObj,
-                allDay: true,
-                display: "background",
-                backgroundColor: "#f79d9d",
-                borderColor: "transparent",
-                extendedProps: { isHoliday: true },
-                className: ["holiday-event"]
-            };
-        });
+            const { data: personalPlans } = await axios.get("/plan/personal", 
+                { 
+                    headers: { Authorization: `Bearer ${token}` } 
+                }
+            );
 
-        const teamPlanEvents = teamPlans.map(plan => ({//팀 일정
-            id: `team-${plan.planNo}`, //고유 ID. 충돌 방지를 위해 prefix("team-") 붙임
-            title: plan.planTitle,
-            start: plan.planStartTime,
-            end: plan.planEndTime,
-            allDay: plan.planIsAllDay === "Y", //plan.planIsAllDay가 문자열 "Y"일 때만 종일 일정으로 처리하겠다는 뜻
-            display: "block",
-            backgroundColor: plan.planColor, //일정 바 색상
-            borderColor: plan.planColor, //일정 바 테두리
-            extendedProps: { //FullCalendar의 커스텀 속성 저장 공간 -> 내용, 참여자 정보도 저장할 수 있음
-                planType: plan.planType,
-                content: plan.planContent,
-                planNo: plan.planNo,
-                receivers: plan.receivers,  
-                planColor: plan.planColor,
-                planSenderNo: plan.planSenderNo, 
-                planStatus: plan.planStatus,
-                planSenderName: plan.planSenderName,
-                planSenderDepartment: plan.planSenderDepartment
-            }
-        }));
+            const holidayEvents = holidays.flatMap(holiday => { //공휴일 
+                const dateStr = `${holiday.locdate}`; // 'YYYYMMDD'
+                const dateObj = new Date(
+                    `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`
+                );
+                return {
+                    id: `holiday-${holiday.locdate}-${holiday.dateName}`,
+                    title: holiday.dateName,
+                    start: dateObj,
+                    allDay: true,
+                    display: "background",
+                    backgroundColor: "#f79d9d",
+                    borderColor: "transparent",
+                    extendedProps: { isHoliday: true },
+                    className: ["holiday-event"]
+                };
+            });
 
-        console.log("📌 teamPlans:", teamPlans);
+            const teamPlanEvents = teamPlans.map(plan => ({//팀 일정
+                id: `team-${plan.planNo}`, //고유 ID. 충돌 방지를 위해 prefix("team-") 붙임
+                title: plan.planTitle,
+                start: plan.planStartTime,
+                end: plan.planEndTime,
+                allDay: plan.planIsAllDay === "Y", //plan.planIsAllDay가 문자열 "Y"일 때만 종일 일정으로 처리하겠다는 뜻
+                display: "block",
+                backgroundColor: plan.planColor, //일정 바 색상
+                borderColor: plan.planColor, //일정 바 테두리
+                extendedProps: { //FullCalendar의 커스텀 속성 저장 공간 -> 내용, 참여자 정보도 저장할 수 있음
+                    planType: plan.planType,
+                    content: plan.planContent,
+                    planNo: plan.planNo,
+                    receivers: plan.receivers,  
+                    planColor: plan.planColor,
+                    planSenderNo: plan.planSenderNo, 
+                    planStatus: plan.planStatus,
+                    planSenderName: plan.planSenderName,
+                    planSenderDepartment: plan.planSenderDepartment
+                }
+            }));
 
-        const personalPlanEvents = personalPlans.map(plan => ({ //개인-Todo
-            id: `personal-${plan.planNo}`,
-            title: plan.planTitle,
-            start: plan.planStartTime,
-            end: plan.planEndTime,
-            allDay: plan.planIsAllDay === "Y", //plan.planIsAllDay가 문자열 "Y"일 때만 종일 일정으로 처리하겠다는 뜻
-            display: "block",
-            backgroundColor: plan.planColor,
-            borderColor: plan.planColor,
-            extendedProps: {
-                planType: '개인',
-                content: plan.planContent,
-                planNo: plan.planNo,
-                planColor: plan.planColor,
-                planSenderNo: plan.planSenderNo,
-                planStatus: plan.planStatus,
-                planSenderName: plan.planSenderName
-            }
-        }));
+            const personalPlanEvents = personalPlans.map(plan => ({ //개인-Todo
+                id: `personal-${plan.planNo}`,
+                title: plan.planTitle,
+                start: plan.planStartTime,
+                end: plan.planEndTime,
+                allDay: plan.planIsAllDay === "Y", //plan.planIsAllDay가 문자열 "Y"일 때만 종일 일정으로 처리하겠다는 뜻
+                display: "block",
+                backgroundColor: plan.planColor,
+                borderColor: plan.planColor,
+                extendedProps: {
+                    planType: '개인',
+                    content: plan.planContent,
+                    planNo: plan.planNo,
+                    planColor: plan.planColor,
+                    planSenderNo: plan.planSenderNo,
+                    planStatus: plan.planStatus,
+                    planSenderName: plan.planSenderName
+                }
+            }));
 
-        setHolidayEvents(holidayEvents);
-        setPlanEvents([...teamPlanEvents, ...personalPlanEvents]);
-        const combinedEvents = [...holidayEvents, ...teamPlanEvents, ...personalPlanEvents];
-        setAllEvents(combinedEvents);
+            setHolidayEvents(holidayEvents);
+            setPlanEvents([...teamPlanEvents, ...personalPlanEvents]);
+            const combinedEvents = [...holidayEvents, ...teamPlanEvents, ...personalPlanEvents];
+            setAllEvents(combinedEvents);
+        } 
+        catch (err) {
+            console.error("이벤트 불러오기 실패", err);
+            toast.error("일정 데이터를 불러오지 못했습니다.");
+            setPlanEvents([]);
+            setAllEvents([]);
+        }
     }, []);
 
     //
@@ -595,9 +600,7 @@ export default function TeamPlan() {
                 );
                 selectedEvent.setExtendedProp("receivers", updatedReceivers);
             }
-            //강제 리렌더링 트리거 작동
         }
-        setEventRefreshKey(prev => prev + 1);
     }, [selectedDate, allEvents]);
 
     //일정 완료되면, 캘린더 바에 완료 표시
@@ -615,7 +618,7 @@ export default function TeamPlan() {
         if (planType === "전체") {
             return (
                 <div className="fc-event-title-container">
-                    <b className="me-1">[공지]</b>
+                    <b className="me-1">[휴무]</b>
                     <span>{eventInfo.event.title}</span>
                 </div>
             );
@@ -978,7 +981,7 @@ export default function TeamPlan() {
                             <div className="col">
                                 <div className="d-flex text-responsive">
                                     <IoPersonSharp className="mt-1 me-2" />
-                                    <span className="fw-bold">수신자</span>
+                                    <span className="fw-bold">참여</span>
                                 </div>
                                 <div className="d-flex text-responsive mt-1 mb-2">
                                     <input type="text" className="form-control text-responsive" placeholder="이름 또는 부서명 검색" 
@@ -1032,7 +1035,7 @@ export default function TeamPlan() {
                                                         }
                                                     }}
                                                     />
-                                                {department}
+                                                <span className="fw-bold">{department}</span>
                                             </div>
 
                                             <ul className="list-group list-group-flush">
@@ -1078,7 +1081,7 @@ export default function TeamPlan() {
                                     {Object.values(groupContacts).flat()
                                     .filter(member => selectedMembers.includes(member.memberNo))
                                     .map(member => (
-                                        <div key={member.memberNo} className="d-flex align-items-center custom-badge">
+                                        <div key={member.memberNo} className="d-flex align-items-center border rounded-pill px-2 py-1 bg-light">
                                             <span className="text-responsive">{member.memberName}</span>
                                             <button
                                                 type="button"
@@ -1194,7 +1197,7 @@ export default function TeamPlan() {
             <div className="modal-dialog modal-lg"> {/* 모달 영역 */}
                 <div className="modal-content">
                 {selectedEvent && (
-                <div key={eventRefreshKey}>
+                <div>
                     {/* 상세일정 - 제목(헤더) */}
                     <div className="modal-header">
                         <h1 className="modal-title text-responsive">
@@ -1322,7 +1325,6 @@ export default function TeamPlan() {
                                                                         <span className="d-flex align-items-center">
                                                                             <IoPerson className="me-1" />
                                                                             <span className="fw-bold">{contact.memberName}</span>
-                                                                            <span className="text-success fw-bold ms-2">수락</span>
                                                                         </span>
                                                                     ) : (
                                                                         <span>{contact.memberName}
@@ -1357,22 +1359,7 @@ export default function TeamPlan() {
                         </>
                         )}
                     </div>
-                    <div className="modal-footer d-flex justify-content-between align-items-center">
-                        {/* 상태 토글 (왼쪽 정렬) */}
-                        <div className="btn-group btn-group" role="group" aria-label="상태 토글">
-                            <button type="button" className={`btn ${getPlanStatus(selectedEvent?.extendedProps.planNo) === '미달성' 
-                                ? 'btn-secondary' : 'btn-outline-secondary'} text-responsive`}
-                                onClick={() => changeStatusToggle(selectedEvent?.extendedProps.planNo, '미달성')}
-                            >
-                                미달성
-                            </button>
-                            <button type="button" className={`btn ${getPlanStatus(selectedEvent?.extendedProps.planNo) === '달성' 
-                                ? 'btn-success' : 'btn-outline-success'} text-responsive`}
-                                onClick={() => changeStatusToggle(selectedEvent?.extendedProps.planNo, '달성')}
-                            >
-                                달성
-                            </button>
-                        </div>
+                    <div className="modal-footer d-flex justify-content-end align-items-center">
                         {/* 닫기 / 삭제 버튼 (오른쪽 정렬) */}
                         <div>
                             <button type="button" className="btn btn-secondary text-responsive" onClick={closeDetailModal}>닫기</button>
