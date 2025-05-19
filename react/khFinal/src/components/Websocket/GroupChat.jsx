@@ -13,7 +13,8 @@ import dayjs from "dayjs";
 import "dayjs/locale/ko"; // 한글 로케일 불러오기
 import relativeTime from "dayjs/plugin/relativeTime";
 import { IoMdPhonePortrait } from "react-icons/io";
-import { IoMdDownload } from "react-icons/io";
+import { FaDownload } from "react-icons/fa6";
+import { FaTrashAlt } from "react-icons/fa";
 
 dayjs.extend(relativeTime); // 상대 시간 사용 가능하게 확장
 dayjs.locale("ko");         // 한글로 설정
@@ -68,30 +69,52 @@ export default function GroupChat() {
     const handleSendMessage = async () => {
         if (!newMessage.trim() && selectedFiles.length === 0) return;
 
-        const formData = new FormData();
-        formData.append("roomChatOrigin", roomNo);
-        formData.append("roomChatContent", newMessage || "");
-        formData.append("roomChatType", "CHAT");
-
-        selectedFiles.forEach(file => {
-            formData.append("attachments", file); // 여러 파일 전송 (name=attachments)
-        });
-
         try {
-            await axios.post(`/chat/send`, formData, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "multipart/form-data",
-                },
-            });
+            // 텍스트 메시지 전송 (선택사항)
+            if (newMessage.trim()) {
+                const textForm = new FormData();
+                textForm.append("roomChatOrigin", roomNo);
+                textForm.append("roomChatContent", newMessage);
+                textForm.append("roomChatType", "CHAT");
 
-            setNewMessage("");
+                await axios.post(`/chat/send`, textForm, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "multipart/form-data",
+                    },
+                });
+
+                setNewMessage("");
+            }
+
+            // 첨부파일 각각 따로 메시지 전송
+            for (const file of selectedFiles) {
+                const fileForm = new FormData();
+                fileForm.append("roomChatOrigin", roomNo);
+                fileForm.append("roomChatContent", `[파일] ${file.name}`);
+                fileForm.append("roomChatType", "CHAT");
+                fileForm.append("attachments", file);
+
+                await axios.post(`/chat/send`, fileForm, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "multipart/form-data",
+                    },
+                });
+            }
+
             setSelectedFiles([]);
-            document.querySelector(".btn-close[data-bs-dismiss='modal']")?.click(); // 파일 모달 닫기
+            // 파일 첨부 모달 닫기
+            const modalEl = document.getElementById("fileUploadModal");
+            if (modalEl) {
+                const modalInstance = Modal.getInstance(modalEl) || Modal.getOrCreateInstance(modalEl);
+                modalInstance.hide();
+            }
         } catch (error) {
             console.error("메시지 전송 실패", error);
             alert("메시지 전송 중 오류가 발생했습니다");
         }
+
     };
 
     //서버에 멤버 추가
@@ -811,6 +834,7 @@ export default function GroupChat() {
                                                                         attachmentNo: file.attachmentNo,
                                                                         fileName: file.attachmentName,
                                                                         fileUrl: fileUrl,
+                                                                        senderNo: msg.senderNo
                                                                     });
 
                                                                     const modalElement = document.getElementById("imagePreviewModal");
@@ -1248,7 +1272,7 @@ export default function GroupChat() {
                     <div className="modal-footer">
                         <button type="button" className="btn btn-primary"
                             onClick={handleSendMessage}>
-                            첨부
+                            전송
                         </button>
                         <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">취소</button>
                     </div>
@@ -1270,14 +1294,16 @@ export default function GroupChat() {
                     <div className="modal-footer">
                         <a
                             id="downloadImageLink"
-                            className="btn btn-primary"
+                            className="btn text-primary"
                             download
                         >
-                            저장
+                            <FaDownload className="fs-5"/>
                         </a>
-                        <button type="button" className="btn btn-danger" onClick={handleDeleteImage}>
-                            삭제
-                        </button>
+                        {selectedImageInfo?.senderNo === memberNo && (
+                            <span type="button" className="btn text-danger" onClick={handleDeleteImage}>
+                                <FaTrashAlt className="fs-5" />
+                            </span>
+                        )}
                     </div>
                 </div>
             </div>

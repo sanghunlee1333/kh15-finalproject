@@ -1,7 +1,4 @@
 import { Link, useNavigate } from "react-router";
-import { CiLogin } from "react-icons/ci";
-import { CiLogout } from "react-icons/ci";
-import { FaUserCircle } from "react-icons/fa";
 import { FaLightbulb } from "react-icons/fa6";
 import { useCallback, useRef } from "react";
 import { Modal } from "bootstrap";
@@ -48,7 +45,9 @@ export default function Menu() {
             <div className="container-fluid">
 
                 {/* 좌측 로고 */}
-                <Link to="/" className="navbar-brand">KHG</Link>
+                <Link to="/" className="navbar-brand">
+                    <img src="/images/LINKO.png" className="logo-small"/>
+                </Link>
 
                 {/* 메뉴 펼침 버튼(폭이 작을 때만 나옴) */}
                 <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-menu" 
@@ -78,19 +77,14 @@ export default function Menu() {
                             </Link>
                         </li>
 
-                        {/* 전자관리 Link */}
-                        <li className="nav-item dropdown">
-                            <a className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button"
-                                aria-haspopup="true" aria-expanded="false">
-                                <i className="fa-solid fa-database"></i>
-                                결재
-                            </a>
-                            <div className="dropdown-menu">
-                                <Link to="" className="dropdown-item">1</Link>
-                                <Link to="" className="dropdown-item">2</Link>
-                                <Link to="" className="dropdown-item">3</Link>
-                            </div>
+                        {/* 연락처 Link */}
+                        <li className="nav-item">
+                            <Link to="/member/contact" className="nav-link">
+                                <i className="fa-solid fa-list-ul"></i>
+                                연락처
+                            </Link>
                         </li>
+
                     </ul>
 
                     {/* 우측 메뉴 */}
@@ -116,24 +110,6 @@ export default function Menu() {
                                 )}
                             </Link>
                         </li>
-
-                        {/* 로그인, 로그아웃 Link */}
-                        <li className="nav-item">
-                            {/* 로그아웃 */}
-                             <Link onClick={gotoLogout} className="nav-link active">
-                                <i className="fa-solid fa-right-to-bracket"></i>
-                                <CiLogout className="fs-4"/>
-                            </Link> 
-                        </li>
-
-                        {/* 마이페이지 Link, 회원가입 Link */}
-                        <li className="nav-item">
-                            <Link to="#" className="nav-link active">
-                                <i className="fa-solid fa-right-to-bracket"></i>
-                                <FaUserCircle className="fs-4"/>
-                            </Link>
-                        </li>
-
                     </ul>
                 </div>
             </div>

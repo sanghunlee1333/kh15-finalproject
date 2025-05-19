@@ -21,7 +21,6 @@ export default function MemberContact() {
     const [profileImages, setProfileImages] = useState({});
     const [isMyProfileReady, setMyProfileReady] = useState(false);
 
-
     //callback
     // 내 정보 불러오기
     const loadMyInfo = useCallback(async () => {
@@ -31,8 +30,8 @@ export default function MemberContact() {
         //내 프로필 이미지 attachment 번호 가져오기
         const attachmentNo = await getProfileAttachmentNo(data.memberNo);
         //console.log("내 프로필 이미지 attachmentNo:", attachmentNo);
-        if(attachmentNo !== null) {
-            setProfileImages((prev)=> ({
+        if (attachmentNo !== null) {
+            setProfileImages((prev) => ({
                 ...prev,
                 [data.memberNo]: attachmentNo,
             }));
@@ -41,18 +40,6 @@ export default function MemberContact() {
         // 프로필 정보와 이미지가 모두 준비됐다고 표시
         setMyProfileReady(true);
     }, []);
-
-    //연락처 불러오기
-    // const loadContacts = useCallback(async () => {
-    //     const token = axios.defaults.headers.common['Authorization']//저장된 토큰 가져오기
-    //     const { data } = await axios.get("/member/contact", {
-    //         headers: {
-    //             Authorization: token,
-    //         }
-    //     });
-    //     setGroupContacts(data);
-    //     setFilterContacts(data);//검색하지 않았을 경우에도 목록을 불러와야하니까
-    // }, [groupContacts, filterContacts, loadMyInfo]);
 
     //연락처 검색
     const searchContact = useCallback(() => {
@@ -97,7 +84,7 @@ export default function MemberContact() {
 
         setSearchContacts("");//검색 후 입력창 초기화
     }, [searchContacts, groupContacts]);
-    
+
     //프로필 이미지
     const getProfileAttachmentNo = async (memberNo) => {
         try {
@@ -109,12 +96,6 @@ export default function MemberContact() {
         }
     };
 
-    // useEffect(()=>{
-    //    loadMyInfo();
-    //   //  console.log(profileImages);
-    // },[profileImages]);
-
-
     const loadProfileImages = async (contacts) => {
         const map = {};
         for (const dept of Object.keys(contacts)) {
@@ -125,14 +106,13 @@ export default function MemberContact() {
                 }
             }
         }
-    
+
         // 덮어쓰기 말고 기존 것 유지하면서 병합
         setProfileImages((prev) => ({
             ...prev,
             ...map,
         }));
     };
-    
 
     const fetchContactsAndProfiles = useCallback(async () => {
         await loadMyInfo();
@@ -144,7 +124,7 @@ export default function MemberContact() {
         setGroupContacts(data);
         setFilterContacts(data);
         await loadProfileImages(data);
-    }, [profileImages]);    
+    }, [profileImages]);
 
     //키보드 enter 누르면 검색되게
     const handleKeyPress = (e) => {
@@ -171,33 +151,30 @@ export default function MemberContact() {
             alert("채팅방을 챙성하거나 찾는 데 실패했습니다.");
         }
     };
-    
-    useEffect(()=> {
+
+    //effect
+    useEffect(() => {
         const handleProfileImageUpdate = () => {
             //프로필 이미지가 변경된 경우 연락처와 이미지 다시 로드
             fetchContactsAndProfiles();
         };
-        
+
         window.addEventListener("profileImageUpdated", handleProfileImageUpdate);
-        return() => {
+        return () => {
             window.removeEventListener(
                 "profileImageUpdated", handleProfileImageUpdate
             );
         };
     }, []);
-    //effect
+
     useEffect(() => {
         fetchContactsAndProfiles();
-        // loadMyInfo();
     }, [loadMyInfo]);
-    
-    // useEffect(()=>{
-    // }, [profileImages]);
 
     //view
     return (<>
         {/* 제목, 검색 */}
-        <div className="row mt-2">
+        <div className="row">
             <div className="col-sm-3 text-nowrap">
                 <h2>
                     <RiContactsBook3Fill className="text-info me-1" />
@@ -205,28 +182,27 @@ export default function MemberContact() {
                 </h2>
             </div>
             <div className="col-sm-9 d-flex justify-content-end">
-                <input type="text" className="form-control me-2"
-                    placeholder="이름 및 부서 검색"
-                    value={searchContacts}
-                    onChange={(e) => setSearchContacts(e.target.value)}
-                    onKeyDown={handleKeyPress}
-                />
-                <button type="button" className="btn btn-secondary" onClick={searchContact}>
-                    <FaMagnifyingGlass />
-                </button>
+                <div className="input-group" style={{ maxWidth: "400px" }}>
+                    <input
+                        type="text"
+                        className="form-control border"
+                        placeholder="이름 및 부서 검색"
+                        value={searchContacts}
+                        onChange={(e) => setSearchContacts(e.target.value)}
+                        onKeyDown={handleKeyPress}
+                    />
+                    <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={searchContact}
+                    >
+                        <FaMagnifyingGlass />
+                    </button>
+                </div>
             </div>
         </div>
 
         <hr className="hr-stick" />
-
-        {/* 검색 결과가 없을 때 메시지 표시 */}
-        {noResults && (
-            <div className="row mt-5">
-                <div className="col">
-                    <h4 className="text-muted">"검색 결과가 없습니다, 이름 또는 부서를 검색하세요."</h4>
-                </div>
-            </div>
-        )}
 
         {/* 연락처 리스트 */}
         <div className="list-group">
@@ -242,21 +218,21 @@ export default function MemberContact() {
                         <img
                             src={
                                 profileImages[myInfo.memberNo]
-                                    // ? `/mypage/attachment/${profileImages[myInfo.memberNo]}`
+                                // ? `/mypage/attachment/${profileImages[myInfo.memberNo]}`
                                     // : "/images/profile_basic.png"
                                     ? `http://localhost:8080/api/mypage/attachment/${profileImages[myInfo.memberNo]}`
                                     : "/images/profile_basic.png"
-                            }
-                            alt="Profile"
-                            className="rounded-circle me-2"
-                            style={{ width: "40px", height: "40px", objectFit: "cover" }}
-                        />
+                                }
+                                alt="Profile"
+                                className="rounded-circle me-2"
+                                style={{ width: "40px", height: "40px", objectFit: "cover" }}
+                                />
 
                         <div className="flex-grow-1 d-flex flex-column flex-sm-row justify-content-between">
                             <div>
                                 <div className="d-flex align-items-center mb-1">
                                     <h5 className="mb-0 me-2 text-nowrap">{myInfo.memberName}</h5>
-                                    <span className="border border-primary text-primary px-2 py-1 rounded-pill small text-nowrap">
+                                    <span className="border border-info text-info px-2 py-1 rounded-pill small text-nowrap">
                                         {myInfo.memberRank}
                                     </span>
                                 </div>
@@ -265,7 +241,7 @@ export default function MemberContact() {
                                         <span>{myInfo.memberEmail}</span>
                                     </div>
                                     <div className="d-flex align-items-center">
-                                        <IoMdPhonePortrait className="text-primary" size={15} />
+                                        <IoMdPhonePortrait className="text-info" size={15} />
                                         <span className="fw-semibold text-muted">
                                             {myInfo.memberContact}
                                         </span>
@@ -274,7 +250,7 @@ export default function MemberContact() {
                             </div>
 
                             <div className="d-flex align-items-center gap-2 mt-2 mt-sm-0 justify-content-end text-sm">
-                                <span className="text-white bg-primary border border-primary rounded-pill px-2 py-1">
+                                <span className="text-white bg-info border border-info rounded-pill px-2 py-1">
                                     내 연락처
                                 </span>
                             </div>
@@ -283,6 +259,16 @@ export default function MemberContact() {
                     </div>
                 </div>
             )}
+
+            {/* 검색 결과가 없을 때 메시지 표시 */}
+            {noResults && (
+                <div className="row mt-5 ms-4">
+                    <div className="col">
+                        <h4 className="text-muted">"검색 결과가 없습니다, 이름 또는 부서를 검색하세요."</h4>
+                    </div>
+                </div>
+            )}
+            
             <div className="mt-4"></div>
             {Object.keys(filterContacts).map((department) => (
                 <div key={department}>
@@ -331,7 +317,7 @@ export default function MemberContact() {
 
                                 {/* 개인 채팅하기 버튼 */}
                                 <div className="d-flex align-items-center gap-2 mt-2 mt-sm-0 justify-content-end">
-                                    <button className="btn btn-outline-primary btn-sm ms-auto"
+                                    <button className="btn btn-primary btn-sm ms-auto"
                                         onClick={() => handleChatClick(contact.memberNo)}>
                                         채팅
                                     </button>
