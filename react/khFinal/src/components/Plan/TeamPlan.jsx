@@ -14,6 +14,8 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
 dayjs.locale('ko');
 
+import { useNavigate } from "react-router-dom";
+import { useLocation } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { fetchHolidays } from "../utils/holiday";
@@ -32,12 +34,20 @@ const colorOptions = ['#dc3545', '#fd7e14', '#ffc107', '#28a745', '#20c997', '#0
 
 export default function TeamPlan() {
 
+    //location
+    const location = useLocation();
+    const initialTab = location.pathname.includes("todo") ? "todo" : "calendar";
+    const [tab, setTab] = useState(initialTab);
+
+    //navigate
+    const navigate = useNavigate();
+
     //recoil
     const setRefreshPlanEvents = useSetRecoilState(refreshPlanEventsState);
 
     //state
     const [isPersonal, setIsPersonal] = useState(false); // 일정 유형
-    const [tab, setTab] = useState('calendar');
+    // const [tab, setTab] = useState('calendar');
 
     const [allEvents, setAllEvents] = useState([]);
     const [holidayEvents, setHolidayEvents] = useState([]);
@@ -89,6 +99,7 @@ export default function TeamPlan() {
         return endTime < startTime;
     }, [startTime, endTime]);
 
+    //
     const loginUserNo = useMemo(() => {
         const token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
         const payload = parseJwt(token);
@@ -110,6 +121,7 @@ export default function TeamPlan() {
         );
     }, [title, startTime, endTime, isInvalidEndTime, selectedMembers]);
 
+    //
     const filteredEvents = useMemo(() => {
         return events.filter(event => {
             const planType = event.extendedProps?.planType;
@@ -123,9 +135,9 @@ export default function TeamPlan() {
             const matchViewType =
                 viewType === "전체" ||
                 (viewType === "개인" && planType === "개인") ||
-                (viewType === "팀" && planType === "팀");
+                (viewType === "팀" && (planType === "팀" || planType === "전체"));
     
-            // 2. 달성 여부 필터 (개인/팀 모두 동일하게 planStatus 기준으로 판단)
+            // 2. 상태 필터
             const isCompleted = planStatus === "완료";
             const matchStatus =
                 statusFilter === "전체" ||
@@ -135,13 +147,20 @@ export default function TeamPlan() {
             return matchViewType && matchStatus;
         });
     }, [events, viewType, statusFilter]);
-    
 
     //effect
+    //
+    useEffect(() => {
+        if (location.pathname.includes("todo")) setTab("todo");
+        else setTab("calendar");
+    }, [location.pathname]);
+
+    //연락처 목록 가져오기
     useEffect(() => {
         loadContacts(); //연락처(부서별 멤버) 목록
     }, []); //컴포넌트가 처음 렌더링된 직후 한 번만 실행
 
+    //모든 이벤트 새로 가져오는 함수
     const fetchAllEvents = useCallback(async (year, month) => {
         const holidays = await fetchHolidays(year, month);
         let token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
@@ -184,7 +203,7 @@ export default function TeamPlan() {
             backgroundColor: plan.planColor, //일정 바 색상
             borderColor: plan.planColor, //일정 바 테두리
             extendedProps: { //FullCalendar의 커스텀 속성 저장 공간 -> 내용, 참여자 정보도 저장할 수 있음
-                planType: "팀",
+                planType: plan.planType,
                 content: plan.planContent,
                 planNo: plan.planNo,
                 receivers: plan.receivers,  
@@ -193,9 +212,10 @@ export default function TeamPlan() {
                 planStatus: plan.planStatus,
                 planSenderName: plan.planSenderName,
                 planSenderDepartment: plan.planSenderDepartment
-
             }
         }));
+
+        console.log("📌 teamPlans:", teamPlans);
 
         const personalPlanEvents = personalPlans.map(plan => ({ //개인-Todo
             id: `personal-${plan.planNo}`,
@@ -223,14 +243,17 @@ export default function TeamPlan() {
         setAllEvents(combinedEvents);
     }, []);
 
+    //
     useEffect(() => {
         setRefreshPlanEvents(() => fetchAllEvents); // 함수 자체를 저장
     }, [fetchAllEvents]);
 
+    //
     useEffect(() => {
         fetchAllEvents(currentYear, currentMonth);
     }, [currentYear, currentMonth, fetchAllEvents]);
 
+    //
     useEffect(()=>{
         if(!searchContacts){ //검색창에 아무것도 입력하지 않았을 때
             setFilterContacts(groupContacts); //원래 전체 연락처 데이터를 그대로 filterContacts에 넣는다
@@ -290,6 +313,7 @@ export default function TeamPlan() {
         }
     }, [allDay, startTime, endTime, endTimeManuallyChanged]);
 
+    //
     useEffect(() => {
         const calendarApi = calendar.current?.getApi();
         if (!calendarApi) return;
@@ -579,11 +603,22 @@ export default function TeamPlan() {
     //일정 완료되면, 캘린더 바에 완료 표시
     const renderEventContent = (eventInfo) => {
         const isHoliday = eventInfo.event.extendedProps?.isHoliday;
+        const planType = eventInfo.event.extendedProps?.planType;
         const isCompleted = eventInfo.event.extendedProps.planStatus === "완료";
 
         //공휴일이면 제목만 출력
         if (isHoliday) {
             return null;
+        }
+
+        // 공지 일정인 경우
+        if (planType === "전체") {
+            return (
+                <div className="fc-event-title-container">
+                    <b className="me-1">[공지]</b>
+                    <span>{eventInfo.event.title}</span>
+                </div>
+            );
         }
 
         //일반 일정은 완료/미완료 표시
@@ -716,10 +751,14 @@ export default function TeamPlan() {
                         </h2>
                     </div>
                     <div className="d-flex align-items-center">
-                        <button className={`btn ${tab === 'calendar' ? 'btn-primary' : 'btn-outline-primary'} text-responsive me-2`} onClick={() => setTab('calendar')}>
+                        <button className={`btn ${location.pathname.includes('calendar') ? 'btn-primary' : 'btn-outline-primary'} text-responsive me-2`}
+                            onClick={() => navigate('/plan/team')}
+                        >
                             Calendar
                         </button>
-                        <button className={`btn ${tab === 'todo' ? 'btn-primary' : 'btn-outline-primary'} text-responsive`} onClick={() => setTab('todo')}>
+                        <button className={`btn ${location.pathname.includes('todo') ? 'btn-primary' : 'btn-outline-primary'} text-responsive`}
+                            onClick={() => navigate('/plan/todo')}
+                        >
                             Todo
                         </button>
                     </div>
@@ -732,7 +771,7 @@ export default function TeamPlan() {
         <div className="calendar-wrapper">
         {/* 개인-Todo */}
         {tab === 'todo' && (
-        <TodoList allEvents={allEvents} fetchAllEvents={fetchAllEvents} groupContacts={groupContacts}/>
+            <TodoList allEvents={allEvents} fetchAllEvents={fetchAllEvents} groupContacts={groupContacts}/>
         )}            
 
         {/* 캘린더 */}
