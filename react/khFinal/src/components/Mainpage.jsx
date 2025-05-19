@@ -5,7 +5,9 @@ import { FaCalendarAlt, FaClipboardList, FaRegCalendarCheck } from "react-icons/
 import MainTodo from "./Plan/MainTodo";
 import MainTeamPlan from "./Plan/MainTeamPlan";
 import MainNotice from "./Notice/MainNotice";
-
+import MainMypage from "./Mypage/MainMypage";
+import { FaUser } from "react-icons/fa6";
+// import MypageEdit from "./Mypage/EditProfile"
 export default function Mainpage() {
     const navigate = useNavigate();
 
@@ -19,26 +21,29 @@ export default function Mainpage() {
     },[])
 
     return (<>
-        
+
         <h2 className="mb-4 mt-2">
             <FaCalendarAlt className="text-danger me-2"/>
             <span className="align-middle">대시보드</span>
         </h2>
 
-        {/* 카드 4개 그리드 */}
-        <div className="row g-4">
-            {/* 마이페이지 */}
-            <div className="col-md-6">
-                <div className="position-relative border rounded shadow-sm p-2" onClick={() => navigate("/notice/mainNotice")}
-                        style={{ overflow: "hidden", cursor: "pointer" }}
-                >
-                    <div className="preview-overlay" />
-                    <div className="card p-3" style={{ overflow: 'visible', minHeight: '650px' }}>
-                        <h3 className="fw-bold d-flex align-items-center justify-content-center">
-                            {/* <FaClipboardList className="text-danger me-1" /> */}
-                            마이페이지 들어올 예정
-                        </h3>
-                        {/* <MainNotice /> */}
+        <div className="border rounded shadow-sm p-2 text-center text-muted" style={{ height: "80%", minHeight: "400px" }}>
+            {/* 카드 4개 그리드 */}
+            <div className="row g-4">
+                {/* 마이페이지 */}
+                <div className="col-md-6">
+                    <div className="position-relative border rounded shadow-sm p-2" 
+                            style={{ overflow: "hidden", cursor: "pointer" }}
+                    >
+                        <div className="preview-overlay" />
+                        <div className="card p-3" style={{ overflow: 'visible', minHeight: '650px' }}>
+                            <h3 className="fw-bold d-flex align-items-center justify-content-center">
+                                {/* <FaClipboardList className="text-danger me-1" /> */}
+                                <FaUser className="me-2"/>마이페이지
+                            </h3>
+                            {/* <MainNotice /> */}
+                            <MainMypage/>
+                        </div>
                     </div>
                 </div>
             </div>
