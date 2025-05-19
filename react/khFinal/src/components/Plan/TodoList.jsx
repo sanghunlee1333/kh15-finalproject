@@ -67,6 +67,19 @@ export default function TodoList({ allEvents = [], fetchAllEvents, groupContacts
         return endTime < startTime;
     }, [startTime, endTime]);
 
+    //등록 버튼 클릭 시, 전체 입력값 검사
+    const validAllFields = useCallback(() => {
+        setTitleChoice(true);
+        setDateChoice(true);
+          
+        return (
+            !title ||
+            !startTime ||
+            !endTime ||
+            isInvalidEndTime
+        );
+    }, [title, startTime, endTime, isInvalidEndTime]);
+
     //
     const todayEvents = useMemo(() => {
         return allEvents
@@ -127,7 +140,7 @@ export default function TodoList({ allEvents = [], fetchAllEvents, groupContacts
 
     //일정 등록
     const submitPlan = useCallback(async () => {
-        if (!title || !startTime || !endTime || isInvalidEndTime) return;
+        if (validAllFields()) return;
     
         let adjustedStartTime = startTime;
         let adjustedEndTime = endTime;
@@ -637,7 +650,6 @@ export default function TodoList({ allEvents = [], fetchAllEvents, groupContacts
                                                                         <span className="d-flex align-items-center">
                                                                             <IoPerson className="me-1" />
                                                                             <span className="fw-bold">{contact.memberName}</span>
-                                                                            <span className="text-success fw-bold ms-2">수락</span>
                                                                         </span>
                                                                     ) : (
                                                                         <span>{contact.memberName}
