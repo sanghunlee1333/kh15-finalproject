@@ -46,8 +46,11 @@ public class AlarmService { //알림을 생성하고 DB에 저장하는 비즈�
 	//공통 알림 전송 메소드
 	public void sendAlarm(long receiverNo, long alarmSenderNo, long planNo, AlarmType alarmType, String alarmMessage) {
 		//중복 알림 방지: 동일한 유형/일정/수신자 조합이 이미 존재하면 skip
-		if (alarmDao.existsByTypeAndPlanAndReceiver(alarmType.name(), planNo, receiverNo)) {
-		    return; // 이미 존재하면 알림 보내지 않음
+		//PLAN_COMPLETE일 경우는 중복 알림 허용
+		if (alarmType != AlarmType.PLAN_COMPLETE) {
+			if (alarmDao.existsByTypeAndPlanAndReceiverAndSender(alarmType.name(), planNo, receiverNo, alarmSenderNo)) {
+			    return; // 이미 존재하면 알림 보내지 않음
+			}
 		}
 		
 		//1. AlarmDto 생성
@@ -69,7 +72,7 @@ public class AlarmService { //알림을 생성하고 DB에 저장하는 비즈�
 		alarmDao.insert(alarmDto);
 		
 		//3. 응답용 VO 생성 (AlarmResponseVO) - WebSocket으로 보내기 위해
-		AlarmResponseVO alarmResponseVO = alarmDao.getAlarm(alarmDto.getAlarmNo());
+		AlarmResponseVO alarmResponseVO = alarmDao.getAlarm(alarmNo);
 		if(alarmResponseVO == null) return;
 		
 		//4. WebSocket 전송
@@ -141,8 +144,14 @@ public class AlarmService { //알림을 생성하고 DB에 저장하는 비즈�
 	//alarm 테이블에 insert하고, WebSocket으로 전송까지 수행하는 메소드
 	public void sendPlanTimedAlarm(PlanWithReceiversVO plan, AlarmType alarmType, String alarmMessage) {
 		for (PlanReceiverStatusVO receiver : plan.getReceivers()) {
-			//중복 알림 방지: 동일한 유형/일정/수신자 조합이 이미 존재하면 skip
-			boolean exists = alarmDao.existsByTypeAndPlanAndReceiver(alarmType.name(), plan.getPlanNo(), receiver.getPlanReceiveReceiverNo());
+			
+			Timestamp recentThreshold = Timestamp.valueOf(LocalDateTime.now().minusSeconds(10));
+	        boolean exists = alarmDao.existsByTypeAndPlanAndReceiverRecently(
+	            alarmType.name(),
+	            plan.getPlanNo(),
+	            receiver.getPlanReceiveReceiverNo(),
+	            recentThreshold
+	        );
 	        if (exists) continue;
 	        
 			//1. 알림 정보 설정
@@ -161,7 +170,7 @@ public class AlarmService { //알림을 생성하고 DB에 저장하는 비즈�
 			alarmDao.insert(alarmDto);
 			
 			//3. VO로 다시 조회 
-			AlarmResponseVO alarmResponseVO = alarmDao.getAlarm(alarmDto.getAlarmNo());
+			AlarmResponseVO alarmResponseVO = alarmDao.getAlarm(alarmNo);
 			
 			//4. WebSocket 전송
 			if(alarmResponseVO != null) {

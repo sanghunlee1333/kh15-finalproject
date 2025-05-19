@@ -40,7 +40,11 @@ public class PlanReceiveRestController {
 	@PatchMapping("/planNo/{planNo}/receiverNo/{planReceiverNo}/response")
 	public void respond(@PathVariable long planNo, @PathVariable long planReceiverNo, @RequestBody PlanStatusUpdateRequestVO vo) {
 
-		//1. 수락/거절 처리
+		//1. 작성자, 일정 조회 및 일정 삭제 체크
+	    PlanDto planDto = planDao.selectOne(planNo); //작성자 정보, 일정 제목
+	    if (planDto == null) return;	
+		
+		//2. 수락/거절 처리
 		boolean accepted = "Y".equalsIgnoreCase(vo.getPlanStatus());
 		if(accepted) {
 			planReceiveDao.accept(planNo, planReceiverNo); 
@@ -49,11 +53,10 @@ public class PlanReceiveRestController {
 			planReceiveDao.reject(planNo, planReceiverNo); 
 		}
 		
-		//2. 작성자 및 수신자 정보 조회
-		PlanDto planDto = planDao.selectOne(planNo); //작성자 정보, 일정 제목
+		//3. 수신자 정보 조회
 		MemberDto receiverDto = memberDao.selectOne(planReceiverNo); //수신자 정보
 		
-		//3. 알림 전송
+		//4. 알림 전송
 		alarmService.sendPlanResponseAlarm(planReceiverNo, planDto.getPlanSenderNo(), planNo, receiverDto.getMemberName(), receiverDto.getMemberDepartment(), planDto.getPlanTitle(), accepted);
 	}
 	
