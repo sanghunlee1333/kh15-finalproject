@@ -28,7 +28,7 @@
 		delete plan where plan_no = #{planNo}
 	</delete>
 	
-	<!-- 전체 조회(개인 + 팀) -->
+	<!-- 전체 조회(개인 + 팀 + 전체) -->
 	<select id="allList" resultType="PlanDto">
 		select distinct p.* from plan p
 		left join plan_receive pr on p.plan_no = pr.plan_receive_plan_no
@@ -36,6 +36,7 @@
 			or (pr.plan_receive_receiver_no = #{memberNo}
 				and pr.plan_receive_is_accept = 'Y'
 			)
+			or p.plan_type = '전체'
 		order by p.plan_start_time desc
 	</select>
 	
@@ -50,12 +51,12 @@
 	<select id="teamList" resultType="PlanDto">
 		select distinct p.* from plan p
 		left join plan_receive r on p.plan_no = r.plan_receive_plan_no
-		where p.plan_type = '팀' 
-		and (p.plan_sender_no = #{memberNo} 
-			or (r.plan_receive_receiver_no = #{memberNo}
-				and r.plan_receive_is_accept = 'Y'
-			)
-		)
+		where (p.plan_type = '팀' and (
+			p.plan_sender_no = #{memberNo}
+			or (r.plan_receive_receiver_no = #{memberNo} 
+			and r.plan_receive_is_accept = 'Y')
+		))
+		or p.plan_type = '전체'
 		order by p.plan_start_time asc
 	</select>
 	
@@ -104,4 +105,16 @@
 	   	where p.plan_end_time between #{timeStart} and #{timeEnd}
 	</select>
 	
+	<insert id="makeByAdmin">
+		insert into plan(
+			plan_no, plan_sender_no, plan_type, 
+			plan_title, plan_content, plan_color,
+			plan_start_time, plan_end_time, plan_is_all_day, plan_status
+		)
+		values (
+			#{planNo}, #{planSenderNo}, #{planType},
+			#{planTitle}, #{planContent}, #{planColor}, 
+			#{planStartTime}, #{planEndTime}, #{planIsAllDay}, #{planStatus}
+		)
+	</insert>
 </mapper>

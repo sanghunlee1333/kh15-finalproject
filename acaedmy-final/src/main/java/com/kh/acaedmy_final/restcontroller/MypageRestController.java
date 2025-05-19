@@ -133,7 +133,7 @@ public class MypageRestController {
 		return false;
 	}
 	
-	
+
 	@GetMapping("/profile/{memberNo}")
 	public int getProfileImageNo(@PathVariable int memberNo) {
 		Integer attachmentNo = memberDocumentDao.selectOne(memberNo);

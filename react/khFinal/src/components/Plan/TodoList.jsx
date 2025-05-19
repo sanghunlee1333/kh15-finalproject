@@ -67,13 +67,13 @@ export default function TodoList({ allEvents = [], fetchAllEvents, groupContacts
         return endTime < startTime;
     }, [startTime, endTime]);
 
+    //
     const todayEvents = useMemo(() => {
         return allEvents
             .filter(event => {
                 if (event.extendedProps?.isHoliday) return true;
 
                 const planType = event.extendedProps?.planType;
-                
                 return (
                     viewType === "전체" ||
                     (viewType === "개인" && planType === "개인") ||
@@ -120,6 +120,7 @@ export default function TodoList({ allEvents = [], fetchAllEvents, groupContacts
     }, []);
 
     //effect
+    //
     useEffect(() => {
         fetchAllEvents(currentYear, currentMonth);
     }, [currentYear, currentMonth, fetchAllEvents]);
@@ -246,6 +247,7 @@ export default function TodoList({ allEvents = [], fetchAllEvents, groupContacts
         if (target !== null) target.hide();
     }, [deleteModal]);
 
+    //view
     return(<>
         <div className="row">
             <div className="col">
