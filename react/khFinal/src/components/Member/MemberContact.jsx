@@ -1,9 +1,8 @@
 import axios from "axios";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FaMagnifyingGlass } from "react-icons/fa6";
 import { IoMdPhonePortrait } from "react-icons/io";
 import { RiContactsBook3Fill } from "react-icons/ri";
-import { BsPersonRaisedHand } from "react-icons/bs";
 import { useNavigate } from "react-router";
 
 export default function MemberContact() {
@@ -174,7 +173,7 @@ export default function MemberContact() {
     //view
     return (<>
         {/* 제목, 검색 */}
-        <div className="row">
+        <div className="row mt-2">
             <div className="col-sm-3 text-nowrap">
                 <h2>
                     <RiContactsBook3Fill className="text-info me-1" />
@@ -249,9 +248,9 @@ export default function MemberContact() {
                                 </div>
                             </div>
 
-                            <div className="d-flex align-items-center gap-2 mt-2 mt-sm-0 justify-content-end text-sm">
+                            <div className="d-flex align-items-center gap-2 me-1 mt-2 mt-sm-0 justify-content-end text-sm">
                                 <span className="text-white bg-info border border-info rounded-pill px-2 py-1">
-                                    내 연락처
+                                    나
                                 </span>
                             </div>
 

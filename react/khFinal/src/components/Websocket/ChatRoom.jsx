@@ -5,7 +5,7 @@ import { FaMagnifyingGlass } from "react-icons/fa6";
 import { IoChatbubbles } from "react-icons/io5";
 import { RiChatNewLine } from "react-icons/ri";
 import { IoMdPhonePortrait } from "react-icons/io";
-import { MdOutlineSubtitles } from "react-icons/md";
+import { MdOutlineImage, MdOutlineSubtitles } from "react-icons/md";
 import { MdGroupAdd } from "react-icons/md";
 import { FaRegImage } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
@@ -339,7 +339,7 @@ export default function ChatRoom() {
 
     //view
     return (<>
-        <div className="row">
+        <div className="row mt-2">
             <div className="col">
                 <div className="d-flex align-items-center justify-content-between">
                     <div className="d-flex-align-items-center">
@@ -409,26 +409,30 @@ export default function ChatRoom() {
                     </div>
                     <div className="modal-body">
                         {/* 채팅방 이름 입력 */}
-                        <div className="mb-3">
-                            <label className="form-label ms-1 fw-bold">
-                                <MdOutlineSubtitles className="me-2 align-middle"/>
+                        <div className="mb-3 w-auto">
+                            <div className="d-flex align-items-center">
+                                <MdOutlineSubtitles/>
+                                <span className="ms-1 fw-bold">
                                     채팅방 제목
-                            </label>
-                            <input type="text" className="form-control" id="roomTitle"
+                                </span>
+                            </div>
+                            <input type="text" className="form-control mt-1" id="roomTitle"
                                 placeholder="방 제목 입력"
                                 value={roomTitle}
                                 onChange={(e) => setRoomTitle(e.target.value)}
                             />
                         </div>
                         {/* 대표 이미지 업로드 */}
-                        <div className="mb-3">
-                            <label className="form-label ms-1 fw-bold">
-                                <FaRegImage className="me-2 align-middle text-muted"/>
-                                채팅방 이미지
-                            </label>
+                        <div className="mb-3 w-auto">
+                            <div className="d-flex align-items-center">
+                                <MdOutlineImage />
+                                <span className="ms-1 fw-bold">
+                                    대표 이미지
+                                </span>
+                            </div>
                             <input
                                 type="file"
-                                className="form-control"
+                                className="form-control mt-1"
                                 accept="image/*"
                                 onChange={handleRoomProfileChange}
                                 style={{ display: "block" }}
@@ -451,11 +455,13 @@ export default function ChatRoom() {
                         {/* 제목, 검색 */}
                         <div className="row mb-3">
                             <div className="col-sm-12">
-                                <label className="form-label ms-1 fw-bold">
-                                    <MdGroupAdd className="me-2 align-middle text-muted"/>
-                                    채팅 초대
-                                </label>
-                                <div className="input-group">
+                                <div className="d-flex align-items-center ms-1">
+                                    <MdGroupAdd/>
+                                    <span className="ms-1 fw-bold">
+                                        채팅 초대
+                                    </span>
+                                </div>
+                                <div className="input-group mt-1">
                                     <input
                                         type="text"
                                         className="form-control border"
@@ -602,11 +608,11 @@ export default function ChatRoom() {
                     </div>
 
                     <div className="modal-footer">
-                        <button type="button" className="btn btn-secondary" onClick={closeModal}>
-                            취소
-                        </button>
                         <button type="button" className="btn btn-primary" onClick={createRoom}>
                             생성
+                        </button>
+                        <button type="button" className="btn btn-secondary" onClick={closeModal}>
+                            취소
                         </button>
                     </div>
                 </div>

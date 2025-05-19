@@ -504,12 +504,12 @@ export default function GroupChat() {
                     const chat = JSON.parse(message.body);
                     setMessages(prev => [...prev, chat]);
 
-                    // ✅ 서버에 읽음 처리
+                    // 서버에 읽음 처리
                     axios.post(`/rooms/${roomNo}/read`, null, {
                         headers: { Authorization: `Bearer ${token}` }
                     });
 
-                    // ✅ 클라이언트에게 뱃지 갱신하도록 알림
+                    // 클라이언트에게 뱃지 갱신하도록 알림
                     window.dispatchEvent(new Event("refreshRoomList"));
                 });
 

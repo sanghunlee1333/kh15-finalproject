@@ -48,9 +48,25 @@ export default function Mainpage() {
                 </div>
             </div>
 
-            {/* 공지 게시판 */}
-            <div className="col-md-6">
-                <div className="position-relative border rounded shadow-sm p-2" onClick={() => navigate("/notice/mainNotice")}
+                {/* 공지 게시판 */}
+                <div className="col-md-6">
+                    <div className="position-relative border rounded shadow-sm p-2" onClick={() => navigate("/notice/list")}
+                            style={{ overflow: "hidden", cursor: "pointer" }}
+                    >
+                        <div className="preview-overlay" />
+                        <div className="card p-3" style={{ overflow: 'visible', minHeight: '650px' }}>
+                            <h3 className="fw-bold d-flex align-items-center justify-content-center">
+                                <FaClipboardList className="text-danger me-2" />
+                                공지사항
+                            </h3>
+                            <MainNotice />
+                        </div>
+                    </div>
+                </div>
+
+                {/* 캘린더 */}
+                <div className="col-md-6">
+                    <div className="position-relative border rounded shadow-sm p-2" onClick={() => navigate("/plan/team")}
                         style={{ overflow: "hidden", cursor: "pointer" }}
                 >
                     <div className="preview-overlay" />
