@@ -33,13 +33,13 @@ public class PasswordService {
 		message.setSubject("새로운 비밀번호 안내");
 		message.setText("새로운 비밀번호는 " + randomPw + " 입니다. 로그인 하여 새로운 비밀번호로 바꿔주시길 바랍니다"  );
 		sender.send(message);
-		//randomPw = encoder.encode(randomPw);
+		randomPw = encoder.encode(randomPw);
 		
 		target.setMemberPw(randomPw);
 //		boolean isValid = memberDao.editPart(target);
 		//memberDao.resetPw(target);
 		//System.err.println(randomPw + " " + target.getMemberPw());
-		
+		//newPw = encoder.encode(newPw);
 		return memberDao.resetPw(target);
 	}
 //	public boolean changePw(long memberNo) {
