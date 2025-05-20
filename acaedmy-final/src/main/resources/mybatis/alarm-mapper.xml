@@ -90,12 +90,33 @@
 		and alarm_read = 'N'
 	</select>
 	
-	<!--  -->
+	<!-- 알림 중복 여부 확인 (알림 유형 + 일정 번호 + 수신자 번호) -->
 	<select id="existsByTypeAndPlanAndReceiver" resultType="boolean">
-	    select case when count(*) > 0 then 1 else 0 end from alarm
+	    select case when count(*) > 0 then 1 else 0 end
+		from alarm
 		where alarm_type = #{alarmType}
 		and alarm_plan_no = #{planNo}
 		and alarm_receiver_no = #{receiverNo}
+	</select>
+	
+	<!-- 알림 중복 여부 확인 (알림 유형 + 일정 번호 + 수신자 번호 + 작성자 번호 기준) -->
+	<select id="existsByTypeAndPlanAndReceiverAndSender" resultType="boolean">
+	    select case when count(*) > 0 then 1 else 0 end
+	    from alarm
+	    where alarm_type = #{alarmType}
+	    and alarm_plan_no = #{planNo}
+	    and alarm_receiver_no = #{receiverNo}
+	    and alarm_sender_no = #{alarmSenderNo}
+	</select>
+	
+	<!-- 최근 10초 이내 동일 수신자에게 동일 알림이 있었는지 검사 -->
+	<select id="existsByTypeAndPlanAndReceiverRecently" resultType="boolean">
+	    select case when count(*) > 0 then 1 else 0 end
+	    from alarm
+	    where alarm_type = #{alarmType}
+	    and alarm_plan_no = #{planNo}
+	    and alarm_receiver_no = #{receiverNo}
+	    and alarm_create_time > #{recentThreshold}
 	</select>
 	
 	<!-- 알림 조회(무한 스크롤) -->

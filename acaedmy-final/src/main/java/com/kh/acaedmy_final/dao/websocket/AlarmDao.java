@@ -1,5 +1,6 @@
 package com.kh.acaedmy_final.dao.websocket;
 
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +76,28 @@ public class AlarmDao {
 	    params.put("receiverNo", receiverNo);
 
 	    return sqlSession.selectOne("alarm.existsByTypeAndPlanAndReceiver", params);
+	}
+	
+	//알림 중복 여부 확인 (알림 유형 + 일정 번호 + 수신자 번호 + 작성자 번호 기준)
+	public boolean existsByTypeAndPlanAndReceiverAndSender(String alarmType, long planNo, long receiverNo, long alarmSenderNo) {
+	    Map<String, Object> params = new HashMap<>();
+	    params.put("alarmType", alarmType);
+	    params.put("planNo", planNo);
+	    params.put("receiverNo", receiverNo);
+	    params.put("alarmSenderNo", alarmSenderNo);
+
+	    return sqlSession.selectOne("alarm.existsByTypeAndPlanAndReceiverAndSender", params);
+	}
+	
+	//
+	public boolean existsByTypeAndPlanAndReceiverRecently(String alarmType, long planNo, long receiverNo, Timestamp recentThreshold) {
+	    Map<String, Object> params = new HashMap<>();
+	    params.put("alarmType", alarmType);
+	    params.put("planNo", planNo);
+	    params.put("receiverNo", receiverNo);
+	    params.put("recentThreshold", recentThreshold);
+		
+		return sqlSession.selectOne("alarm.existsByTypeAndPlanAndReceiverRecently", params);
 	}
 	
 	//알림 조회(무한 스크롤)

@@ -67,30 +67,21 @@ public class PlanDao {
 	}
 	
 	//조회(일정 시작 30분 전 알림)
-	public List<PlanWithReceiversVO> findPlansStartingSoon(Timestamp timeStart, Timestamp timeEnd) {
-		Map<String, Object> param = new HashMap<>();
-		param.put("timeStart", timeStart);
-		param.put("timeEnd", timeEnd);
-		return sqlSession.selectList("plan.findPlansStartingSoon", param);
+	public List<PlanWithReceiversVO> findPlansStartingSoon(Timestamp targetTime) {
+		return sqlSession.selectList("plan.findPlansStartingSoon", targetTime);
 	}
 
 	//조회(일정 시작 알림)
-	public List<PlanWithReceiversVO> findPlansStartingAt(Timestamp timeStart, Timestamp timeEnd) {
-		Map<String, Object> param = new HashMap<>();
-		param.put("timeStart", timeStart);
-		param.put("timeEnd", timeEnd);
-		return sqlSession.selectList("plan.findPlansStartingAt", param);
+	public List<PlanWithReceiversVO> findPlansStartingAt(Timestamp planStartTime) {
+	    return sqlSession.selectList("plan.findPlansStartingAt", planStartTime);
 	}
 
 	//조회(일정 종료 알림)
-	public List<PlanWithReceiversVO> findPlansEndingAt(Timestamp timeStart, Timestamp timeEnd) {
-		Map<String, Object> param = new HashMap<>();
-		param.put("timeStart", timeStart);
-		param.put("timeEnd", timeEnd);
-		return sqlSession.selectList("plan.findPlansEndingAt", param);
+	public List<PlanWithReceiversVO> findPlansEndingAt(Timestamp planEndTime) {
+		return sqlSession.selectList("plan.findPlansEndingAt", planEndTime);
 	}
 	
-	// 관리자 휴일등록
+	//관리자 휴일등록
 	public boolean insertByAdmin(PlanDto dto) {
 		return sqlSession.insert("plan.makeByAdmin", dto) > 0;
 	}

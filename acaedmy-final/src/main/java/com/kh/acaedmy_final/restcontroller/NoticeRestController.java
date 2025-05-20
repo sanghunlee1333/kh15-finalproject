@@ -115,7 +115,7 @@ public class NoticeRestController {
 		
 		//3. 일반 첨부파일 삭제 (notice_image + attachment + 파일)
 	    noticeAttachmentService.deleteNoticeImages(noticeNo);
-
+	    
 		//4. 글 삭제 (notice_image, notice_editor_image는 ON DELETE CASCADE로 날아감)
 		noticeDao.delete(noticeNo); //있으면 200
 	}

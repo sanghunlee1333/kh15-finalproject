@@ -74,10 +74,8 @@ export default function AdminAttendancePolicy(){
 
     return (<>
         <Jumbotron subject="출결 관리"></Jumbotron>
-        <span className="text-muted">*출근 시간 범위가 0 이면 고정 출근제이고 지각 허용시간이 0 이면 자율 출근제입니다</span>
-
- 
-        <div className="card shadow-sm p-4 mt-4">
+        <span className="text-muted mt-2">*출근 시간 범위가 0 이면 고정 출근제이고 지각 허용시간이 0 이면 자율 출근제입니다</span>
+        <div className="card shadow-sm p-4 mt-2">
         <h5 className="mb-4">출결 정책 상세</h5>
 
         <div className="row mb-3">
@@ -123,7 +121,7 @@ export default function AdminAttendancePolicy(){
     
     <div className="d-flex justify-content-end mb-3 mt-4">
         <button className="btn btn-primary rounded-pill px-4 d-flex align-items-center" onClick={openPolicyModal}>
-            <i className="bi bi-plus-lg me-2"></i> 새 출결 정책
+            새 출결 정책
         </button>
     </div>
 
@@ -177,7 +175,7 @@ export default function AdminAttendancePolicy(){
                                 </div>
                                 </div>
                                 <div className="row mt-4">
-                                <label className="col-sm-3 col-form-label">저녘 시간</label>
+                                <label className="col-sm-3 col-form-label">저녁 시간</label>
                                 <div className="col-sm-9 d-flex align-items-center">
                                     <input type="number" className="form-control w-auto" min="0" 
                                     value={newPolicy.policyDinnerTime} name="policyDinnerTime" onChange={changePolicy}/>

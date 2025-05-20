@@ -24,7 +24,7 @@ export default function MainTeamPlan() {
 
         const token = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
 
-        const { data: teamPlans } = await axios.get("/plan/team", {
+        const { data: teamPlans } = await axios.get("/plan/all", {
             headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -54,9 +54,9 @@ export default function MainTeamPlan() {
             backgroundColor: plan.planColor,
             borderColor: plan.planColor,
             extendedProps: {
-            ...plan,
-            planType: plan.planType,
-            isHoliday: false,
+                ...plan,
+                planType: plan.planType,
+                isHoliday: false,
             }
         }));
 
@@ -123,6 +123,7 @@ export default function MainTeamPlan() {
                 }}
                 events={events}
                 eventDisplay="block"
+                dayMaxEventRows={4}
                 displayEventTime={false}
                 height="auto"
                 expandRows={true}

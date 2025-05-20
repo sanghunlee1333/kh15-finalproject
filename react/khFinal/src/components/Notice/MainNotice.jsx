@@ -44,7 +44,7 @@ export default function MainNotice() {
                                         </span>
                                         <span className="text-dark text-truncate">{notice.noticeTitle}</span>
                                         {moment(notice.noticeWriteDate).isAfter(moment().startOf('day')) && (
-                                            <span className="badge bg-danger ms-2">N</span>
+                                            <span className="rounded-circle badge bg-danger ms-2">N</span>
                                         )}
                                     </Link>
                                 </div>
