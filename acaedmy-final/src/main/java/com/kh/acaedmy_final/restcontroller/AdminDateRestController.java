@@ -53,32 +53,32 @@ public class AdminDateRestController {
 		return map;
 	}
 	@PostMapping("/date")// 일정등록
-	public boolean insert(@RequestBody AdminDateDto dto, @RequestHeader ("Authorization") String bearerToken) {
-		dto.setHolidayNo(adminDateDao.sequence());
-		dto.setHolidayAdmin('Y');
-		System.err.println(dto);
-		boolean adminValid = adminDateDao.add(dto);
-		
-		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
-		
-		PlanDto planDto = new PlanDto();
-		
-		long planNo = planDao.sequence();
-		planDto.setPlanTitle(dto.getHolidayName());
-		planDto.setPlanNo(planNo);
-		planDto.setPlanStartTime(dto.getHolidayDate());
-		planDto.setPlanEndTime(dto.getHolidayDate());
-		planDto.setPlanType("전체");
-		planDto.setPlanStatus("완료");
-		planDto.setPlanIsAllDay("Y");
-		planDto.setPlanColor("#dc3545");
-		planDto.setPlanSenderNo(claimVO.getMemberNo());
-		planDto.setPlanContent("");
-		boolean planValid = planDao.insertByAdmin(planDto);
-		//return true;
-		System.out.println(planDto);
-		return adminValid && planValid;
-	} 
+    public boolean insert(@RequestBody AdminDateDto dto, @RequestHeader ("Authorization") String bearerToken) {
+        dto.setHolidayNo(adminDateDao.sequence());
+        dto.setHolidayAdmin('Y');
+        System.err.println(dto);
+        boolean adminValid = adminDateDao.add(dto);
+
+        ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+
+        PlanDto planDto = new PlanDto();
+
+        long planNo = planDao.sequence();
+        planDto.setPlanTitle(dto.getHolidayName());
+        planDto.setPlanNo(planNo);
+        planDto.setPlanStartTime(dto.getHolidayDate());
+        planDto.setPlanEndTime(dto.getHolidayDate());
+        planDto.setPlanType("전체");
+        planDto.setPlanStatus("완료");
+        planDto.setPlanIsAllDay("Y");
+        planDto.setPlanColor("#dc3545");
+        planDto.setPlanSenderNo(claimVO.getMemberNo());
+        planDto.setPlanContent("");
+        boolean planValid = planDao.insertByAdmin(planDto);
+        //return true;
+        System.out.println(planDto);
+        return adminValid && planValid;
+    }
 	@DeleteMapping("/date/{holidayNo}")
 	public boolean delete(@PathVariable long holidayNo) {
 		

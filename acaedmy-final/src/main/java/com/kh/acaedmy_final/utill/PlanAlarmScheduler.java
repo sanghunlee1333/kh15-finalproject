@@ -42,12 +42,10 @@ public class PlanAlarmScheduler {
 			List<PlanReceiverStatusVO> receivers = planReceiveDao.selectPlanReceiverStatusList(vo.getPlanNo());
 			
 			//일정 수락한 사람만 필터링
-			Set<Long> seen = new HashSet<>();
 			List<PlanReceiverStatusVO> accepted = receivers.stream()
-			    .filter(r -> "Y".equals(r.getPlanReceiveIsAccept()))
-			    .filter(r -> r.getPlanReceiveReceiverNo() != vo.getPlanSenderNo()) // 작성자 제외
-			    .filter(r -> seen.add(r.getPlanReceiveReceiverNo())) // 중복 제거
-			    .collect(Collectors.toList());
+				    .filter(r -> "Y".equals(r.getPlanReceiveIsAccept()))
+				    .distinct()
+				    .collect(Collectors.toList());
 			
 			vo.setReceivers(accepted);
 			alarmService.sendPlanTimedAlarm(vo, AlarmType.PLAN_SOON, "[" + vo.getPlanTitle() + "] 시작 30분 전 입니다.");
