@@ -80,7 +80,7 @@
 	        m.member_name as plan_sender_name, m.member_department as plan_sender_department
 	    from plan p
 	    join member m on p.plan_sender_no = m.member_no
-	    where p.plan_start_time between #{timeStart} and #{timeEnd}
+	    where p.plan_start_time = #{targetTime}
 	</select>
 	
 	<!-- 조회(일정 시작 알림) -->
@@ -91,7 +91,7 @@
 	        m.member_name as plan_sender_name, m.member_department as plan_sender_department
 	    from plan p
 	    join member m on p.plan_sender_no = m.member_no
-	    where p.plan_start_time between #{timeStart} and #{timeEnd}
+	    where p.plan_start_time = #{planStartTime}
 	</select>	
 	
 	<!-- 조회(일정 종료 알림) -->
@@ -102,7 +102,7 @@
 	        m.member_name as plan_sender_name, m.member_department as plan_sender_department
 	    from plan p
 	    join member m on p.plan_sender_no = m.member_no
-	   	where p.plan_end_time between #{timeStart} and #{timeEnd}
+	   	where p.plan_end_time = #{planEndTime}
 	</select>
 	
 	<insert id="makeByAdmin">

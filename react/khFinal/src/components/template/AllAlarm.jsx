@@ -362,8 +362,22 @@ export default function AllAlarm({ groupContacts, loginUserNo, detailModal, sele
                             <div className="row mt-2">
                                 <div className="col">
                                     <div className="d-flex text-responsive">
-                                        <span>{selectedEvent?.extendedProps?.planSenderName}</span>
+                                    <span>{selectedEvent?.extendedProps?.planSenderName}</span>
+                                    {selectedEvent?.extendedProps?.planSenderDepartment === "인사" && (
+                                        <span className="badge bg-danger ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                    )}
+                                    {selectedEvent?.extendedProps?.planSenderDepartment === "디자인" && (
+                                        <span className="badge bg-warning ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                    )}
+                                    {selectedEvent?.extendedProps?.planSenderDepartment === "영업" && (
+                                        <span className="badge bg-dark ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                    )}
+                                    {selectedEvent?.extendedProps?.planSenderDepartment === "개발" && (
                                         <span className="badge bg-primary ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                    )}
+                                    {selectedEvent?.extendedProps?.planSenderDepartment === "기획" && (
+                                        <span className="badge bg-info ms-2">{selectedEvent?.extendedProps?.planSenderDepartment}</span>
+                                    )}
                                     </div>
                                 </div>
                             </div>

@@ -137,15 +137,15 @@ public class MypageRestController {
 	}
 	
 
-
-	@GetMapping("/")
-	public boolean checkAttendance(@RequestHeader ("Authorization") String bearerToken) {
-		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
-		attendanceDao.countAttendance(claimVO.getMemberNo());
-		
-		return false;
-		
-	}
+//
+//	@GetMapping("/")
+//	public boolean checkAttendance(@RequestHeader ("Authorization") String bearerToken) {
+//		ClaimVO claimVO = tokenService.parseBearerToken(bearerToken);
+//		attendanceDao.countAttendance(claimVO.getMemberNo());
+//		
+//		return false;
+//		
+//	}
 
 	@GetMapping("/profile/{memberNo}")
 	public int getProfileImageNo(@PathVariable int memberNo) {
