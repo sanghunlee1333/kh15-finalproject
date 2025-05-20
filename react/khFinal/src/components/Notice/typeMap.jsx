@@ -4,7 +4,6 @@ import { MdEventAvailable } from "react-icons/md";
 import { IoPersonSharp, IoSettingsSharp } from "react-icons/io5";
 import { FaStarOfLife, FaCircleQuestion, FaFolderOpen } from "react-icons/fa6";
 
-
 const typeMap = {
     "[긴급]": {
       color : "red",
