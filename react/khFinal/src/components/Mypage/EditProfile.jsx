@@ -142,6 +142,7 @@ export default function EditProfile() {
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
   const checkContact = useCallback(() => {
     const regex = /^010[0-9]{8}$/;
     const isValid = regex.test(member.memberContact);
@@ -291,18 +292,37 @@ export default function EditProfile() {
     }
   }, [memberPw, memberPwValid, pwCheckValid]);
 
+   const [checkNewAttach, setCheckNewAttach] = useState(false);
 
   const blockPwButton = useMemo(() => {
     return memberPwValid === true && pwCheckValid === true;
   }, [memberPwValid, pwCheckValid])
 
+    const changeProfile = useCallback((e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setNewAttach(file);
+    const url = URL.createObjectURL(file);
+    // console.log(file.name);
+    // console.log(file.type);
+    // console.log(file.size);
+    setPreview({
+      url: url
+    })
+    setCheckNewAttach(true);
+  }, [])
+ 
+  
+ 
 
   const changeInfo = useCallback(async () => {
     console.log(member);
 
     try {
+      console.log("try");
       // 1. 이미지가 바뀐 경우 + newAttach가 있는 경우
-      if (memberImg !== preview && newAttach !== null) {
+      if (checkNewAttach === true) {
+        console.log("ifif")
         const formData = new FormData();
         formData.append("newAttach", inputImage.current.files[0]);
 
@@ -314,11 +334,13 @@ export default function EditProfile() {
         // 프로필 이미지 변경 이벤트 발생
         window.dispatchEvent(new Event("profileImageUpdated"));
       }
-
+      console.log("afterTry");
       // 2. 회원 정보 변경 요청
+      
       const resp = await axios.patch("/mypage/edit", member);
-
+      
       closeChangeInfo();
+      
     } catch (error) {
       console.error("정보 변경 실패", error);
       alert("정보 변경 중 오류가 발생했습니다.");
@@ -339,18 +361,8 @@ export default function EditProfile() {
   }, []);
 
 
-  const changeProfile = useCallback((e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setNewAttach(file);
-    const url = URL.createObjectURL(file);
-    // console.log(file.name);
-    // console.log(file.type);
-    // console.log(file.size);
-    setPreview({
-      url: url
-    })
-  }, [])
+
+
 
 
   const zoomProfile = useCallback(() => {
@@ -588,9 +600,9 @@ export default function EditProfile() {
           <div className="modal-footer">
             <div className="d-flex justify-content-between">
 
-              <button className="btn btn-secondary" onClick={changeInfo} //disabled={!blockButton}
+              <button className="btn btn-secondary" onClick={changeInfo} disabled={!blockButton}
               >변경하기</button>
-              <button className="btn btn-danger" >닫기</button>
+              <button className="btn btn-danger" onClick={closeChangeInfo} >닫기</button>
             </div>
 
           </div>

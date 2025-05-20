@@ -71,6 +71,7 @@ export default function MemberLogin(){
         
         
         try{
+          console.log("try");
           const resp = await axios.post("/member/login", members);
 
           setUserNo(resp.data.memberNo);
