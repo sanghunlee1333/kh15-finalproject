@@ -60,7 +60,7 @@ public class AttachmentRestController {
 	public Map<String, Object> upload(@RequestParam MultipartFile attach) throws IllegalStateException, IOException {
 		AttachmentDto attachmentDto = attachmentService.save(attach); //(DB + 파일 저장)
 		
-		String url = "/api/attachment/" + attachmentDto. getAttachmentNo(); //저장된 파일 URL 경로
+		String url = "/api/attachment/" + attachmentDto.getAttachmentNo(); //저장된 파일 URL 경로
 		
 		Map<String, Object> map = new HashMap<>();
 		map.put("url", url); //프론트에 반환할 것
