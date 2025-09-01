@@ -200,6 +200,10 @@ export default function ChatRoom() {
                 alert("참여할 멤버를 선택해주세요.");
                 return;
             }
+            if (selectMembers.length === 1) {
+                alert("그룹채팅은 2명 이상 초대해야 합니다.");
+                return;
+            }
             if (!roomProfileFile) {
                 alert("대표 이미지를 업로드 해주세요.");
                 return;

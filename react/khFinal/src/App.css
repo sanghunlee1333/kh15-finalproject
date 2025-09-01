@@ -51,12 +51,11 @@
 
   /* Sidebar 기본 스타일 */
   .sidebar {
-    width: 4.2rem;
+    width: 4.6rem;
     height: calc(100vh - 56px);
     position: fixed;
     top: 57px;
     left: 0;
-    z-index: 1000;
     background-color: #323941;
   }
 

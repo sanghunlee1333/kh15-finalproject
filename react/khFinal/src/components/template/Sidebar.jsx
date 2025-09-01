@@ -95,8 +95,9 @@ export default function Sidebar() {
     }, [memberNo]);
 
     useEffect(() => {
+        if (!memberNo) return;
         loadRooms();
-    }, []);
+    }, [memberNo]);
 
     const getRoomImageSrc = (room) => {
         const isDirectChat = room.roomProfileNo === null && room.partnerProfileNo !== null;
@@ -124,7 +125,7 @@ export default function Sidebar() {
                 new bootstrap.Tooltip(el);
             }
         });
-    }, [rooms]);      
+    }, [rooms]);
 
     return (
         <div className="sidebar d-flex flex-column" style={{ height: "calc(100vh - 56px)" }}>
@@ -199,12 +200,11 @@ export default function Sidebar() {
                 {/* 프로필 드롭다운 */}
                 <div className="dropdown mt-3 d-flex justify-content-center w-100">
                     <button
-                        className="btn btn-outline-secondary dropdown-toggle d-flex align-items-center"
+                        className="btn p-0 border-0 bg-transparent d-flex align-items-center"
                         type="button"
                         id="profileDropdown"
                         data-bs-toggle="dropdown"
                         aria-expanded="false"
-                        style={{ width: "40px", height: "40px", borderRadius: "50%", padding: 0 }}
                     >
                         <img
                             src={
@@ -214,14 +214,15 @@ export default function Sidebar() {
                             }
                             alt="프로필"
                             style={{
-                                width: "100%",
-                                height: "100%",
+                                width: "40px",
+                                height: "40px",
                                 objectFit: "cover",
                                 borderRadius: "50%",
                             }}
                         />
                     </button>
-                    
+
+
                     <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
                         <li>
                             <Link className="dropdown-item d-flex align-items-center gap-2" to="/mypage">
